@@ -98,6 +98,9 @@ mod public_key_alg {
     pub const ED25519: u8 = 0;
 }
 
+// TODO: Could encode and decode, and the functions upstream that call them, be
+// const fn's?
+
 fn encode(v: Version, payload: &[u8]) -> String {
     let mut d: Vec<u8> = Vec::with_capacity(1 + payload.len() + 2);
     d.push(v as u8);

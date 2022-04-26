@@ -38,11 +38,17 @@ impl PublicKey {
         }
     }
 
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, _) = decode(s)?;
+    fn from_version_and_payload(ver: Version, payload: &[u8]) -> Result<Self, DecodeError> {
         match ver {
-            Version::PublicKeyEd25519 => Ok(Self::Ed25519(PublicKeyEd25519::from_string(s)?)),
+            Version::PublicKeyEd25519 => Ok(Self::Ed25519(
+                PublicKeyEd25519::from_version_and_payload(ver, payload)?,
+            )),
         }
+    }
+
+    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode(s)?;
+        Self::from_version_and_payload(ver, &payload)
     }
 }
 
@@ -54,14 +60,18 @@ impl PublicKeyEd25519 {
         encode(Version::PublicKeyEd25519, &self.0)
     }
 
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+    fn from_version_and_payload(ver: Version, payload: &[u8]) -> Result<Self, DecodeError> {
         match ver {
             Version::PublicKeyEd25519 => match payload.try_into() {
                 Ok(ed25519) => Ok(Self(ed25519)),
                 Err(_) => Err(DecodeError::Invalid),
             },
         }
+    }
+
+    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode(s)?;
+        Self::from_version_and_payload(ver, &payload)
     }
 }
 
@@ -71,12 +81,11 @@ enum Version {
     PublicKeyEd25519 = typ::PUBLIC_KEY | public_key_alg::ED25519,
 }
 
-impl TryFrom<u8> for Version {
-    type Error = DecodeError;
-    fn try_from(b: u8) -> Result<Self, Self::Error> {
+impl Version {
+    fn try_from(b: u8) -> Result<Self, DecodeError> {
         match b {
             typ::PUBLIC_KEY | public_key_alg::ED25519 => Ok(Version::PublicKeyEd25519),
-            _ => Err(Self::Error::Invalid),
+            _ => Err(DecodeError::Invalid),
         }
     }
 }
@@ -110,7 +119,7 @@ fn decode(s: &str) -> Result<(Version, Vec<u8>), DecodeError> {
         if data.len() < 3 {
             return Err(DecodeError::Invalid);
         }
-        let ver: Version = data[0].try_into()?;
+        let ver = Version::try_from(data[0])?;
         let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
         let crc_expect = checksum(&data_without_crc);
         if crc_actual != crc_expect {

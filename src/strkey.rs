@@ -2,6 +2,7 @@ use crate::crc::checksum;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum DecodeError {
+    // TODO: Add meaningful errors for each problem that can occur.
     Invalid,
 }
 

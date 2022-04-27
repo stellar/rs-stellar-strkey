@@ -28,21 +28,22 @@ impl Strkey {
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub enum PublicKey {
-    Ed25519(PublicKeyEd25519),
+    Ed25519([u8; 32]),
 }
 
 impl PublicKey {
     pub fn to_string(&self) -> String {
         match self {
-            Self::Ed25519(x) => x.to_string(),
+            Self::Ed25519(x) => encode(Version::PublicKeyEd25519, x),
         }
     }
 
     fn from_version_and_payload(ver: Version, payload: &[u8]) -> Result<Self, DecodeError> {
         match ver {
-            Version::PublicKeyEd25519 => Ok(Self::Ed25519(
-                PublicKeyEd25519::from_version_and_payload(ver, payload)?,
-            )),
+            Version::PublicKeyEd25519 => match payload.try_into() {
+                Ok(ed25519) => Ok(Self::Ed25519(ed25519)),
+                Err(_) => Err(DecodeError::Invalid),
+            },
         }
     }
 

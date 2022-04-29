@@ -24,14 +24,13 @@ impl Strkey {
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let (ver, payload) = decode(s)?;
-        return match <[u8; 32]>::try_from(payload) {
-            Ok(bs) => {
-                match ver {
-                    Version::PublicKeyEd25519 => Ok(Self::PublicKeyEd25519(bs)),
-                    Version::PrivateKeyEd25519 => Ok(Self::PrivateKeyEd25519(bs)),
-                }
-            },
-            Err(_) =>  Err(DecodeError::Invalid),
+        let payload_slice = match <[u8; 32]>::try_from(payload) {
+            Ok(bs) => bs,
+            Err(_) => return Err(DecodeError::Invalid),
+        };
+        match ver {
+            Version::PublicKeyEd25519 => Ok(Self::PublicKeyEd25519(payload_slice)),
+            Version::PrivateKeyEd25519 => Ok(Self::PrivateKeyEd25519(payload_slice)),
         }
     }
 }
@@ -79,18 +78,17 @@ fn decode(s: &str) -> Result<(Version, Vec<u8>), DecodeError> {
         if data.len() < 3 {
             return Err(DecodeError::Invalid);
         }
-        return match Version::try_from(data[0]) {
-            Ok(ver) => {
-                let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
-                let crc_expect = checksum(&data_without_crc);
-                if crc_actual != crc_expect {
-                    return Err(DecodeError::Invalid);
-                }
-                let payload = &data_without_crc[1..];
-                Ok((ver, payload.to_vec()))
-            },
-            Err(_) => Err(DecodeError::Invalid)
+        let ver = match Version::try_from(data[0]) {
+            Ok(ver) => ver,
+            Err(_) => return Err(DecodeError::Invalid),
         };
+        let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
+        let crc_expect = checksum(&data_without_crc);
+        if crc_actual != crc_expect {
+            return Err(DecodeError::Invalid);
+        }
+        let payload = &data_without_crc[1..];
+        Ok((ver, payload.to_vec()))
     } else {
         Err(DecodeError::Invalid)
     }

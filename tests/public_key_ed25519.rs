@@ -8,11 +8,11 @@ fn test_public_key_ed25519_from_string() {
     let r = Strkey::from_string("GA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5");
     assert_eq!(
         r,
-        Ok(Strkey::PublicKey(PublicKey::Ed25519(PublicKeyEd25519([
+        Ok(Strkey::PublicKeyEd25519(PublicKeyEd25519([
             0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
             0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
             0x05, 0xc7, 0xb1, 0x03,
-        ]))))
+        ])))
     );
 
     // Invalid length (Ed25519 should be 32 bytes, not 5).
@@ -42,11 +42,11 @@ proptest! {
 #[test]
 fn test_public_key_ed25519_to_string() {
     // Valid account.
-    let r = Strkey::PublicKey(PublicKey::Ed25519(PublicKeyEd25519([
+    let r = Strkey::PublicKeyEd25519(PublicKeyEd25519([
         0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
         0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d, 0x05, 0xc7,
         0xb1, 0x03,
-    ])))
+    ]))
     .to_string();
     assert_eq!(
         r,
@@ -57,6 +57,6 @@ fn test_public_key_ed25519_to_string() {
 proptest! {
     #[test]
     fn test_public_key_ed25519_to_string_doesnt_panic(data: [u8; 32]) {
-        Strkey::PublicKey(PublicKey::Ed25519(PublicKeyEd25519(data))).to_string();
+        Strkey::PublicKeyEd25519(PublicKeyEd25519(data)).to_string();
     }
 }

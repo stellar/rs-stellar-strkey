@@ -9,12 +9,14 @@ pub enum DecodeError {
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Strkey {
     PublicKey(PublicKey),
+    PrivateKey(PrivateKey),
 }
 
 impl Strkey {
     pub fn to_string(&self) -> String {
         match self {
             Self::PublicKey(x) => x.to_string(),
+            Self::PrivateKey(x) => x.to_string(),
         }
     }
 
@@ -22,6 +24,9 @@ impl Strkey {
         let (ver, payload) = decode(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKey(PublicKey::from_payload(&payload)?)),
+            version::PRIVATE_KEY_ED25519 => {
+                Ok(Self::PrivateKey(PrivateKey::from_payload(&payload)?))
+            }
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -51,15 +56,41 @@ impl PublicKey {
     }
 }
 
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+pub struct PrivateKey(pub [u8; 32]);
+
+impl PrivateKey {
+    pub fn to_string(&self) -> String {
+        encode(version::PRIVATE_KEY_ED25519, &self.0)
+    }
+
+    fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
+        match payload.try_into() {
+            Ok(ed25519) => Ok(Self(ed25519)),
+            Err(_) => Err(DecodeError::Invalid),
+        }
+    }
+
+    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode(s)?;
+        match ver {
+            version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
+            _ => Err(DecodeError::Invalid),
+        }
+    }
+}
+
 mod version {
     use super::public_key_alg::*;
     use super::typ::*;
 
     pub const PUBLIC_KEY_ED25519: u8 = PUBLIC_KEY | ED25519;
+    pub const PRIVATE_KEY_ED25519: u8 = PRIVATE_KEY | ED25519;
 }
 
 mod typ {
     pub const PUBLIC_KEY: u8 = 6 << 3;
+    pub const PRIVATE_KEY: u8 = 18 << 3;
 }
 
 mod public_key_alg {

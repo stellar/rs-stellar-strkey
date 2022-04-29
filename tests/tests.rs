@@ -34,6 +34,19 @@ fn test_invalid_public_keys() {
     assert_eq!(r, Err(DecodeError::Invalid));
 }
 
+#[test]
+fn test_valid_private_keys() {
+    // Valid account.
+    assert_convert_roundtrip(
+        "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR",
+        &Strkey::PrivateKey(PrivateKey([
+            0x69, 0xa8, 0xc4, 0xcb, 0xb9, 0xf6, 0x4e, 0x8a, 0x07, 0x98, 0xf6, 0xe1, 0xac, 0x65,
+            0xd0, 0x6c, 0x31, 0x62, 0x92, 0x90, 0x56, 0xbc, 0xf4, 0xcd, 0xb7, 0xd3, 0x73, 0x8d,
+            0x18, 0x55, 0xf3, 0x63,
+        ])),
+    );
+}
+
 proptest! {
     #[test]
     fn test_public_key_ed25519_from_string_doesnt_panic(data: String) {

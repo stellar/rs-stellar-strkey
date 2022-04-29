@@ -19,9 +19,14 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, _) = decode(s)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            Version::PublicKeyEd25519 => Ok(Self::PublicKey(PublicKey::from_string(s)?)),
+            Version::PublicKeyEd25519 => {
+                match <[u8; 32]>::try_from(payload) {
+                    Ok(x) => Ok(Self::PublicKey(PublicKey(x))),
+                    Err(_) => Err(DecodeError::Invalid),
+                }
+            },
         }
     }
 }
@@ -32,20 +37,6 @@ pub struct PublicKey(pub [u8; 32]);
 impl PublicKey {
     pub fn to_string(&self) -> String {
         encode(Version::PublicKeyEd25519, &self.0)
-    }
-
-    fn from_version_and_payload(ver: Version, payload: &[u8]) -> Result<Self, DecodeError> {
-        match ver {
-            Version::PublicKeyEd25519 => match payload.try_into() {
-                Ok(ed25519) => Ok(Self(ed25519)),
-                Err(_) => Err(DecodeError::Invalid),
-            },
-        }
-    }
-
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
-        Self::from_version_and_payload(ver, &payload)
     }
 }
 

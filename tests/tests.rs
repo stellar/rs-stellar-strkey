@@ -5,7 +5,7 @@ use proptest::prelude::*;
 #[test]
 fn test_valid_public_keys() {
     // Valid account.
-    test_valid_strkey_roundtrip(
+    assert_convert_roundtrip(
         "GA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5",
         &Strkey::PublicKey(PublicKey([
             0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
@@ -48,8 +48,8 @@ proptest! {
     }
 }
 
-fn test_valid_strkey_roundtrip(str: &str, strkey: &Strkey) {
-    let strkey_result = Strkey::from_string(&str).unwrap();
+fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
+    let strkey_result = Strkey::from_string(&s).unwrap();
     assert_eq!(&strkey_result, strkey);
     let str_result = strkey.to_string();
     assert_eq!(str_result, str_result)

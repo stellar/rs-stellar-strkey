@@ -19,9 +19,11 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, _) = decode(s)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            Version::PublicKeyEd25519 => Ok(Self::PublicKey(PublicKey::from_string(s)?)),
+            Version::PublicKeyEd25519 => Ok(Self::PublicKey(PublicKey::from_version_and_payload(
+                ver, &payload,
+            )?)),
         }
     }
 }

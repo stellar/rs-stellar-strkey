@@ -1,4 +1,6 @@
 use crate::crc::checksum;
+use num_enum::TryFromPrimitive;
+use std::convert::TryFrom;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum DecodeError {
@@ -8,90 +10,45 @@ pub enum DecodeError {
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Strkey {
-    PublicKey(PublicKey),
+    PublicKeyEd25519([u8; 32]),
+    PrivateKeyEd25519([u8; 32]),
 }
 
 impl Strkey {
     pub fn to_string(&self) -> String {
         match self {
-            Self::PublicKey(x) => x.to_string(),
-        }
-    }
-
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, _) = decode(s)?;
-        match ver {
-            Version::PublicKeyEd25519 => Ok(Self::PublicKey(PublicKey::from_string(s)?)),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-pub enum PublicKey {
-    Ed25519(PublicKeyEd25519),
-}
-
-impl PublicKey {
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::Ed25519(x) => x.to_string(),
-        }
-    }
-
-    fn from_version_and_payload(ver: Version, payload: &[u8]) -> Result<Self, DecodeError> {
-        match ver {
-            Version::PublicKeyEd25519 => Ok(Self::Ed25519(
-                PublicKeyEd25519::from_version_and_payload(ver, payload)?,
-            )),
+            Self::PublicKeyEd25519(bs) => encode(Version::PublicKeyEd25519, bs),
+            Self::PrivateKeyEd25519(bs) => encode(Version::PrivateKeyEd25519, bs),
         }
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let (ver, payload) = decode(s)?;
-        Self::from_version_and_payload(ver, &payload)
+        return match <[u8; 32]>::try_from(payload) {
+            Ok(bs) => {
+                match ver {
+                    Version::PublicKeyEd25519 => Ok(Self::PublicKeyEd25519(bs)),
+                    Version::PrivateKeyEd25519 => Ok(Self::PrivateKeyEd25519(bs)),
+                }
+            },
+            Err(_) =>  Err(DecodeError::Invalid),
+        }
     }
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct PublicKeyEd25519(pub [u8; 32]);
 
-impl PublicKeyEd25519 {
-    pub fn to_string(&self) -> String {
-        encode(Version::PublicKeyEd25519, &self.0)
-    }
-
-    fn from_version_and_payload(ver: Version, payload: &[u8]) -> Result<Self, DecodeError> {
-        match ver {
-            Version::PublicKeyEd25519 => match payload.try_into() {
-                Ok(ed25519) => Ok(Self(ed25519)),
-                Err(_) => Err(DecodeError::Invalid),
-            },
-        }
-    }
-
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
-        Self::from_version_and_payload(ver, &payload)
-    }
-}
-
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug, TryFromPrimitive)]
 #[repr(u8)]
 enum Version {
     PublicKeyEd25519 = typ::PUBLIC_KEY | public_key_alg::ED25519,
-}
-
-impl Version {
-    fn try_from(b: u8) -> Result<Self, DecodeError> {
-        match b {
-            typ::PUBLIC_KEY | public_key_alg::ED25519 => Ok(Version::PublicKeyEd25519),
-            _ => Err(DecodeError::Invalid),
-        }
-    }
+    PrivateKeyEd25519 = typ::PRIVATE_KEY | public_key_alg::ED25519,
 }
 
 mod typ {
     pub const PUBLIC_KEY: u8 = 6 << 3;
+    pub const PRIVATE_KEY: u8 = 18 << 3;
 }
 
 mod public_key_alg {
@@ -122,14 +79,18 @@ fn decode(s: &str) -> Result<(Version, Vec<u8>), DecodeError> {
         if data.len() < 3 {
             return Err(DecodeError::Invalid);
         }
-        let ver = Version::try_from(data[0])?;
-        let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
-        let crc_expect = checksum(&data_without_crc);
-        if crc_actual != crc_expect {
-            return Err(DecodeError::Invalid);
-        }
-        let payload = &data_without_crc[1..];
-        Ok((ver, payload.to_vec()))
+        return match Version::try_from(data[0]) {
+            Ok(ver) => {
+                let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
+                let crc_expect = checksum(&data_without_crc);
+                if crc_actual != crc_expect {
+                    return Err(DecodeError::Invalid);
+                }
+                let payload = &data_without_crc[1..];
+                Ok((ver, payload.to_vec()))
+            },
+            Err(_) => Err(DecodeError::Invalid)
+        };
     } else {
         Err(DecodeError::Invalid)
     }

@@ -78,16 +78,23 @@ impl PublicKeyEd25519 {
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 #[repr(u8)]
 enum Version {
-    PublicKeyEd25519 = typ::PUBLIC_KEY | public_key_alg::ED25519,
+    PublicKeyEd25519 = version::PUBLIC_KEY_ED25519,
 }
 
 impl Version {
     fn try_from(b: u8) -> Result<Self, DecodeError> {
         match b {
-            typ::PUBLIC_KEY | public_key_alg::ED25519 => Ok(Version::PublicKeyEd25519),
+            version::PUBLIC_KEY_ED25519 => Ok(Version::PublicKeyEd25519),
             _ => Err(DecodeError::Invalid),
         }
     }
+}
+
+mod version {
+    use super::public_key_alg::*;
+    use super::typ::*;
+
+    pub const PUBLIC_KEY_ED25519: u8 = PUBLIC_KEY | ED25519;
 }
 
 mod typ {

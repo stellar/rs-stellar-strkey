@@ -8,28 +8,30 @@ pub enum DecodeError {
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Strkey {
-    PublicKeyEd25519(PublicKeyEd25519),
+    PublicKey(PublicKey),
 }
 
 impl Strkey {
     pub fn to_string(&self) -> String {
         match self {
-            Self::PublicKeyEd25519(x) => x.to_string(),
+            Self::PublicKey(x) => x.to_string(),
         }
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let (ver, _) = decode(s)?;
         match ver {
-            Version::PublicKeyEd25519 => Ok(Self::PublicKeyEd25519(PublicKeyEd25519::from_string(s)?)),
+            Version::PublicKeyEd25519 => {
+                Ok(Self::PublicKey(PublicKey::from_string(s)?))
+            }
         }
     }
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-pub struct PublicKeyEd25519(pub [u8; 32]);
+pub struct PublicKey(pub [u8; 32]);
 
-impl PublicKeyEd25519 {
+impl PublicKey {
     pub fn to_string(&self) -> String {
         encode(Version::PublicKeyEd25519, &self.0)
     }

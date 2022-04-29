@@ -35,9 +35,6 @@ impl Strkey {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-pub struct PublicKeyEd25519(pub [u8; 32]);
-
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug, TryFromPrimitive)]
 #[repr(u8)]
 enum Version {

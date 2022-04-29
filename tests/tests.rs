@@ -36,7 +36,7 @@ fn test_invalid_public_keys() {
 
 #[test]
 fn test_valid_private_keys() {
-    // Valid account.
+    // Valid private key.
     assert_convert_roundtrip(
         "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR",
         &Strkey::PrivateKey(PrivateKey([

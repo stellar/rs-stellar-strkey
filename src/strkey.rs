@@ -8,34 +8,36 @@ pub enum DecodeError {
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
 pub enum Strkey {
-    PublicKey(PublicKey),
-    PrivateKey(PrivateKey),
+    PublicKeyEd25519(StrkeyPublicKeyEd25519),
+    PrivateKeyEd25519(StrkeyPrivateKeyEd25519),
 }
 
 impl Strkey {
     pub fn to_string(&self) -> String {
         match self {
-            Self::PublicKey(x) => x.to_string(),
-            Self::PrivateKey(x) => x.to_string(),
+            Self::PublicKeyEd25519(x) => x.to_string(),
+            Self::PrivateKeyEd25519(x) => x.to_string(),
         }
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let (ver, payload) = decode(s)?;
         match ver {
-            version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKey(PublicKey::from_payload(&payload)?)),
-            version::PRIVATE_KEY_ED25519 => {
-                Ok(Self::PrivateKey(PrivateKey::from_payload(&payload)?))
-            }
+            version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
+                StrkeyPublicKeyEd25519::from_payload(&payload)?,
+            )),
+            version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(
+                StrkeyPrivateKeyEd25519::from_payload(&payload)?,
+            )),
             _ => Err(DecodeError::Invalid),
         }
     }
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-pub struct PublicKey(pub [u8; 32]);
+pub struct StrkeyPublicKeyEd25519(pub [u8; 32]);
 
-impl PublicKey {
+impl StrkeyPublicKeyEd25519 {
     pub fn to_string(&self) -> String {
         encode(version::PUBLIC_KEY_ED25519, &self.0)
     }
@@ -57,9 +59,9 @@ impl PublicKey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-pub struct PrivateKey(pub [u8; 32]);
+pub struct StrkeyPrivateKeyEd25519(pub [u8; 32]);
 
-impl PrivateKey {
+impl StrkeyPrivateKeyEd25519 {
     pub fn to_string(&self) -> String {
         encode(version::PRIVATE_KEY_ED25519, &self.0)
     }

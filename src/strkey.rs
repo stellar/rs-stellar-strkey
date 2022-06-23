@@ -1,12 +1,12 @@
 use crate::crc::checksum;
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum DecodeError {
     // TODO: Add meaningful errors for each problem that can occur.
     Invalid,
 }
 
-#[derive(Clone, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Strkey {
     PublicKeyEd25519(StrkeyPublicKeyEd25519),
     PrivateKeyEd25519(StrkeyPrivateKeyEd25519),
@@ -50,7 +50,7 @@ impl Strkey {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeyPublicKeyEd25519(pub [u8; 32]);
 
 impl StrkeyPublicKeyEd25519 {
@@ -74,7 +74,7 @@ impl StrkeyPublicKeyEd25519 {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeyPrivateKeyEd25519(pub [u8; 32]);
 
 impl StrkeyPrivateKeyEd25519 {
@@ -98,7 +98,7 @@ impl StrkeyPrivateKeyEd25519 {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeyMuxedAccountEd25519 {
     pub ed25519: [u8; 32],
     pub id: u64,
@@ -138,7 +138,7 @@ impl StrkeyMuxedAccountEd25519 {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeyPreAuthTx(pub [u8; 32]);
 
 impl StrkeyPreAuthTx {
@@ -162,7 +162,7 @@ impl StrkeyPreAuthTx {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeyHashX(pub [u8; 32]);
 
 impl StrkeyHashX {
@@ -186,7 +186,7 @@ impl StrkeyHashX {
     }
 }
 
-#[derive(Clone, Hash, PartialEq, Eq, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeySignedPayloadEd25519 {
     pub ed25519: [u8; 32],
     pub payload: Vec<u8>,

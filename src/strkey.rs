@@ -121,8 +121,8 @@ impl StrkeyMuxedAccountEd25519 {
             Ok(muxed) => {
                 let (ed25519, id) = muxed.split_at(32);
                 Ok(Self {
-                    ed25519: ed25519.try_into().unwrap(),
-                    id: u64::from_be_bytes(id.try_into().unwrap()),
+                    ed25519: ed25519.try_into().map_err(|_| DecodeError::Invalid)?,
+                    id: u64::from_be_bytes(id.try_into().map_err(|_| DecodeError::Invalid)?),
                 })
             }
             Err(_) => Err(DecodeError::Invalid),
@@ -218,15 +218,20 @@ impl StrkeySignedPayloadEd25519 {
                 if payload_len < 32 + 4 + 4 || payload_len > 32 + 4 + 64 {
                     return Err(DecodeError::Invalid);
                 }
-                let inner_payload_len =
-                    u32::from_be_bytes((&signed_payload[32..32 + 4]).try_into().unwrap());
+                let inner_payload_len = u32::from_be_bytes(
+                    (&signed_payload[32..32 + 4])
+                        .try_into()
+                        .map_err(|_| DecodeError::Invalid)?,
+                );
                 if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize
                     != payload_len - 32 - 4
                 {
                     return Err(DecodeError::Invalid);
                 }
 
-                let ed25519 = (&signed_payload[0..32]).try_into().unwrap();
+                let ed25519 = (&signed_payload[0..32])
+                    .try_into()
+                    .map_err(|_| DecodeError::Invalid)?;
                 let inner_payload = &signed_payload[32 + 4..32 + 4 + inner_payload_len as usize];
 
                 Ok(Self {

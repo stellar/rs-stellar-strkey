@@ -99,16 +99,32 @@ impl StrkeyPrivateKeyEd25519 {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-pub struct StrkeyMuxedAccountEd25519(pub [u8; 40]);
+pub struct StrkeyMuxedAccountEd25519 {
+    pub ed25519: [u8; 32],
+    pub id: u64,
+}
 
 impl StrkeyMuxedAccountEd25519 {
     pub fn to_string(&self) -> String {
-        encode(version::MUXED_ACCOUNT_ED25519, &self.0)
+        let payload = {
+            let mut payload: [u8; 40] = [0; 40];
+            let (ed25519, id) = payload.split_at_mut(32);
+            ed25519.copy_from_slice(&self.ed25519);
+            id.copy_from_slice(&self.id.to_be_bytes());
+            payload
+        };
+        encode(version::MUXED_ACCOUNT_ED25519, &payload)
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match payload.try_into() {
-            Ok(muxed) => Ok(Self(muxed)),
+        match <[u8; 40]>::try_from(payload) {
+            Ok(muxed) => {
+                let (ed25519, id) = muxed.split_at(32);
+                Ok(Self {
+                    ed25519: ed25519.try_into().unwrap(),
+                    id: u64::from_be_bytes(id.try_into().unwrap()),
+                })
+            }
             Err(_) => Err(DecodeError::Invalid),
         }
     }

@@ -10,7 +10,7 @@ pub enum DecodeError {
 pub enum Strkey {
     PublicKeyEd25519(StrkeyPublicKeyEd25519),
     PrivateKeyEd25519(StrkeyPrivateKeyEd25519),
-    HashTx(StrkeyHashTx),
+    PreAuthTx(StrkeyPreAuthTx),
     HashX(StrkeyHashX),
     MuxedAccountEd25519(StrkeyMuxedAccountEd25519),
     SignedPayloadEd25519(StrkeySignedPayloadEd25519),
@@ -21,7 +21,7 @@ impl Strkey {
         match self {
             Self::PublicKeyEd25519(x) => x.to_string(),
             Self::PrivateKeyEd25519(x) => x.to_string(),
-            Self::HashTx(x) => x.to_string(),
+            Self::PreAuthTx(x) => x.to_string(),
             Self::HashX(x) => x.to_string(),
             Self::MuxedAccountEd25519(x) => x.to_string(),
             Self::SignedPayloadEd25519(x) => x.to_string(),
@@ -37,7 +37,7 @@ impl Strkey {
             version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(
                 StrkeyPrivateKeyEd25519::from_payload(&payload)?,
             )),
-            version::HASH_TX => Ok(Self::HashTx(StrkeyHashTx::from_payload(&payload)?)),
+            version::PRE_AUTH_TX => Ok(Self::PreAuthTx(StrkeyPreAuthTx::from_payload(&payload)?)),
             version::HASH_X => Ok(Self::HashX(StrkeyHashX::from_payload(&payload)?)),
             version::MUXED_ACCOUNT_ED25519 => Ok(Self::MuxedAccountEd25519(
                 StrkeyMuxedAccountEd25519::from_payload(&payload)?,
@@ -123,16 +123,16 @@ impl StrkeyMuxedAccountEd25519 {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
-pub struct StrkeyHashTx(pub [u8; 32]);
+pub struct StrkeyPreAuthTx(pub [u8; 32]);
 
-impl StrkeyHashTx {
+impl StrkeyPreAuthTx {
     pub fn to_string(&self) -> String {
-        encode(version::HASH_TX, &self.0)
+        encode(version::PRE_AUTH_TX, &self.0)
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
-            Ok(hash_tx) => Ok(Self(hash_tx)),
+            Ok(pre_auth_tx) => Ok(Self(pre_auth_tx)),
             Err(_) => Err(DecodeError::Invalid),
         }
     }
@@ -140,7 +140,7 @@ impl StrkeyHashTx {
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let (ver, payload) = decode(s)?;
         match ver {
-            version::HASH_TX => Self::from_payload(&payload),
+            version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -214,7 +214,7 @@ mod version {
     pub const PUBLIC_KEY_ED25519: u8 = typ::PUBLIC_KEY | ED25519;
     pub const PRIVATE_KEY_ED25519: u8 = typ::PRIVATE_KEY | ED25519;
     pub const MUXED_ACCOUNT_ED25519: u8 = typ::MUXED_ACCOUNT | ED25519;
-    pub const HASH_TX: u8 = typ::HASH_TX;
+    pub const PRE_AUTH_TX: u8 = typ::PRE_AUTH_TX;
     pub const HASH_X: u8 = typ::HASH_X;
     pub const SIGNED_PAYLOAD_ED25519: u8 = typ::SIGNED_PAYLOAD | ED25519;
 }
@@ -223,7 +223,7 @@ mod typ {
     pub const PUBLIC_KEY: u8 = 6 << 3;
     pub const PRIVATE_KEY: u8 = 18 << 3;
     pub const MUXED_ACCOUNT: u8 = 12 << 3;
-    pub const HASH_TX: u8 = 19 << 3;
+    pub const PRE_AUTH_TX: u8 = 19 << 3;
     pub const HASH_X: u8 = 23 << 3;
     pub const SIGNED_PAYLOAD: u8 = 15 << 3;
 }

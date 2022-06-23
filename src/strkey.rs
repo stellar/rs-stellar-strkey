@@ -187,30 +187,52 @@ impl StrkeyHashX {
 }
 
 #[derive(Clone, Hash, PartialEq, Eq, Debug)]
-// The largest strkey is a signed payload:
-// 32-byte public key + 4-byte payload length + 64-byte payload
-pub struct StrkeySignedPayloadEd25519(pub Vec<u8>);
+pub struct StrkeySignedPayloadEd25519 {
+    pub ed25519: [u8; 32],
+    pub payload: Vec<u8>,
+}
 
 impl StrkeySignedPayloadEd25519 {
     pub fn to_string(&self) -> String {
-        encode(version::SIGNED_PAYLOAD_ED25519, &self.0)
+        let payload = {
+            let inner_payload_len = self.payload.len();
+            let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
+            let mut payload = vec![0; payload_len];
+            let (ed25519, payload_len_bytes_inner_payload) = payload.split_at_mut(32);
+            let (payload_len_bytes, inner_payload) =
+                payload_len_bytes_inner_payload.split_at_mut(4);
+            ed25519.copy_from_slice(&self.ed25519);
+            payload_len_bytes.copy_from_slice(&(inner_payload_len as u32).to_be_bytes());
+            inner_payload[..inner_payload_len].copy_from_slice(&self.payload);
+            payload
+        };
+        encode(version::SIGNED_PAYLOAD_ED25519, &payload)
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match payload.try_into() {
+        match Vec::try_from(payload) {
             Ok(signed_payload) => {
-                let payload_len = payload.len();
+                let payload_len = signed_payload.len();
+                // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
+                // min or 64-byte for the max payload
                 if payload_len < 32 + 4 + 4 || payload_len > 32 + 4 + 64 {
                     return Err(DecodeError::Invalid);
                 }
                 let inner_payload_len =
-                    u32::from_be_bytes((&payload[32..32 + 4]).try_into().unwrap());
+                    u32::from_be_bytes((&signed_payload[32..32 + 4]).try_into().unwrap());
                 if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize
                     != payload_len - 32 - 4
                 {
                     return Err(DecodeError::Invalid);
                 }
-                Ok(Self(signed_payload))
+
+                let ed25519 = (&signed_payload[0..32]).try_into().unwrap();
+                let inner_payload = &signed_payload[32 + 4..32 + 4 + inner_payload_len as usize];
+
+                Ok(Self {
+                    ed25519: ed25519,
+                    payload: inner_payload.to_vec(),
+                })
             }
             Err(_) => Err(DecodeError::Invalid),
         }

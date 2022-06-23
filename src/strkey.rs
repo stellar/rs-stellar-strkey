@@ -183,13 +183,15 @@ impl StrkeySignedPayloadEd25519 {
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
             Ok(signed_payload) => {
-                let payload_len = payload.len() as u32;
+                let payload_len = payload.len();
                 if payload_len < 32 + 4 + 4 || payload_len > 32 + 4 + 64 {
                     return Err(DecodeError::Invalid);
                 }
                 let inner_payload_len =
                     u32::from_be_bytes((&payload[32..32 + 4]).try_into().unwrap());
-                if inner_payload_len + ((4 - inner_payload_len % 4) % 4) != payload_len - 32 - 4 {
+                if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize
+                    != payload_len - 32 - 4
+                {
                     return Err(DecodeError::Invalid);
                 }
                 Ok(Self(signed_payload))

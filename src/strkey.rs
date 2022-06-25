@@ -195,13 +195,9 @@ impl StrkeySignedPayloadEd25519 {
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
         let mut payload = vec![0; payload_len];
-        let (ed25519, inner_payload_len_bytes_and_inner_payload) = payload.split_at_mut(32);
-        let (inner_payload_len_bytes, inner_payload) =
-            inner_payload_len_bytes_and_inner_payload.split_at_mut(4);
-
-        ed25519.copy_from_slice(&self.ed25519);
-        inner_payload_len_bytes.copy_from_slice(&(inner_payload_len as u32).to_be_bytes());
-        inner_payload[..inner_payload_len].copy_from_slice(&self.payload);
+        payload[..32].copy_from_slice(&self.ed25519);
+        payload[32..32 + 4].copy_from_slice(&(inner_payload_len as u32).to_be_bytes());
+        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
         encode(version::SIGNED_PAYLOAD_ED25519, &payload)
     }

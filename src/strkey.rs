@@ -203,37 +203,29 @@ impl StrkeySignedPayloadEd25519 {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match Vec::try_from(payload) {
-            Ok(signed_payload) => {
-                let payload_len = signed_payload.len();
-                // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
-                // min or 64-byte for the max payload
-                if payload_len < 32 + 4 + 4 || payload_len > 32 + 4 + 64 {
-                    return Err(DecodeError::Invalid);
-                }
-                let inner_payload_len = u32::from_be_bytes(
-                    (&signed_payload[32..32 + 4])
-                        .try_into()
-                        .map_err(|_| DecodeError::Invalid)?,
-                );
-                if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize
-                    != payload_len - 32 - 4
-                {
-                    return Err(DecodeError::Invalid);
-                }
-
-                let ed25519 = (&signed_payload[0..32])
-                    .try_into()
-                    .map_err(|_| DecodeError::Invalid)?;
-                let inner_payload = &signed_payload[32 + 4..32 + 4 + inner_payload_len as usize];
-
-                Ok(Self {
-                    ed25519: ed25519,
-                    payload: inner_payload.to_vec(),
-                })
-            }
-            Err(_) => Err(DecodeError::Invalid),
+        let payload_len = payload.len();
+        // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
+        // min or 64-byte for the max payload
+        if payload_len < 32 + 4 + 4 || payload_len > 32 + 4 + 64 {
+            return Err(DecodeError::Invalid);
         }
+        let inner_payload_len = u32::from_be_bytes(
+            (&payload[32..32 + 4])
+                .try_into()
+                .map_err(|_| DecodeError::Invalid)?,
+        );
+        if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize != payload_len - 32 - 4 {
+            return Err(DecodeError::Invalid);
+        }
+        let ed25519 = (&payload[0..32])
+            .try_into()
+            .map_err(|_| DecodeError::Invalid)?;
+        let inner_payload = &payload[32 + 4..32 + 4 + inner_payload_len as usize];
+
+        Ok(Self {
+            ed25519: ed25519,
+            payload: inner_payload.to_vec(),
+        })
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {

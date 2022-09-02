@@ -1,6 +1,6 @@
 [package]
 name = "stellar-strkey"
-description = "Strkey utilties for Stellar."
+description = "Parse and generate strkeys for Stellar."
 homepage = "https://github.com/stellar/rs-stellar-strkey"
 repository = "https://github.com/stellar/rs-stellar-strkey"
 authors = ["Stellar Development Foundation <info@stellar.org>"]

@@ -40,7 +40,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
-    - run: rustup update stable && rustup default stable
+    - uses: stellar/actions/rust-cache@main
+    - run: rustup update
     - run: cargo build --verbose --profile ${{ matrix.profile }} --target ${{ matrix.target }}
 
   test:
@@ -53,7 +54,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v3
-    - run: rustup update stable && rustup default stable
+    - uses: stellar/actions/rust-cache@main
+    - run: rustup update
     - run: cargo test --verbose --profile ${{ matrix.profile }} --target ${{ matrix.target }}
 
   publish:
@@ -62,8 +64,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: stellar/actions/rust-cache@main
     - run: rustup update
-    - run: cargo install --locked --version 0.2.35 cargo-workspaces
+    - run: cargo install --target-dir ~/.cargo/target --locked --version 0.2.35 cargo-workspaces
     - run: make publish
       env:
         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

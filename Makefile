@@ -19,6 +19,3 @@ fmt:
 
 clean:
 	cargo clean
-
-publish:
-	cargo workspaces publish --all --force '*' --from-git --yes

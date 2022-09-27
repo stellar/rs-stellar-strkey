@@ -1,10 +1,13 @@
 use std::str::FromStr;
 
+use thiserror::Error;
+
 use crate::crc::checksum;
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Error, Clone, PartialEq, Eq, Debug)]
 pub enum DecodeError {
     // TODO: Add meaningful errors for each problem that can occur.
+    #[error("the strkey is invalid")]
     Invalid,
 }
 

@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::crc::checksum;
 
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -34,6 +36,14 @@ impl Strkey {
     }
 }
 
+impl FromStr for Strkey {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Strkey::from_string(s)
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct StrkeyPublicKeyEd25519(pub [u8; 32]);
 
@@ -58,6 +68,14 @@ impl StrkeyPublicKeyEd25519 {
     }
 }
 
+impl FromStr for StrkeyPublicKeyEd25519 {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        StrkeyPublicKeyEd25519::from_string(s)
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct StrkeyPrivateKeyEd25519(pub [u8; 32]);
 
@@ -79,6 +97,14 @@ impl StrkeyPrivateKeyEd25519 {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl FromStr for StrkeyPrivateKeyEd25519 {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        StrkeyPrivateKeyEd25519::from_string(s)
     }
 }
 

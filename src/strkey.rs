@@ -143,16 +143,11 @@ impl StrkeyMuxedAccountEd25519 {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match <[u8; 40]>::try_from(payload) {
-            Ok(muxed) => {
-                let (ed25519, id) = muxed.split_at(32);
-                Ok(Self {
-                    ed25519: ed25519.try_into().map_err(|_| DecodeError::Invalid)?,
-                    id: u64::from_be_bytes(id.try_into().map_err(|_| DecodeError::Invalid)?),
-                })
-            }
-            Err(_) => Err(DecodeError::Invalid),
-        }
+        let (ed25519, id) = payload.split_at(32);
+        Ok(Self {
+            ed25519: ed25519.try_into().map_err(|_| DecodeError::Invalid)?,
+            id: u64::from_be_bytes(id.try_into().map_err(|_| DecodeError::Invalid)?),
+        })
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -173,10 +168,7 @@ impl StrkeyPreAuthTx {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match payload.try_into() {
-            Ok(pre_auth_tx) => Ok(Self(pre_auth_tx)),
-            Err(_) => Err(DecodeError::Invalid),
-        }
+        Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -197,10 +189,7 @@ impl StrkeyHashX {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match payload.try_into() {
-            Ok(hash_x) => Ok(Self(hash_x)),
-            Err(_) => Err(DecodeError::Invalid),
-        }
+        Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -232,10 +221,12 @@ impl StrkeySignedPayloadEd25519 {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        let payload_len = payload.len();
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
         // min or 64-byte for the max payload
-        if payload_len < 32 + 4 + 4 || payload_len > 32 + 4 + 64 {
+        const MIN_LENGTH: usize = 32 + 4 + 4;
+        const MAX_LENGTH: usize = 32 + 4 + 64;
+        let payload_len = payload.len();
+        if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
         }
         let inner_payload_len = u32::from_be_bytes(
@@ -252,7 +243,7 @@ impl StrkeySignedPayloadEd25519 {
         let inner_payload = &payload[32 + 4..32 + 4 + inner_payload_len as usize];
 
         Ok(Self {
-            ed25519: ed25519,
+            ed25519,
             payload: inner_payload.to_vec(),
         })
     }
@@ -267,7 +258,7 @@ impl StrkeySignedPayloadEd25519 {
 }
 
 mod version {
-    use super::public_key_alg::*;
+    use super::public_key_alg::ED25519;
     use super::typ;
 
     pub const PUBLIC_KEY_ED25519: u8 = typ::PUBLIC_KEY | ED25519;
@@ -297,7 +288,7 @@ mod public_key_alg {
 fn encode(ver: u8, payload: &[u8]) -> String {
     let mut d: Vec<u8> = Vec::with_capacity(1 + payload.len() + 2);
     d.push(ver);
-    d.extend_from_slice(&payload);
+    d.extend_from_slice(payload);
     d.extend_from_slice(&checksum(&d));
     base32::encode(base32::Alphabet::RFC4648 { padding: false }, &d)
 }
@@ -306,7 +297,7 @@ fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
     // TODO: Look at what other base32 implementations are available, because
     // this one allows for decoding of non-canonical base32 strings, and doesn't
     // come with helpful methods for validating the length is canonical.
-    let data = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &s);
+    let data = base32::decode(base32::Alphabet::RFC4648 { padding: false }, s);
     if let Some(data) = data {
         let s_canonical_len = (data.len() * 8 + 4) / 5;
         if s.len() != s_canonical_len {
@@ -317,7 +308,7 @@ fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
         }
         let ver = data[0];
         let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
-        let crc_expect = checksum(&data_without_crc);
+        let crc_expect = checksum(data_without_crc);
         if crc_actual != crc_expect {
             return Err(DecodeError::Invalid);
         }

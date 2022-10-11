@@ -201,6 +201,9 @@ impl StrkeyHashX {
     }
 }
 
+/// Stores a signed payload ed25519 signer.
+///
+/// The payload must not have a size larger than u32::MAX.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeySignedPayloadEd25519 {
     pub ed25519: [u8; 32],
@@ -208,13 +211,22 @@ pub struct StrkeySignedPayloadEd25519 {
 }
 
 impl StrkeySignedPayloadEd25519 {
+    /// Returns the strkey string for the signed payload signer.
+    ///
+    /// ### Panics
+    ///
+    /// When the payload is larger than u32::MAX.
     pub fn to_string(&self) -> String {
         let inner_payload_len = self.payload.len();
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
+        let inner_payload_len_u32: u32 = inner_payload_len
+            .try_into()
+            .expect("payload length larger than u32::MAX");
+
         let mut payload = vec![0; payload_len];
         payload[..32].copy_from_slice(&self.ed25519);
-        payload[32..32 + 4].copy_from_slice(&(inner_payload_len as u32).to_be_bytes());
+        payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
         encode(version::SIGNED_PAYLOAD_ED25519, &payload)

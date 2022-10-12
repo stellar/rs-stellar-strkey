@@ -159,6 +159,14 @@ impl StrkeyMuxedAccountEd25519 {
     }
 }
 
+impl FromStr for StrkeyMuxedAccountEd25519 {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        StrkeyMuxedAccountEd25519::from_string(s)
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeyPreAuthTx(pub [u8; 32]);
 
@@ -180,6 +188,14 @@ impl StrkeyPreAuthTx {
     }
 }
 
+impl FromStr for StrkeyPreAuthTx {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        StrkeyPreAuthTx::from_string(s)
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct StrkeyHashX(pub [u8; 32]);
 
@@ -198,6 +214,14 @@ impl StrkeyHashX {
             version::HASH_X => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl FromStr for StrkeyHashX {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        StrkeyHashX::from_string(s)
     }
 }
 
@@ -266,6 +290,14 @@ impl StrkeySignedPayloadEd25519 {
             version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl FromStr for StrkeySignedPayloadEd25519 {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        StrkeySignedPayloadEd25519::from_string(s)
     }
 }
 

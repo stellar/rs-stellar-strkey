@@ -65,5 +65,5 @@ fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
     let strkey_result = Strkey::from_string(&s).unwrap();
     assert_eq!(&strkey_result, strkey);
     let str_result = strkey.to_string();
-    assert_eq!(str_result, str_result)
+    assert_eq!(s, str_result)
 }

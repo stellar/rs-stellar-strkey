@@ -257,9 +257,9 @@ impl StrkeySignedPayloadEd25519 {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        // 32-byte for the signer, 4-byte for the payload size, then either 0-byte for the
+        // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
         // min or 64-byte for the max payload
-        const MIN_LENGTH: usize = 32 + 4;
+        const MIN_LENGTH: usize = 32 + 4 + 4;
         const MAX_LENGTH: usize = 32 + 4 + 64;
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {

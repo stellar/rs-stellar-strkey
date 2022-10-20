@@ -194,7 +194,7 @@ fn test_invalid_signed_payload_ed25519() {
 
 #[test]
 fn test_signed_payload_ed25519_payload_sizes() {
-    for payload_size in 0..=64 {
+    for payload_size in 1..=64 {
         let mut payload = vec![0; payload_size];
         for i in 0..payload_size {
             payload[i] = i as u8;

@@ -56,7 +56,7 @@ impl TryFrom<&[u8]> for StrkeyPublicKeyEd25519 {
     type Error = DecodeError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        Ok(value.try_into().map_err(|_| DecodeError::Invalid)?)
+        value.try_into().map_err(|_| DecodeError::Invalid)
     }
 }
 impl TryFrom<Vec<u8>> for StrkeyPublicKeyEd25519 {
@@ -72,7 +72,7 @@ impl FromStr for StrkeyPublicKeyEd25519 {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match decode(s)? {
-            (version::PUBLIC_KEY_ED25519, payload) => Self::try_from(payload.deref()),
+            (version::PUBLIC_KEY_ED25519, payload) => Self::try_from(payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -91,7 +91,7 @@ impl TryFrom<&[u8]> for StrkeyPrivateKeyEd25519 {
     type Error = DecodeError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        Ok(value.try_into().map_err(|_| DecodeError::Invalid)?)
+        value.try_into().map_err(|_| DecodeError::Invalid)
     }
 }
 
@@ -115,8 +115,8 @@ impl FromStr for StrkeyPrivateKeyEd25519 {
 }
 
 mod version {
-    use super::public_key_alg::*;
-    use super::typ::*;
+    use super::public_key_alg::ED25519;
+    use super::typ::{PRIVATE_KEY, PUBLIC_KEY};
 
     pub const PUBLIC_KEY_ED25519: u8 = PUBLIC_KEY | ED25519;
     pub const PRIVATE_KEY_ED25519: u8 = PRIVATE_KEY | ED25519;
@@ -137,7 +137,7 @@ mod public_key_alg {
 fn encode(ver: u8, payload: &[u8]) -> String {
     let mut d: Vec<u8> = Vec::with_capacity(1 + payload.len() + 2);
     d.push(ver);
-    d.extend_from_slice(&payload);
+    d.extend_from_slice(payload);
     d.extend_from_slice(&checksum(&d));
     base32::encode(base32::Alphabet::RFC4648 { padding: false }, &d)
 }
@@ -146,7 +146,7 @@ fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
     // TODO: Look at what other base32 implementations are available, because
     // this one allows for decoding of non-canonical base32 strings, and doesn't
     // come with helpful methods for validating the length is canonical.
-    let data = base32::decode(base32::Alphabet::RFC4648 { padding: false }, &s);
+    let data = base32::decode(base32::Alphabet::RFC4648 { padding: false }, s);
     if let Some(data) = data {
         let s_canonical_len = (data.len() * 8 + 4) / 5;
         if s.len() != s_canonical_len {
@@ -157,7 +157,7 @@ fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
         }
         let ver = data[0];
         let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
-        let crc_expect = checksum(&data_without_crc);
+        let crc_expect = checksum(data_without_crc);
         if crc_actual != crc_expect {
             return Err(DecodeError::Invalid);
         }

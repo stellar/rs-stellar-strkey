@@ -1,4 +1,6 @@
-use stellar_strkey::*;
+use std::str::FromStr;
+
+use stellar_strkey::{DecodeError, Strkey, StrkeyPrivateKeyEd25519, StrkeyPublicKeyEd25519};
 extern crate proptest;
 use proptest::prelude::*;
 
@@ -18,19 +20,19 @@ fn test_valid_public_keys() {
 #[test]
 fn test_invalid_public_keys() {
     // Invalid length (Ed25519 should be 32 bytes, not 5).
-    let r = Strkey::from_string("GAAAAAAAACGC6");
+    let r = Strkey::from_str("GAAAAAAAACGC6");
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (congruent to 1 mod 8).
-    let r = Strkey::from_string("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZA");
+    let r = Strkey::from_str("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZA");
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (base-32 decoding should yield 35 bytes, not 36).
-    let r = Strkey::from_string("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUACUSI");
+    let r = Strkey::from_str("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUACUSI");
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid algorithm (low 3 bits of version byte are 7).
-    let r = Strkey::from_string("G47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVP2I");
+    let r = Strkey::from_str("G47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVP2I");
     assert_eq!(r, Err(DecodeError::Invalid));
 }
 
@@ -49,8 +51,8 @@ fn test_valid_private_keys() {
 
 proptest! {
     #[test]
-    fn test_public_key_ed25519_from_string_doesnt_panic(data: String) {
-        let _ = Strkey::from_string(&data);
+    fn test_public_key_ed25519_from_str_doesnt_panic(data: String) {
+        let _ = Strkey::from_str(&data);
     }
 }
 
@@ -62,8 +64,8 @@ proptest! {
 }
 
 fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
-    let strkey_result = Strkey::from_string(&s).unwrap();
+    let strkey_result = Strkey::from_str(s).unwrap();
     assert_eq!(&strkey_result, strkey);
     let str_result = strkey.to_string();
-    assert_eq!(s, str_result)
+    assert_eq!(s, str_result);
 }

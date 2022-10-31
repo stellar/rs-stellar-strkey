@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, ops::Deref, str::FromStr};
 
 use thiserror::Error;
 
@@ -17,25 +17,16 @@ pub enum Strkey {
     PrivateKeyEd25519(StrkeyPrivateKeyEd25519),
 }
 
-impl Strkey {
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::PublicKeyEd25519(x) => x.to_string(),
-            Self::PrivateKeyEd25519(x) => x.to_string(),
-        }
-    }
-
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
-        match ver {
-            version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
-                StrkeyPublicKeyEd25519::from_payload(&payload)?,
-            )),
-            version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(
-                StrkeyPrivateKeyEd25519::from_payload(&payload)?,
-            )),
-            _ => Err(DecodeError::Invalid),
-        }
+impl Display for Strkey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::PublicKeyEd25519(x) => x.to_string(),
+                Self::PrivateKeyEd25519(x) => x.to_string(),
+            }
+        )
     }
 }
 
@@ -43,31 +34,36 @@ impl FromStr for Strkey {
     type Err = DecodeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Strkey::from_string(s)
+        let (ver, payload) = decode(s)?;
+        match ver {
+            version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(payload.try_into()?)),
+            version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(payload.try_into()?)),
+            _ => Err(DecodeError::Invalid),
+        }
     }
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct StrkeyPublicKeyEd25519(pub [u8; 32]);
 
-impl StrkeyPublicKeyEd25519 {
-    pub fn to_string(&self) -> String {
-        encode(version::PUBLIC_KEY_ED25519, &self.0)
+impl Display for StrkeyPublicKeyEd25519 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", encode(version::PUBLIC_KEY_ED25519, &self.0))
     }
+}
 
-    fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match payload.try_into() {
-            Ok(ed25519) => Ok(Self(ed25519)),
-            Err(_) => Err(DecodeError::Invalid),
-        }
+impl TryFrom<&[u8]> for StrkeyPublicKeyEd25519 {
+    type Error = DecodeError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Ok(value.try_into().map_err(|_| DecodeError::Invalid)?)
     }
+}
+impl TryFrom<Vec<u8>> for StrkeyPublicKeyEd25519 {
+    type Error = DecodeError;
 
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
-        match ver {
-            version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
-        }
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        value.deref().try_into()
     }
 }
 
@@ -75,31 +71,35 @@ impl FromStr for StrkeyPublicKeyEd25519 {
     type Err = DecodeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        StrkeyPublicKeyEd25519::from_string(s)
+        match decode(s)? {
+            (version::PUBLIC_KEY_ED25519, payload) => Self::try_from(payload.deref()),
+            _ => Err(DecodeError::Invalid),
+        }
     }
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug)]
 pub struct StrkeyPrivateKeyEd25519(pub [u8; 32]);
 
-impl StrkeyPrivateKeyEd25519 {
-    pub fn to_string(&self) -> String {
-        encode(version::PRIVATE_KEY_ED25519, &self.0)
+impl Display for StrkeyPrivateKeyEd25519 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", encode(version::PRIVATE_KEY_ED25519, &self.0))
     }
+}
 
-    fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        match payload.try_into() {
-            Ok(ed25519) => Ok(Self(ed25519)),
-            Err(_) => Err(DecodeError::Invalid),
-        }
+impl TryFrom<&[u8]> for StrkeyPrivateKeyEd25519 {
+    type Error = DecodeError;
+
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Ok(value.try_into().map_err(|_| DecodeError::Invalid)?)
     }
+}
 
-    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
-        match ver {
-            version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
-        }
+impl TryFrom<Vec<u8>> for StrkeyPrivateKeyEd25519 {
+    type Error = DecodeError;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        value.deref().try_into()
     }
 }
 
@@ -107,7 +107,10 @@ impl FromStr for StrkeyPrivateKeyEd25519 {
     type Err = DecodeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        StrkeyPrivateKeyEd25519::from_string(s)
+        match decode(s)? {
+            (version::PRIVATE_KEY_ED25519, payload) => payload.try_into(),
+            _ => Err(DecodeError::Invalid),
+        }
     }
 }
 

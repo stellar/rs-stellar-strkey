@@ -56,7 +56,10 @@ impl TryFrom<&[u8]> for StrkeyPublicKeyEd25519 {
     type Error = DecodeError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        value.try_into().map_err(|_| DecodeError::Invalid)
+        value
+            .try_into()
+            .map_err(|_| DecodeError::Invalid)
+            .map(|i| Self(i))
     }
 }
 impl TryFrom<Vec<u8>> for StrkeyPublicKeyEd25519 {
@@ -91,7 +94,10 @@ impl TryFrom<&[u8]> for StrkeyPrivateKeyEd25519 {
     type Error = DecodeError;
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        value.try_into().map_err(|_| DecodeError::Invalid)
+        value
+            .try_into()
+            .map_err(|_| DecodeError::Invalid)
+            .map(|i| Self(i))
     }
 }
 

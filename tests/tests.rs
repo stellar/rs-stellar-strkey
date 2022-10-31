@@ -20,19 +20,19 @@ fn test_valid_public_keys() {
 #[test]
 fn test_invalid_public_keys() {
     // Invalid length (Ed25519 should be 32 bytes, not 5).
-    let r = Strkey::from_str("GAAAAAAAACGC6");
+    let mut r = "GAAAAAAAACGC6".parse::<Strkey>();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (congruent to 1 mod 8).
-    let r = Strkey::from_str("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZA");
+    r = "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZA".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (base-32 decoding should yield 35 bytes, not 36).
-    let r = Strkey::from_str("GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUACUSI");
+    r = "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUACUSI".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid algorithm (low 3 bits of version byte are 7).
-    let r = Strkey::from_str("G47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVP2I");
+    r = "G47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVP2I".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 }
 
@@ -64,7 +64,7 @@ proptest! {
 }
 
 fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
-    let strkey_result = Strkey::from_str(s).unwrap();
+    let strkey_result = s.parse().unwrap();
     assert_eq!(&strkey_result, strkey);
     let str_result = strkey.to_string();
     assert_eq!(s, str_result);

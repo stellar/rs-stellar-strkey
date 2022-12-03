@@ -79,7 +79,7 @@ pub fn checksum(data: &[u8]) -> [u8; 2] {
     for b in data.iter() {
         crc = (crc << 8) ^ CRC16_TABLE[((crc >> 8) as u8 ^ *b) as usize];
     }
-    [crc as u8, (crc >> 8) as u8]
+    [(crc & 0xff) as u8, (crc >> 8) as u8]
 }
 
 #[cfg(test)]

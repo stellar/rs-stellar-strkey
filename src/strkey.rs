@@ -146,6 +146,9 @@ impl StrkeyMuxedAccountEd25519 {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
+        if payload.len() < 40 {
+            return Err(DecodeError::Invalid);
+        }
         let (ed25519, id) = payload.split_at(32);
         Ok(Self {
             ed25519: ed25519.try_into().map_err(|_| DecodeError::Invalid)?,

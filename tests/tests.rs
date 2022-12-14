@@ -206,7 +206,7 @@ fn test_signed_payload_ed25519_payload_sizes() {
             payload,
         });
 
-        let encoded = signed_payload.as_string();
+        let encoded = signed_payload.to_string();
         let decoded = Strkey::from_string(&encoded).unwrap();
         assert_eq!(signed_payload, decoded);
     }
@@ -224,7 +224,7 @@ fn test_signed_payload_ed25519_payload_length_larger_than_u32_max_panic() {
         ],
         payload,
     });
-    signed_payload.as_string();
+    signed_payload.to_string();
 }
 
 #[test]
@@ -249,13 +249,13 @@ proptest! {
 proptest! {
     #[test]
     fn test_public_key_ed25519_to_string_doesnt_panic(data: [u8; 32]) {
-        Strkey::PublicKeyEd25519(ed25519::PublicKey(data)).as_string();
+        Strkey::PublicKeyEd25519(ed25519::PublicKey(data)).to_string();
     }
 }
 
 fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
     let strkey_result = Strkey::from_string(s).unwrap();
     assert_eq!(&strkey_result, strkey);
-    let str_result = strkey.as_string();
+    let str_result = strkey.to_string();
     assert_eq!(s, str_result)
 }

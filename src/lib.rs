@@ -5,6 +5,7 @@ mod error;
 mod strkey;
 mod typ;
 mod version;
+mod seed_phrase;
 
 pub use error::*;
 pub use strkey::*;

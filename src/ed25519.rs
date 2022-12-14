@@ -3,7 +3,7 @@ use std::str::FromStr;
 use crate::{
     convert::{decode, encode},
     error::DecodeError,
-    version,
+    seed_phrase, version,
 };
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
@@ -27,6 +27,30 @@ impl PrivateKey {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl PrivateKey {
+    pub fn from_seed(seed: &[u8]) -> Result<Self, DecodeError> {
+        Self::from_seed_and_path(seed, "")
+    }
+
+    pub fn from_seed_and_path(seed: &[u8], path: &str) -> Result<Self, DecodeError> {
+        Self::from_payload(&from_seed_and_path(seed, path)?.key)
+    }
+
+    pub fn random_with_seed_phrase() -> Result<(String, Self), DecodeError> {
+        let nm = seed_phrase::random(12)?;
+        Ok((nm.to_string(), Self::from_seed(&nm.to_seed(""))?))
+    }
+
+    pub fn seeded_seed_phrase(seed: &[u8]) -> Result<(String, Self), DecodeError> {
+        let nm = seed_phrase::from_seed(seed)?;
+        Ok((nm.to_string(), Self::from_seed(&nm.to_seed(""))?))
+    }
+
+    pub fn from_seed_phrase(seed_phrase: &str) -> Result<Self, DecodeError> {
+        Self::from_seed(&seed_phrase::to_seed(seed_phrase)?)
     }
 }
 
@@ -59,6 +83,21 @@ impl PublicKey {
             version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl PublicKey {
+    pub fn from_seed(seed: &[u8]) -> Result<Self, DecodeError> {
+        Self::from_seed_and_path(seed, "")
+    }
+
+    pub fn from_seed_and_path(seed: &[u8], path: &str) -> Result<Self, DecodeError> {
+        let p = from_seed_and_path(seed, path)?;
+        Self::from_payload(&p.public_key()[1..])
+    }
+
+    pub fn from_seed_phrase(seed_phrase: &str) -> Result<Self, DecodeError> {
+        Self::from_seed(&seed_phrase::to_seed(seed_phrase)?)
     }
 }
 
@@ -187,4 +226,13 @@ impl FromStr for SignedPayload {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         SignedPayload::from_string(s)
     }
+}
+
+pub fn from_seed_and_path(seed: &[u8], path: &str) -> Result<slip10::Key, DecodeError> {
+    slip10::derive_key_from_path(
+        seed,
+        slip10::Curve::Ed25519,
+        &slip10::BIP32Path::from_str(path).map_err(|_| DecodeError::InvalidPath)?,
+    )
+    .map_err(|_| DecodeError::SeedPhrase)
 }

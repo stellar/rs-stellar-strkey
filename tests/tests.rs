@@ -239,6 +239,23 @@ fn test_valid_contract() {
     );
 }
 
+#[test]
+fn test_seed_phrase() {
+    assert_convert_roundtrip(
+        "SBNPFRYP7IERAYC2E3TFD7AEDXT4RRNAS353JPNP6LCZP5US4LAUL3NF",
+        &Strkey::PrivateKeyEd25519(ed25519::PrivateKey::from_seed(&[]).unwrap()),
+    );
+    assert_convert_roundtrip(
+        "GBC5LQ66QWJSYPKRW7THZQD2LCR2RVRFSKBN2LUYS5KHXIIX4H7TMB5W",
+        &Strkey::PublicKeyEd25519(ed25519::PublicKey::from_seed(&[]).unwrap()),
+    );
+
+    let (seed_phrase, key) = ed25519::PrivateKey::random_with_seed_phrase().unwrap();
+    let str_key =
+        &Strkey::PrivateKeyEd25519(ed25519::PrivateKey::from_seed_phrase(&seed_phrase).unwrap());
+    assert_convert_roundtrip(&key.to_string(), str_key);
+}
+
 proptest! {
     #[test]
     fn test_public_key_ed25519_from_string_doesnt_panic(data: String) {
@@ -258,4 +275,20 @@ fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
     assert_eq!(&strkey_result, strkey);
     let str_result = strkey.to_string();
     assert_eq!(s, str_result)
+}
+
+proptest! {
+    #[test]
+    fn test_seed_phrase_generation_doesnt_panic(data: [u8; 32]) {
+        let (seed_phrase, key) = ed25519::PrivateKey::seeded_seed_phrase(&data).unwrap();
+        let strkey = Strkey::from_string(&key.to_string()).unwrap();
+        let from_seed_phrase = ed25519::PrivateKey::from_seed_phrase(&seed_phrase).unwrap();
+        if let Strkey::PrivateKeyEd25519(private_key) = strkey {
+            assert_eq!(key, private_key);
+            assert_eq!(private_key, from_seed_phrase);
+        }
+        else {
+            panic!("failed to create private key");
+        }
+    }
 }

@@ -1,6 +1,11 @@
 use std::str::FromStr;
 
-use crate::{ed25519, error::DecodeError, convert::{decode, encode}, version};
+use crate::{
+    convert::{decode, encode},
+    ed25519,
+    error::DecodeError,
+    version,
+};
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Strkey {
@@ -14,15 +19,15 @@ pub enum Strkey {
 }
 
 impl Strkey {
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         match self {
-            Self::PublicKeyEd25519(x) => x.as_string(),
-            Self::PrivateKeyEd25519(x) => x.as_string(),
-            Self::PreAuthTx(x) => x.as_string(),
-            Self::HashX(x) => x.as_string(),
-            Self::MuxedAccountEd25519(x) => x.as_string(),
-            Self::SignedPayloadEd25519(x) => x.as_string(),
-            Self::Contract(x) => x.as_string(),
+            Self::PublicKeyEd25519(x) => x.to_string(),
+            Self::PrivateKeyEd25519(x) => x.to_string(),
+            Self::PreAuthTx(x) => x.to_string(),
+            Self::HashX(x) => x.to_string(),
+            Self::MuxedAccountEd25519(x) => x.to_string(),
+            Self::SignedPayloadEd25519(x) => x.to_string(),
+            Self::Contract(x) => x.to_string(),
         }
     }
 
@@ -57,12 +62,11 @@ impl FromStr for Strkey {
     }
 }
 
-
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct PreAuthTx(pub [u8; 32]);
 
 impl PreAuthTx {
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         encode(version::PRE_AUTH_TX, &self.0)
     }
 
@@ -91,7 +95,7 @@ impl FromStr for PreAuthTx {
 pub struct HashX(pub [u8; 32]);
 
 impl HashX {
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         encode(version::HASH_X, &self.0)
     }
 
@@ -120,7 +124,7 @@ impl FromStr for HashX {
 pub struct Contract(pub [u8; 32]);
 
 impl Contract {
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         encode(version::CONTRACT, &self.0)
     }
 
@@ -144,4 +148,3 @@ impl FromStr for Contract {
         Contract::from_string(s)
     }
 }
-

@@ -1,12 +1,16 @@
 use std::str::FromStr;
 
-use crate::{error::DecodeError, convert::{encode, decode}, version};
+use crate::{
+    convert::{decode, encode},
+    error::DecodeError,
+    version,
+};
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct PrivateKey(pub [u8; 32]);
 
 impl PrivateKey {
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         encode(version::PRIVATE_KEY_ED25519, &self.0)
     }
 
@@ -38,7 +42,7 @@ impl FromStr for PrivateKey {
 pub struct PublicKey(pub [u8; 32]);
 
 impl PublicKey {
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         encode(version::PUBLIC_KEY_ED25519, &self.0)
     }
 
@@ -66,7 +70,6 @@ impl FromStr for PublicKey {
     }
 }
 
-
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub struct MuxedAccount {
     pub ed25519: [u8; 32],
@@ -74,7 +77,7 @@ pub struct MuxedAccount {
 }
 
 impl MuxedAccount {
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
@@ -110,7 +113,6 @@ impl FromStr for MuxedAccount {
     }
 }
 
-
 /// Stores a signed payload ed25519 signer.
 ///
 /// The payload must not have a size larger than u32::MAX.
@@ -126,7 +128,7 @@ impl SignedPayload {
     /// ### Panics
     ///
     /// When the payload is larger than u32::MAX.
-    pub fn as_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         let inner_payload_len = self.payload.len();
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 

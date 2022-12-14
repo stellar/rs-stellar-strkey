@@ -1,7 +1,7 @@
 mod convert;
 mod crc;
 pub mod ed25519;
-pub mod error;
+mod error;
 mod strkey;
 mod typ;
 mod version;

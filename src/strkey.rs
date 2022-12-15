@@ -19,6 +19,7 @@ pub enum Strkey {
     HashX(StrkeyHashX),
     MuxedAccountEd25519(StrkeyMuxedAccountEd25519),
     SignedPayloadEd25519(StrkeySignedPayloadEd25519),
+    Contract(StrkeyContract),
 }
 
 impl Strkey {
@@ -30,6 +31,7 @@ impl Strkey {
             Self::HashX(x) => x.to_string(),
             Self::MuxedAccountEd25519(x) => x.to_string(),
             Self::SignedPayloadEd25519(x) => x.to_string(),
+            Self::Contract(x) => x.to_string(),
         }
     }
 
@@ -50,6 +52,7 @@ impl Strkey {
             version::SIGNED_PAYLOAD_ED25519 => Ok(Self::SignedPayloadEd25519(
                 StrkeySignedPayloadEd25519::from_payload(&payload)?,
             )),
+            version::CONTRACT => Ok(Self::Contract(StrkeyContract::from_payload(&payload)?)),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -228,6 +231,35 @@ impl FromStr for StrkeyHashX {
     }
 }
 
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub struct StrkeyContract(pub [u8; 32]);
+
+impl StrkeyContract {
+    pub fn to_string(&self) -> String {
+        encode(version::CONTRACT, &self.0)
+    }
+
+    fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
+        Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
+    }
+
+    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode(s)?;
+        match ver {
+            version::CONTRACT => Self::from_payload(&payload),
+            _ => Err(DecodeError::Invalid),
+        }
+    }
+}
+
+impl FromStr for StrkeyContract {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        StrkeyContract::from_string(s)
+    }
+}
+
 /// Stores a signed payload ed25519 signer.
 ///
 /// The payload must not have a size larger than u32::MAX.
@@ -314,6 +346,7 @@ mod version {
     pub const PRE_AUTH_TX: u8 = typ::PRE_AUTH_TX;
     pub const HASH_X: u8 = typ::HASH_X;
     pub const SIGNED_PAYLOAD_ED25519: u8 = typ::SIGNED_PAYLOAD | ED25519;
+    pub const CONTRACT: u8 = typ::CONTRACT;
 }
 
 mod typ {
@@ -323,6 +356,7 @@ mod typ {
     pub const PRE_AUTH_TX: u8 = 19 << 3;
     pub const HASH_X: u8 = 23 << 3;
     pub const SIGNED_PAYLOAD: u8 = 15 << 3;
+    pub const CONTRACT: u8 = 2 << 3;
 }
 
 mod public_key_alg {

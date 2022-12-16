@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use crate::{
     convert::{decode, encode},
@@ -54,6 +54,12 @@ impl Strkey {
     }
 }
 
+impl Display for Strkey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
 impl FromStr for Strkey {
     type Err = DecodeError;
 
@@ -80,6 +86,12 @@ impl PreAuthTx {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl Display for PreAuthTx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -112,6 +124,12 @@ impl HashX {
     }
 }
 
+impl Display for HashX {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
 impl FromStr for HashX {
     type Err = DecodeError;
 
@@ -138,6 +156,12 @@ impl Contract {
             version::CONTRACT => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl Display for Contract {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 

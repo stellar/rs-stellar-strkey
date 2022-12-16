@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use crate::{
     convert::{decode, encode},
@@ -27,6 +27,12 @@ impl PrivateKey {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl Display for PrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -59,6 +65,12 @@ impl PublicKey {
             version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl Display for PublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -102,6 +114,12 @@ impl MuxedAccount {
             version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl Display for MuxedAccount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -178,6 +196,12 @@ impl SignedPayload {
             version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
+    }
+}
+
+impl Display for SignedPayload {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
 }
 

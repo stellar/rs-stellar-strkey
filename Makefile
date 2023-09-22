@@ -7,12 +7,11 @@ test:
 
 build:
 	cargo build
+	cargo build --features cli
 
 check:
 	cargo check --all-targets
-
-watch:
-	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
+	cargo check --all-targets --features cli
 
 fmt:
 	cargo fmt --all

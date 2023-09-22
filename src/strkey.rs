@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::Debug, fmt::Display, str::FromStr};
 
 use crate::{
     convert::{decode, encode},
@@ -68,8 +68,25 @@ impl FromStr for Strkey {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PreAuthTx(pub [u8; 32]);
+
+impl Debug for PreAuthTx {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PreAuthTx(")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .0
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
 
 impl PreAuthTx {
     pub fn to_string(&self) -> String {
@@ -103,8 +120,25 @@ impl FromStr for PreAuthTx {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct HashX(pub [u8; 32]);
+
+impl Debug for HashX {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "HashX(")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .0
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
 
 impl HashX {
     pub fn to_string(&self) -> String {
@@ -138,8 +172,25 @@ impl FromStr for HashX {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Contract(pub [u8; 32]);
+
+impl Debug for Contract {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Contract(")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .0
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
 
 impl Contract {
     pub fn to_string(&self) -> String {

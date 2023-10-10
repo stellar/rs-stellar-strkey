@@ -1,4 +1,7 @@
-use std::{fmt::Display, str::FromStr};
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use crate::{
     convert::{decode, encode},
@@ -6,8 +9,25 @@ use crate::{
     version,
 };
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrivateKey(pub [u8; 32]);
+
+impl Debug for PrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PrivateKey(")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .0
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
 
 impl PrivateKey {
     pub fn to_string(&self) -> String {
@@ -44,8 +64,25 @@ impl FromStr for PrivateKey {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PublicKey(pub [u8; 32]);
+
+impl Debug for PublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PublicKey(")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .0
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ")")?;
+        Ok(())
+    }
+}
 
 impl PublicKey {
     pub fn to_string(&self) -> String {
@@ -82,10 +119,29 @@ impl FromStr for PublicKey {
     }
 }
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MuxedAccount {
     pub ed25519: [u8; 32],
     pub id: u64,
+}
+
+impl Debug for MuxedAccount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "MuxedAccount(")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .ed25519
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ", ")?;
+        write!(f, "{}", self.id)?;
+        write!(f, ")")?;
+        Ok(())
+    }
 }
 
 impl MuxedAccount {
@@ -134,10 +190,37 @@ impl FromStr for MuxedAccount {
 /// Stores a signed payload ed25519 signer.
 ///
 /// The payload must not have a size larger than u32::MAX.
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SignedPayload {
     pub ed25519: [u8; 32],
     pub payload: Vec<u8>,
+}
+
+impl Debug for SignedPayload {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "MuxedAccount(")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .ed25519
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ", ")?;
+        write!(
+            f,
+            "{}",
+            &self
+                .payload
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        )?;
+        write!(f, ")")?;
+        Ok(())
+    }
 }
 
 impl SignedPayload {

@@ -7,12 +7,14 @@ test:
 
 build:
 	cargo build
+	cargo build --features cli
 
 check:
 	cargo check --all-targets
+	cargo check --all-targets --features cli
 
-watch:
-	cargo watch --clear --watch-when-idle --shell '$(MAKE)'
+install:
+	cargo install --path . --force --features cli
 
 fmt:
 	cargo fmt --all

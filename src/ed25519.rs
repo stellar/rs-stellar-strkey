@@ -259,10 +259,10 @@ impl SignedPayload {
                 .try_into()
                 .map_err(|_| DecodeError::Invalid)?,
         );
-	// Making sure the size is bounded to avoid overflow
-	if inner_payload_len > u32::MAX - 3 {
+        // Making sure the size is bounded to avoid overflow
+        if inner_payload_len > u32::MAX - 3 {
             return Err(DecodeError::Invalid);
-	}
+        }
         if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize != payload_len - 32 - 4 {
             return Err(DecodeError::Invalid);
         }

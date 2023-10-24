@@ -248,8 +248,9 @@ impl SignedPayload {
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
         // min or 64-byte for the max payload
+        const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
         const MIN_LENGTH: usize = 32 + 4 + 4;
-        const MAX_LENGTH: usize = 32 + 4 + 64;
+        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
@@ -259,6 +260,9 @@ impl SignedPayload {
                 .try_into()
                 .map_err(|_| DecodeError::Invalid)?,
         );
+        if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
+            return Err(DecodeError::Invalid);
+        }
         if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize != payload_len - 32 - 4 {
             return Err(DecodeError::Invalid);
         }

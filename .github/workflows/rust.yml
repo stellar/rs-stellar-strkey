@@ -26,6 +26,7 @@ jobs:
     strategy:
       matrix:
         rust: [msrv, latest]
+        features: [ no_std, std ]
         include:
         - os: ubuntu-latest
           target: x86_64-unknown-linux-gnu
@@ -47,8 +48,12 @@ jobs:
     - run: rustup update
     - run: cargo version
     - run: cargo build --target ${{ matrix.target }}
-    - run: cargo test --target ${{ matrix.target }} --no-default-features
-    - run: cargo test --target ${{ matrix.target }} --features std
+    - name: Run tests with no_std
+      if: matrix.features == 'no_std'
+      run: cargo test --target ${{ matrix.target }} --no-default-features
+    - name: Run tests with std
+      if: matrix.features == 'std'
+      run: cargo test --target ${{ matrix.target }} --features std
 
   publish-dry-run:
     if: startsWith(github.head_ref, 'release/')

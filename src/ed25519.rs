@@ -1,19 +1,20 @@
-use std::{
-    fmt::{Debug, Display},
-    str::FromStr,
-};
-
 use crate::{
     convert::{decode, encode},
     error::DecodeError,
     version,
 };
 
+use alloc::{format, string::String, vec, vec::Vec};
+use core::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PrivateKey(")?;
         write!(
             f,
@@ -51,7 +52,7 @@ impl PrivateKey {
 }
 
 impl Display for PrivateKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -68,7 +69,7 @@ impl FromStr for PrivateKey {
 pub struct PublicKey(pub [u8; 32]);
 
 impl Debug for PublicKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PublicKey(")?;
         write!(
             f,
@@ -106,7 +107,7 @@ impl PublicKey {
 }
 
 impl Display for PublicKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -126,7 +127,7 @@ pub struct MuxedAccount {
 }
 
 impl Debug for MuxedAccount {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "MuxedAccount(")?;
         write!(
             f,
@@ -174,7 +175,7 @@ impl MuxedAccount {
 }
 
 impl Display for MuxedAccount {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -197,7 +198,7 @@ pub struct SignedPayload {
 }
 
 impl Debug for SignedPayload {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "MuxedAccount(")?;
         write!(
             f,
@@ -287,7 +288,7 @@ impl SignedPayload {
 }
 
 impl Display for SignedPayload {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }

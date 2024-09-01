@@ -11,8 +11,9 @@ edition = "2021"
 rust-version = "1.67.0"
 
 [features]
-default = []
-cli = ["dep:clap"]
+default = ["std"]
+std = []
+cli = ["std", "dep:clap"]
 
 [[bin]]
 name = "stellar-strkey"
@@ -20,13 +21,17 @@ path = "src/bin/stellar-strkey/main.rs"
 required-features = ["cli"]
 doctest = false
 
-[build_dependencies]
+[build-dependencies]
 crate-git-revision = "0.0.6"
 
 [dev-dependencies]
 proptest = "1.0.0"
 
 [dependencies]
-base32 = "0.4.0"
-thiserror = "1.0.36"
-clap = { version = "4.2.4", default-features = false, features = ["std", "derive", "usage", "help"], optional = true }
+base32 = "0.5.1"
+clap = { version = "4.5.16", default-features = false, features = [
+    "std",
+    "derive",
+    "usage",
+    "help",
+], optional = true }

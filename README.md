@@ -16,6 +16,8 @@ To use the library, include in your toml:
 stellar-strkey = "..."
 ```
 
+By default, the library uses the standard library (std). If you want to use it in a `no_std` environment, you need to disable the `default` features and enable the `alloc` crate.
+
 #### CLI
 
 To use the CLI:

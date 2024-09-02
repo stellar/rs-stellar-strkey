@@ -27,6 +27,6 @@ crate-git-revision = "0.0.6"
 proptest = "1.0.0"
 
 [dependencies]
-base32 = "0.4.0"
+data-encoding = "2.6.0"
 thiserror = "1.0.36"
 clap = { version = "4.2.4", default-features = false, features = ["std", "derive", "usage", "help"], optional = true }

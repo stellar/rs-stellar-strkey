@@ -11,19 +11,12 @@ pub fn encode(ver: u8, payload: &[u8]) -> String {
     d.push(ver);
     d.extend_from_slice(payload);
     d.extend_from_slice(&checksum(&d));
-    base32::encode(base32::Alphabet::Rfc4648 { padding: false }, &d)
+    data_encoding::BASE32_NOPAD.encode(&d)
 }
 
 pub fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
-    // TODO: Look at what other base32 implementations are available, because
-    // this one allows for decoding of non-canonical base32 strings, and doesn't
-    // come with helpful methods for validating the length is canonical.
-    let data = base32::decode(base32::Alphabet::Rfc4648 { padding: false }, s);
+    let data = data_encoding::BASE32_NOPAD.decode(s.as_bytes()).ok();
     if let Some(data) = data {
-        let s_canonical_len = (data.len() * 8 + 4) / 5;
-        if s.len() != s_canonical_len {
-            return Err(DecodeError::Invalid);
-        }
         if data.len() < 3 {
             return Err(DecodeError::Invalid);
         }

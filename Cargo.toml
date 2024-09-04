@@ -12,7 +12,7 @@ rust-version = "1.67.0"
 
 [features]
 default = ["std"]
-std = []
+std = ["data-encoding/std"]
 cli = ["std", "dep:clap"]
 
 [[bin]]
@@ -28,5 +28,5 @@ crate-git-revision = "0.0.6"
 proptest = "1.0.0"
 
 [dependencies]
-data-encoding = "2.6.0"
+data-encoding = { version = "2.6.0", default-features = false, features = ["alloc"] }
 clap = { version = "4.2.4", default-features = false, features = ["std", "derive", "usage", "help"], optional = true }

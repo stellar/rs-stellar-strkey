@@ -187,6 +187,10 @@ fn test_invalid_signed_payload_ed25519() {
     // No zero padding in signed payload
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DXFH6".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Non-zero padding in signed payload
+    r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAA4KVWLTJJFCJJFC7MPA7QYNF7SOWQ3GLR2GXUA7JUAAAAAEAAAAU".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 }
 
 #[test]

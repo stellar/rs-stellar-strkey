@@ -263,13 +263,18 @@ impl SignedPayload {
         if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
             return Err(DecodeError::Invalid);
         }
-        if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize != payload_len - 32 - 4 {
-            return Err(DecodeError::Invalid);
-        }
+        let padding_len = (4 - inner_payload_len % 4) % 4;
         let ed25519 = (&payload[0..32])
             .try_into()
             .map_err(|_| DecodeError::Invalid)?;
         let inner_payload = &payload[32 + 4..32 + 4 + inner_payload_len as usize];
+        let padding = &payload[32 + 4 + inner_payload_len as usize..];
+        if padding.len() != padding_len as usize {
+            return Err(DecodeError::Invalid);
+        }
+        if padding.iter().any(|b| *b != 0) {
+            return Err(DecodeError::Invalid);
+        }
 
         Ok(Self {
             ed25519,

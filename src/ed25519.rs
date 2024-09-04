@@ -255,21 +255,55 @@ impl SignedPayload {
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
         }
+
+        // Decode ed25519 public key. 32 bytes.
+        let mut offset = 0;
+        let ed25519: [u8; 32] = payload
+            .get(offset..offset + 32)
+            .ok_or(DecodeError::Invalid)?
+            .try_into()
+            .map_err(|_| DecodeError::Invalid)?;
+        offset += 32;
+
+        // Decode inner payload length. 4 bytes.
         let inner_payload_len = u32::from_be_bytes(
-            (&payload[32..32 + 4])
+            payload
+                .get(offset..offset + 4)
+                .ok_or(DecodeError::Invalid)?
                 .try_into()
                 .map_err(|_| DecodeError::Invalid)?,
         );
+        offset += 4;
+
+        // Check inner payload length is inside accepted range.
         if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
             return Err(DecodeError::Invalid);
         }
-        if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize != payload_len - 32 - 4 {
+
+        // Decode inner payload.
+        let inner_payload = payload
+            .get(offset..offset + inner_payload_len as usize)
+            .ok_or(DecodeError::Invalid)?;
+        offset += inner_payload_len as usize;
+
+        // Calculate padding at end of inner payload. 0-3 bytes.
+        let padding_len = (4 - inner_payload_len % 4) % 4;
+
+        // Decode padding.
+        let padding = payload
+            .get(offset..offset + padding_len as usize)
+            .ok_or(DecodeError::Invalid)?;
+        offset += padding_len as usize;
+
+        // Check padding is all zeros.
+        if padding.iter().any(|b| *b != 0) {
             return Err(DecodeError::Invalid);
         }
-        let ed25519 = (&payload[0..32])
-            .try_into()
-            .map_err(|_| DecodeError::Invalid)?;
-        let inner_payload = &payload[32 + 4..32 + 4 + inner_payload_len as usize];
+
+        // Check that entire payload consumed.
+        if offset != payload_len {
+            return Err(DecodeError::Invalid);
+        }
 
         Ok(Self {
             ed25519,

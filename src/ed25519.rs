@@ -280,14 +280,14 @@ impl SignedPayload {
             return Err(DecodeError::Invalid);
         }
 
-        // Calculate padding at end of inner payload. 0-3 bytes.
-        let padding_len = (4 - inner_payload_len % 4) % 4;
-
         // Decode inner payload.
         let inner_payload = payload
             .get(offset..offset + inner_payload_len as usize)
             .ok_or(DecodeError::Invalid)?;
         offset += inner_payload_len as usize;
+
+        // Calculate padding at end of inner payload. 0-3 bytes.
+        let padding_len = (4 - inner_payload_len % 4) % 4;
 
         // Decode padding.
         let padding = payload

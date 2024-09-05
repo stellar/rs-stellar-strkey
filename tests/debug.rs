@@ -1,6 +1,5 @@
-use stellar_strkey::*;
-
 extern crate proptest;
+use stellar_strkey::*;
 
 #[test]
 fn test_ed25519_public_key() {
@@ -106,7 +105,8 @@ fn test_ed25519_signed_payload() {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1, 2, 3, 4].into(),
+                payload: [1, 2, 3, 4, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0, 0, 0,0 ],
+                payload_len: 4
             })
         ),
         "SignedPayloadEd25519(MuxedAccount(0000000000000000000000000000000000000000000000000000000000000000, 01020304))",

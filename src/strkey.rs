@@ -1,9 +1,12 @@
-use alloc::{format, string::String};
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
 };
 
+#[cfg(feature = "alloc")]
+use alloc::string::String;
+
+use crate::convert::decode_len;
 use crate::{
     convert::{decode, encode},
     ed25519,
@@ -23,6 +26,7 @@ pub enum Strkey {
 }
 
 impl Strkey {
+    #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         match self {
             Self::PublicKeyEd25519(x) => x.to_string(),
@@ -36,7 +40,10 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut payload = [0u8; 100];
+        let len = decode_len(s.len())?;
+        let ver = decode(s.as_bytes(), &mut payload)?;
+        let payload = &payload[..len];
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
@@ -49,6 +56,7 @@ impl Strkey {
             version::MUXED_ACCOUNT_ED25519 => Ok(Self::MuxedAccountEd25519(
                 ed25519::MuxedAccount::from_payload(&payload)?,
             )),
+            // TODO: get valid payload length
             version::SIGNED_PAYLOAD_ED25519 => Ok(Self::SignedPayloadEd25519(
                 ed25519::SignedPayload::from_payload(&payload)?,
             )),
@@ -58,6 +66,7 @@ impl Strkey {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
@@ -78,23 +87,25 @@ pub struct PreAuthTx(pub [u8; 32]);
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PreAuthTx(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
+        for &b in self.0.iter() {
+            write!(f, "{:02x}", b)?;
+        }
+
         write!(f, ")")?;
         Ok(())
     }
 }
 
 impl PreAuthTx {
+    #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        encode(version::PRE_AUTH_TX, &self.0)
+        let mut output = [0; 56];
+        self.to_encoded(&mut output);
+        String::from_utf8(output.to_vec()).unwrap()
+    }
+
+    pub fn to_encoded(&self, output: &mut [u8]) {
+        encode(version::PRE_AUTH_TX, &self.0, output);
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -102,7 +113,8 @@ impl PreAuthTx {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut payload = [0u8; 32];
+        let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -110,6 +122,7 @@ impl PreAuthTx {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl Display for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
@@ -130,23 +143,25 @@ pub struct HashX(pub [u8; 32]);
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "HashX(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
+        for &b in self.0.iter() {
+            write!(f, "{:02x}", b)?;
+        }
+
         write!(f, ")")?;
         Ok(())
     }
 }
 
 impl HashX {
+    #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        encode(version::HASH_X, &self.0)
+        let mut output = [0; 56];
+        self.to_encoded(&mut output);
+        String::from_utf8(output.to_vec()).unwrap()
+    }
+
+    pub fn to_encoded(&self, output: &mut [u8]) {
+        encode(version::HASH_X, &self.0, output);
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -154,7 +169,8 @@ impl HashX {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut payload = [0u8; 32];
+        let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -162,6 +178,7 @@ impl HashX {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl Display for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
@@ -182,23 +199,24 @@ pub struct Contract(pub [u8; 32]);
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Contract(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
+        for &b in self.0.iter() {
+            write!(f, "{:02x}", b)?;
+        }
         write!(f, ")")?;
         Ok(())
     }
 }
 
 impl Contract {
+    #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        encode(version::CONTRACT, &self.0)
+        let mut output = [0; 56];
+        self.to_encoded(&mut output);
+        String::from_utf8(output.to_vec()).unwrap()
+    }
+
+    pub fn to_encoded(&self, output: &mut [u8]) {
+        encode(version::CONTRACT, &self.0, output);
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -206,7 +224,8 @@ impl Contract {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut payload = [0u8; 32];
+        let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -214,6 +233,7 @@ impl Contract {
     }
 }
 
+#[cfg(feature = "alloc")]
 impl Display for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())

@@ -373,7 +373,7 @@ fn test_invalid_signed_payload_ed25519() {
 
 #[test]
 fn test_signed_payload_ed25519_payload_sizes() {
-    for payload_size in 1..=1 {
+    for payload_size in 1..=64 {
         let mut payload = [0u8; 64];
         (0..payload_size).for_each(|i| {
             payload[i] = i as u8;

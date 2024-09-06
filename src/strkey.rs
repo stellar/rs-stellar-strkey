@@ -1,10 +1,12 @@
 use core::{
-    fmt::{Debug, Display},
+    fmt::Debug,
     str::FromStr,
 };
 
 #[cfg(feature = "alloc")]
 use alloc::string::String;
+#[cfg(feature = "alloc")]
+use core::fmt::Display;
 
 use crate::convert::decode_len;
 use crate::{
@@ -42,8 +44,9 @@ impl Strkey {
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let mut payload = [0u8; 100];
         let len = decode_len(s.len())?;
+        let mut payload = &mut payload[..len];
         let ver = decode(s.as_bytes(), &mut payload)?;
-        let payload = &payload[..len];
+
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
@@ -56,7 +59,6 @@ impl Strkey {
             version::MUXED_ACCOUNT_ED25519 => Ok(Self::MuxedAccountEd25519(
                 ed25519::MuxedAccount::from_payload(&payload)?,
             )),
-            // TODO: get valid payload length
             version::SIGNED_PAYLOAD_ED25519 => Ok(Self::SignedPayloadEd25519(
                 ed25519::SignedPayload::from_payload(&payload)?,
             )),

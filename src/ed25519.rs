@@ -4,14 +4,17 @@ use crate::{
     version,
 };
 
-#[cfg(feature = "alloc")]
-use alloc::string::String;
-
 use crate::convert::encode_len;
 use core::{
-    fmt::{Debug, Display},
+    fmt::Debug,
     str::FromStr,
 };
+
+
+#[cfg(feature = "alloc")]
+use alloc::string::String;
+#[cfg(feature = "alloc")]
+use core::fmt::Display;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PrivateKey(pub [u8; 32]);

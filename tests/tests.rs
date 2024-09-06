@@ -1,13 +1,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(not(feature = "std"))]
+#[cfg(feature = "alloc")]
 extern crate alloc;
 extern crate proptest;
 use proptest::proptest;
 use stellar_strkey::*;
 
-#[cfg(not(feature = "std"))]
-use alloc::{format, string::String, vec, vec::Vec};
+#[cfg(feature = "alloc")]
+use alloc::{
+    format,
+    string::String,
+};
 
 #[test]
 fn test_valid_public_keys() {
@@ -389,9 +392,18 @@ fn test_signed_payload_ed25519_payload_sizes() {
             payload_len: payload_size,
         });
 
-        let encoded = signed_payload.to_string();
-        let decoded = Strkey::from_string(&encoded).unwrap();
+        let mut encoded = [0u8; 165];
+        let mut encoded = &mut encoded[..signed_payload.encoded_len()];
+        signed_payload.to_encoded(&mut encoded);
+        let decoded = Strkey::from_string(core::str::from_utf8(encoded).unwrap()).unwrap();
         assert_eq!(signed_payload, decoded);
+
+        #[cfg(feature = "alloc")]
+        {
+            let encoded = signed_payload.to_string();
+            let decoded = Strkey::from_string(&encoded).unwrap();
+            assert_eq!(signed_payload, decoded);
+        }
     }
 }
 
@@ -418,7 +430,7 @@ fn test_valid_contract() {
 
 #[test]
 fn test_signed_payload_from_string_doesnt_panic_with_unbounded_size() {
-    let payload: Vec<u8> = vec![
+    let payload = [
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -428,6 +440,7 @@ fn test_signed_payload_from_string_doesnt_panic_with_unbounded_size() {
 }
 
 proptest! {
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_public_key_ed25519_from_string_doesnt_panic(data: String) {
         let _ = Strkey::from_string(&data);
@@ -435,6 +448,7 @@ proptest! {
 }
 
 proptest! {
+    #[cfg(feature = "alloc")]
     #[test]
     fn test_public_key_ed25519_to_string_doesnt_panic(data: [u8; 32]) {
         Strkey::PublicKeyEd25519(ed25519::PublicKey(data)).to_string();
@@ -444,6 +458,15 @@ proptest! {
 fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
     let strkey_result = Strkey::from_string(s).unwrap();
     assert_eq!(&strkey_result, strkey);
-    let str_result = format!("{strkey}");
-    assert_eq!(s, str_result)
+
+    let mut encoded = [0u8; 165];
+    let mut encoded = &mut encoded[..strkey.encoded_len()];
+    strkey.to_encoded(&mut encoded);
+    assert_eq!(s, core::str::from_utf8(encoded).unwrap());
+
+    #[cfg(feature = "alloc")]
+    {
+        let str_result = format!("{strkey}");
+        assert_eq!(s, str_result)
+    }
 }

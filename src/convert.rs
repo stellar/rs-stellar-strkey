@@ -12,7 +12,6 @@ use crate::{crc::checksum, error::DecodeError};
 // Contract              32-bytes
 const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
 
-
 /// Get the length of the strkey encoded data.
 ///
 /// # Arguments
@@ -22,7 +21,6 @@ pub fn encode_len(input_len: usize) -> usize {
     let len = 1 + input_len + 2;
     data_encoding::BASE32_NOPAD.encode_len(len)
 }
-
 
 /// Encode the raw data to a strkey.
 ///
@@ -54,7 +52,6 @@ pub fn encode(ver: u8, input: &[u8], output: &mut [u8]) {
     assert_eq!(encode_len(input.len()), output.len());
     data_encoding::BASE32_NOPAD.encode_mut(&d[..input.len() + 3], output);
 }
-
 
 /// Get the length of the raw data from a strkey.
 ///

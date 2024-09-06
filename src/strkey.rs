@@ -1,7 +1,4 @@
-use core::{
-    fmt::Debug,
-    str::FromStr,
-};
+use core::{fmt::Debug, str::FromStr};
 
 #[cfg(feature = "alloc")]
 use alloc::string::String;
@@ -38,6 +35,30 @@ impl Strkey {
             Self::MuxedAccountEd25519(x) => x.to_string(),
             Self::SignedPayloadEd25519(x) => x.to_string(),
             Self::Contract(x) => x.to_string(),
+        }
+    }
+
+    pub fn to_encoded(&self, output: &mut [u8]) {
+        match self {
+            Self::PublicKeyEd25519(x) => x.to_encoded(output),
+            Self::PrivateKeyEd25519(x) => x.to_encoded(output),
+            Self::PreAuthTx(x) => x.to_encoded(output),
+            Self::HashX(x) => x.to_encoded(output),
+            Self::MuxedAccountEd25519(x) => x.to_encoded(output),
+            Self::SignedPayloadEd25519(x) => x.to_encoded(output),
+            Self::Contract(x) => x.to_encoded(output),
+        }
+    }
+
+    pub fn encoded_len(&self) -> usize {
+        match self {
+            Strkey::PublicKeyEd25519(x) => x.encoded_len(),
+            Strkey::PrivateKeyEd25519(x) => x.encoded_len(),
+            Strkey::PreAuthTx(x) => x.encoded_len(),
+            Strkey::HashX(x) => x.encoded_len(),
+            Strkey::MuxedAccountEd25519(x) => x.encoded_len(),
+            Strkey::SignedPayloadEd25519(x) => x.encoded_len(),
+            Strkey::Contract(x) => x.encoded_len(),
         }
     }
 
@@ -106,6 +127,10 @@ impl PreAuthTx {
         String::from_utf8(output.to_vec()).unwrap()
     }
 
+    pub fn encoded_len(&self) -> usize {
+        56
+    }
+
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::PRE_AUTH_TX, &self.0, output);
     }
@@ -162,6 +187,10 @@ impl HashX {
         String::from_utf8(output.to_vec()).unwrap()
     }
 
+    pub fn encoded_len(&self) -> usize {
+        56
+    }
+
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::HASH_X, &self.0, output);
     }
@@ -215,6 +244,10 @@ impl Contract {
         let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
+    }
+
+    pub fn encoded_len(&self) -> usize {
+        56
     }
 
     pub fn to_encoded(&self, output: &mut [u8]) {

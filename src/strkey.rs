@@ -34,6 +34,7 @@ pub enum Strkey {
 // }
 
 impl Strkey {
+    /// Returns the [String] representation of the [Strkey].
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         match self {
@@ -47,6 +48,39 @@ impl Strkey {
         }
     }
 
+    /// Encodes the [Strkey] into the provided buffer.
+    ///
+    /// # Arguments
+    ///
+    /// * `output` - The encoded strkey. We assume it is the correct size, and you can get the correct size by calling [encoded_len].
+    ///
+    /// # Panics
+    ///
+    /// If the output buffer's length is not equal to the encoded [Strkey] length.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use stellar_strkey::ed25519::SignedPayload;
+    /// use stellar_strkey::Strkey;
+    ///
+    /// let mut output = [0u8; 100];
+    /// let strkey = Strkey::SignedPayloadEd25519(SignedPayload {
+    ///     ed25519: [
+    ///         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ///         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ///         0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ///     ],
+    ///     payload: [1, 2, 3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ///         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ///         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ///         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    ///     ],
+    ///     payload_len: 4,
+    /// });
+    /// let output_len = strkey.encoded_len();
+    /// strkey.to_encoded(&mut output[..output_len]);
+    /// ```
     pub fn to_encoded(&self, output: &mut [u8]) {
         match self {
             Self::PublicKeyEd25519(x) => x.to_encoded(output),
@@ -59,6 +93,7 @@ impl Strkey {
         }
     }
 
+    /// Returns the length of the encoded [Strkey].
     pub fn encoded_len(&self) -> usize {
         match self {
             Strkey::PublicKeyEd25519(x) => x.encoded_len(),
@@ -71,6 +106,24 @@ impl Strkey {
         }
     }
 
+    /// Creates a [Strkey] from the strkey encoded [Strkey].
+    ///
+    /// # Arguments
+    ///
+    /// * `s` - The strkey encoded [Strkey].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the strkey is not a valid [Strkey].
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use stellar_strkey::Strkey;
+    ///
+    /// let s = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
+    /// let strkey = Strkey::from_string(s).unwrap();
+    /// ```
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let mut payload = [0u8; typ::MAX_PAYLOAD_LEN];
         let len = decode_len(s.len())?;
@@ -129,6 +182,7 @@ impl Debug for PreAuthTx {
 }
 
 impl PreAuthTx {
+    /// Returns the [String] representation of the [PreAuthTx].
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let mut output = [0; typ::ENCODED_PRE_AUTH_TX_LEN];
@@ -217,6 +271,7 @@ impl Debug for HashX {
 }
 
 impl HashX {
+    /// Returns the [String] representation of the [HashX].
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let mut output = [0; typ::ENCODED_HASH_X_LEN];
@@ -304,6 +359,7 @@ impl Debug for Contract {
 }
 
 impl Contract {
+    /// Returns the [String] representation of the [Contract].
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let mut output = [0; typ::ENCODED_CONTRACT_LEN];

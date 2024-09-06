@@ -139,7 +139,7 @@ impl PublicKey {
     ///
     /// # Panics
     ///
-    /// If the output buffer's length is not equal to the encoded private key length.
+    /// If the output buffer's length is not equal to the encoded [PublicKey] length.
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::PUBLIC_KEY_ED25519, &self.0, output);
     }
@@ -387,6 +387,7 @@ impl SignedPayload {
         const MIN_INNER_PAYLOAD_LENGTH: u32 = 1;
         const MIN_LENGTH: usize = typ::RAW_SIGNED_PAYLOAD_MIN_LEN;
         const MAX_LENGTH: usize = typ::RAW_SIGNED_PAYLOAD_MAX_LEN;
+        const PAYLOAD_SIZE_LEN: usize = 4;
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
@@ -404,7 +405,7 @@ impl SignedPayload {
         // Decode inner payload length. 4 bytes.
         let inner_payload_len = u32::from_be_bytes(
             payload
-                .get(offset..offset + 4)
+                .get(offset..offset + PAYLOAD_SIZE_LEN)
                 .ok_or(DecodeError::Invalid)?
                 .try_into()
                 .map_err(|_| DecodeError::Invalid)?,
@@ -421,12 +422,14 @@ impl SignedPayload {
         // Calculate padding at end of inner payload. 0-3 bytes.
         let padding_len = (4 - inner_payload_len % 4) % 4;
         let inner_payload_with_padding_len = inner_payload_len + padding_len;
-        if payload_len != 32 + 4 + inner_payload_with_padding_len as usize {
+        if payload_len
+            != typ::RAW_PUBLIC_KEY_LEN + PAYLOAD_SIZE_LEN + inner_payload_with_padding_len as usize
+        {
             return Err(DecodeError::Invalid);
         }
 
         // Decode inner payload.
-        let mut inner_payload = [0u8; 64];
+        let mut inner_payload = [0u8; MAX_INNER_PAYLOAD_LENGTH as usize];
         inner_payload[..inner_payload_len as usize]
             .copy_from_slice(&payload[offset..offset + inner_payload_len as usize]);
         offset += inner_payload_len as usize;

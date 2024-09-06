@@ -379,10 +379,11 @@ impl SignedPayload {
     /// Returns an error if the payload is not a valid [SignedPayload].
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
-        // min or 64-byte for the max payload
+        // min or 64-byte for the max payload, including padding.
         const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
-        const MIN_LENGTH: usize = 32 + 4 + 4;
-        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);
+        const MIN_INNER_PAYLOAD_LENGTH: u32 = 1;
+        const MIN_LENGTH: usize = typ::RAW_SIGNED_PAYLOAD_MIN_LEN;
+        const MAX_LENGTH: usize = typ::RAW_SIGNED_PAYLOAD_MAX_LEN;
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
@@ -390,12 +391,12 @@ impl SignedPayload {
 
         // Decode ed25519 public key. 32 bytes.
         let mut offset = 0;
-        let ed25519: [u8; 32] = payload
-            .get(offset..offset + 32)
+        let ed25519: [u8; typ::RAW_PUBLIC_KEY_LEN] = payload
+            .get(offset..offset + typ::RAW_PUBLIC_KEY_LEN)
             .ok_or(DecodeError::Invalid)?
             .try_into()
             .map_err(|_| DecodeError::Invalid)?;
-        offset += 32;
+        offset += typ::RAW_PUBLIC_KEY_LEN;
 
         // Decode inner payload length. 4 bytes.
         let inner_payload_len = u32::from_be_bytes(
@@ -408,11 +409,15 @@ impl SignedPayload {
         offset += 4;
 
         // Check inner payload length is inside accepted range.
-        if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
+        if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH
+            || inner_payload_len < MIN_INNER_PAYLOAD_LENGTH
+        {
             return Err(DecodeError::Invalid);
         }
 
-        let inner_payload_with_padding_len = inner_payload_len + (4 - inner_payload_len % 4) % 4;
+        // Calculate padding at end of inner payload. 0-3 bytes.
+        let padding_len = (4 - inner_payload_len % 4) % 4;
+        let inner_payload_with_padding_len = inner_payload_len + padding_len;
         if payload_len != 32 + 4 + inner_payload_with_padding_len as usize {
             return Err(DecodeError::Invalid);
         }
@@ -422,9 +427,6 @@ impl SignedPayload {
         inner_payload[..inner_payload_len as usize]
             .copy_from_slice(&payload[offset..offset + inner_payload_len as usize]);
         offset += inner_payload_len as usize;
-
-        // Calculate padding at end of inner payload. 0-3 bytes.
-        let padding_len = (4 - inner_payload_len % 4) % 4;
 
         // Decode padding.
         let padding = payload

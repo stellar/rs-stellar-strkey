@@ -5,7 +5,11 @@ use crate::{
 };
 
 use crate::convert::encode_len;
-use core::{fmt::Debug, str::FromStr};
+use core::{
+    fmt::Debug,
+    str::FromStr,
+};
+
 
 #[cfg(feature = "alloc")]
 use alloc::string::String;
@@ -32,10 +36,6 @@ impl PrivateKey {
         let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
-    }
-
-    pub fn encoded_len(&self) -> usize {
-        56
     }
 
     /// Encodes the private key into the provided buffer.
@@ -100,10 +100,6 @@ impl PublicKey {
         let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
-    }
-
-    pub fn encoded_len(&self) -> usize {
-        56
     }
 
     /// Encodes the public key into the provided buffer.
@@ -180,10 +176,6 @@ impl MuxedAccount {
         let mut output = [0; 69];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
-    }
-
-    pub fn encoded_len(&self) -> usize {
-        69
     }
 
     /// Encodes the muxed account into the provided buffer.

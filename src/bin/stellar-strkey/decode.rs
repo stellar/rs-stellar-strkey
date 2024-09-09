@@ -9,10 +9,10 @@ pub enum Error {
 }
 
 impl core::fmt::Display for Error {
-    fn fmt(&self, __formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
             Error::Decode(s, inner) => {
-                __formatter.write_fmt(format_args!("decoding {s:?}: {inner}"))
+                f.write_fmt(format_args!("decoding {s:?}: {inner}"))
             }
         }
     }

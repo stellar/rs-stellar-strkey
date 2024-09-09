@@ -1,7 +1,7 @@
 use crate::{
     convert::{decode, encode},
     error::DecodeError,
-    typ, version,
+    version,
 };
 
 use crate::convert::encode_len;
@@ -13,7 +13,7 @@ use alloc::string::String;
 use core::fmt::Display;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PrivateKey(pub [u8; typ::RAW_PRIVATE_KEY_LEN]);
+pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -29,38 +29,25 @@ impl Debug for PrivateKey {
 impl PrivateKey {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        let mut output = [0; typ::ENCODED_PRIVATE_KEY_LEN];
+        let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
     }
 
-    /// Returns the length of the encoded [PrivateKey].
-    ///
-    /// # Note
-    ///
-    /// The encoded [PrivateKey] length is always [`typ::ENCODED_PRIVATE_KEY_LEN`] bytes.
     pub fn encoded_len(&self) -> usize {
-        typ::ENCODED_PRIVATE_KEY_LEN
+        56
     }
 
-    /// Encodes the [PrivateKey] into the provided buffer.
+    /// Encodes the private key into the provided buffer.
     ///
-    /// # Panics
+    /// ### Panics
     ///
-    /// If the output buffer's length is not equal to the encoded [PrivateKey] length.
+    /// If the buffer's length is not equal to the encoded private key length,
+    /// which is 56 bytes.
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::PRIVATE_KEY_ED25519, &self.0, output);
     }
 
-    /// Creates a [PrivateKey] from the raw payload.
-    ///
-    /// # Arguments
-    ///
-    /// * `payload` - The raw payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the payload is not a valid [PrivateKey].
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
             Ok(ed25519) => Ok(Self(ed25519)),
@@ -68,17 +55,8 @@ impl PrivateKey {
         }
     }
 
-    /// Creates a [PrivateKey] from the strkey encoded [PrivateKey].
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - The strkey encoded [PrivateKey].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the strkey is not a valid [PrivateKey].
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut payload = [0u8; typ::RAW_PRIVATE_KEY_LEN];
+        let mut payload = [0u8; 32];
         let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
@@ -103,7 +81,7 @@ impl FromStr for PrivateKey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PublicKey(pub [u8; typ::RAW_PUBLIC_KEY_LEN]);
+pub struct PublicKey(pub [u8; 32]);
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -119,38 +97,25 @@ impl Debug for PublicKey {
 impl PublicKey {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        let mut output = [0; typ::ENCODED_PUBLIC_KEY_LEN];
+        let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
     }
 
-    /// Returns the length of the encoded [PublicKey].
-    ///
-    /// # Note
-    ///
-    /// The encoded [PublicKey] length is always [`typ::PUBLIC_KEY_ED25519`] bytes.
     pub fn encoded_len(&self) -> usize {
-        typ::ENCODED_PUBLIC_KEY_LEN
+        56
     }
 
-    /// Encodes the [PublicKey] into the provided buffer.
+    /// Encodes the public key into the provided buffer.
     ///
-    /// # Panics
+    /// ### Panics
     ///
-    /// If the output buffer's length is not equal to the encoded private key length.
+    /// If the buffer's length is not equal to the encoded public key length,
+    /// which is 56 bytes.
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::PUBLIC_KEY_ED25519, &self.0, output);
     }
 
-    /// Creates a [PublicKey] from the raw payload.
-    ///
-    /// # Arguments
-    ///
-    /// * `payload` - The raw payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the payload is not a valid [PublicKey].
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
             Ok(ed25519) => Ok(Self(ed25519)),
@@ -158,17 +123,8 @@ impl PublicKey {
         }
     }
 
-    /// Creates a [PublicKey] from the strkey encoded [PublicKey].
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - The strkey encoded [PublicKey].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the strkey is not a valid [PublicKey].
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut payload = [0u8; typ::RAW_PUBLIC_KEY_LEN];
+        let mut payload = [0u8; 32];
 
         let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
@@ -195,7 +151,7 @@ impl FromStr for PublicKey {
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MuxedAccount {
-    pub ed25519: [u8; typ::RAW_PUBLIC_KEY_LEN],
+    pub ed25519: [u8; 32],
     pub id: u64,
 }
 
@@ -221,42 +177,29 @@ impl Debug for MuxedAccount {
 impl MuxedAccount {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        let mut output = [0; typ::ENCODED_MUXED_ACCOUNT_LEN];
+        let mut output = [0; 69];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
     }
 
-    /// Returns the length of the encoded [MuxedAccount].
-    ///
-    /// # Note
-    ///
-    /// The encoded [MuxedAccount] length is always [`typ::ENCODED_MUXED_ACCOUNT_LEN`] bytes.
     pub fn encoded_len(&self) -> usize {
-        typ::ENCODED_MUXED_ACCOUNT_LEN
+        69
     }
 
-    /// Encodes the [MuxedAccount] into the provided buffer.
+    /// Encodes the muxed account into the provided buffer.
     ///
-    /// # Panics
+    /// ### Panics
     ///
-    /// If the output buffer's length is not equal to the encoded [MuxedAccount] length.
+    /// If the buffer's length is not equal to the encoded muxed account length,
+    /// which is 69 bytes.
     pub fn to_encoded(&self, output: &mut [u8]) {
-        let mut payload = [0u8; typ::RAW_MUXED_ACCOUNT_LEN];
+        let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
         id.copy_from_slice(&self.id.to_be_bytes());
         encode(version::MUXED_ACCOUNT_ED25519, &payload, output);
     }
 
-    /// Creates a [MuxedAccount] from the raw payload.
-    ///
-    /// # Arguments
-    ///
-    /// * `payload` - The raw payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the payload is not a valid [MuxedAccount].
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         if payload.len() < 40 {
             return Err(DecodeError::Invalid);
@@ -268,17 +211,8 @@ impl MuxedAccount {
         })
     }
 
-    /// Creates a [MuxedAccount] from the strkey encoded [MuxedAccount].
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - The strkey encoded [MuxedAccount].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the strkey is not a valid [MuxedAccount].
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut payload = [0u8; typ::RAW_MUXED_ACCOUNT_LEN];
+        let mut payload = [0u8; 40];
         let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&payload),
@@ -307,7 +241,7 @@ impl FromStr for MuxedAccount {
 /// The payload must not have a size larger than u32::MAX.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SignedPayload {
-    pub ed25519: [u8; typ::RAW_PUBLIC_KEY_LEN],
+    pub ed25519: [u8; 32],
     pub payload: [u8; 64],
     pub payload_len: usize,
 }
@@ -333,30 +267,23 @@ impl SignedPayload {
     /// Returns the strkey string for the signed payload signer.
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        let mut output = [0; typ::ENCODED_SIGNED_PAYLOAD_MAX_LEN];
+        let mut output = [0; 165];
         let encoded_len = self.encoded_len();
         self.to_encoded(&mut output[..encoded_len]);
         String::from_utf8(output[..encoded_len].to_vec()).unwrap()
     }
 
-    /// Returns the length of the encoded [SignedPayload].
-    ///
-    /// # Note
-    ///
-    /// The encoded [SignedPayload] length is between [`typ::ENCODED_SIGNED_PAYLOAD_MIN_LEN`]
-    /// and [`typ::ENCODED_SIGNED_PAYLOAD_MAX_LEN`] bytes.
     pub fn encoded_len(&self) -> usize {
         let inner_payload_len = self.payload_len + (4 - self.payload_len % 4) % 4;
         encode_len(32 + 4 + inner_payload_len)
     }
 
-    /// Encodes the [SignedPayload] into the provided buffer.
+    /// Encodes the signed payload into the provided buffer.
     ///
-    /// # Panics
-    ///
-    /// If the output buffer's length is not equal to the encoded [SignedPayload] length.
+    /// ### Panics
+    /// TODO
     pub fn to_encoded(&self, output: &mut [u8]) {
-        let mut payload = [0u8; typ::RAW_SIGNED_PAYLOAD_MAX_LEN];
+        let mut payload = [0u8; 32 + 4 + 64];
         let inner_payload_len = self.payload_len + (4 - self.payload_len % 4) % 4;
         payload[..32].copy_from_slice(&self.ed25519);
         payload[32..32 + 4].copy_from_slice(&(self.payload_len as u32).to_be_bytes());
@@ -368,15 +295,6 @@ impl SignedPayload {
         );
     }
 
-    /// Creates a [SignedPayload] from the raw payload.
-    ///
-    /// # Arguments
-    ///
-    /// * `payload` - The raw payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the payload is not a valid [SignedPayload].
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
         // min or 64-byte for the max payload
@@ -449,15 +367,6 @@ impl SignedPayload {
         })
     }
 
-    /// Creates a [SignedPayload] from the strkey encoded [SignedPayload].
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - The strkey encoded [SignedPayload].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the strkey is not a valid [SignedPayload].
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
         let mut payload = [0u8; 100];
         let ver = decode(s.as_bytes(), &mut payload)?;

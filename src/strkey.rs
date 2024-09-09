@@ -10,7 +10,7 @@ use crate::{
     convert::{decode, encode},
     ed25519,
     error::DecodeError,
-    typ, version,
+    version,
 };
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
@@ -23,15 +23,6 @@ pub enum Strkey {
     SignedPayloadEd25519(ed25519::SignedPayload),
     Contract(Contract),
 }
-
-// TODO: add a trait?
-// pub trait StrkeyTrait: Sized + Debug {
-//     #[cfg(feature = "alloc")]
-//     fn to_string(&self) -> String;
-//     fn to_encoded(&self, output: &mut [u8]);
-//     fn encoded_len(&self) -> usize;
-//     fn from_string(s: &str) -> Result<Self, DecodeError>;
-// }
 
 impl Strkey {
     #[cfg(feature = "alloc")]
@@ -72,7 +63,7 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut payload = [0u8; typ::MAX_PAYLOAD_LEN];
+        let mut payload = [0u8; 100];
         let len = decode_len(s.len())?;
         let mut payload = &mut payload[..len];
         let ver = decode(s.as_bytes(), &mut payload)?;
@@ -114,7 +105,7 @@ impl FromStr for Strkey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct PreAuthTx(pub [u8; typ::RAW_PRE_AUTH_TX_LEN]);
+pub struct PreAuthTx(pub [u8; 32]);
 
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -131,53 +122,25 @@ impl Debug for PreAuthTx {
 impl PreAuthTx {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        let mut output = [0; typ::ENCODED_PRE_AUTH_TX_LEN];
+        let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
     }
 
-    /// Returns the length of the encoded [PreAuthTx].
-    ///
-    /// # Note
-    ///
-    /// The encoded [PreAuthTx] length is always [`typ::ENCODED_PRE_AUTH_TX_LEN`] bytes.
     pub fn encoded_len(&self) -> usize {
-        typ::ENCODED_PRE_AUTH_TX_LEN
+        56
     }
 
-    /// Encodes the [PreAuthTx] into the provided buffer.
-    ///
-    /// # Panics
-    ///
-    /// If the output buffer's length is not equal to the encoded [PreAuthTx] length.
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::PRE_AUTH_TX, &self.0, output);
     }
 
-    /// Creates a [PreAuthTx] from the raw payload.
-    ///
-    /// # Arguments
-    ///
-    /// * `payload` - The raw payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the payload is not a valid [PreAuthTx].
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
     }
 
-    /// Creates a [PreAuthTx] from the strkey encoded [PreAuthTx].
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - The strkey encoded [PreAuthTx].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the strkey is not a valid [PreAuthTx].
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut payload = [0u8; typ::RAW_PRE_AUTH_TX_LEN];
+        let mut payload = [0u8; 32];
         let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
@@ -202,7 +165,7 @@ impl FromStr for PreAuthTx {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct HashX(pub [u8; typ::RAW_HASH_X_LEN]);
+pub struct HashX(pub [u8; 32]);
 
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -219,53 +182,25 @@ impl Debug for HashX {
 impl HashX {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        let mut output = [0; typ::ENCODED_HASH_X_LEN];
+        let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
     }
 
-    /// Returns the length of the encoded [HashX].
-    ///
-    /// # Note
-    ///
-    /// The encoded [HashX] length is always [`typ::ENCODED_HASH_X_LEN`] bytes.
     pub fn encoded_len(&self) -> usize {
-        typ::ENCODED_HASH_X_LEN
+        56
     }
 
-    /// Encodes the [HashX] into the provided buffer.
-    ///
-    /// # Panics
-    ///
-    /// If the output buffer's length is not equal to the encoded [HashX] length.
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::HASH_X, &self.0, output);
     }
 
-    /// Creates a [HashX] from the raw payload.
-    ///
-    /// # Arguments
-    ///
-    /// * `payload` - The raw payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the payload is not a valid [HashX].
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
     }
 
-    /// Creates a [HashX] from the strkey encoded [HashX].
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - The strkey encoded [HashX].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the strkey is not a valid [HashX].
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut payload = [0u8; typ::RAW_HASH_X_LEN];
+        let mut payload = [0u8; 32];
         let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
@@ -290,7 +225,7 @@ impl FromStr for HashX {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Contract(pub [u8; typ::RAW_CONTRACT_LEN]);
+pub struct Contract(pub [u8; 32]);
 
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -306,53 +241,25 @@ impl Debug for Contract {
 impl Contract {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
-        let mut output = [0; typ::ENCODED_CONTRACT_LEN];
+        let mut output = [0; 56];
         self.to_encoded(&mut output);
         String::from_utf8(output.to_vec()).unwrap()
     }
 
-    /// Returns the length of the encoded [Contract].
-    ///
-    /// # Note
-    ///
-    /// The encoded [Contract] length is always [`typ::ENCODED_CONTRACT_LEN`] bytes.
     pub fn encoded_len(&self) -> usize {
-        typ::ENCODED_CONTRACT_LEN
+        56
     }
 
-    /// Encodes the [Contract] into the provided buffer.
-    ///
-    /// # Panics
-    ///
-    /// If the output buffer's length is not equal to the encoded [Contract] length.
     pub fn to_encoded(&self, output: &mut [u8]) {
         encode(version::CONTRACT, &self.0, output);
     }
 
-    /// Creates a [Contract] from the raw payload.
-    ///
-    /// # Arguments
-    ///
-    /// * `payload` - The raw payload.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the payload is not a valid [Contract].
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
     }
 
-    /// Creates a [Contract] from the strkey encoded [Contract].
-    ///
-    /// # Arguments
-    ///
-    /// * `s` - The strkey encoded [Contract].
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the strkey is not a valid [Contract].
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut payload = [0u8; typ::RAW_CONTRACT_LEN];
+        let mut payload = [0u8; 32];
         let ver = decode(s.as_bytes(), &mut payload)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),

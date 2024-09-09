@@ -7,7 +7,10 @@ use proptest::proptest;
 use stellar_strkey::*;
 
 #[cfg(feature = "alloc")]
-use alloc::{format, string::String};
+use alloc::{
+    format,
+    string::String,
+};
 
 #[test]
 fn test_valid_public_keys() {

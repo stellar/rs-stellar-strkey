@@ -86,6 +86,7 @@ pub fn checksum(data: &[u8]) -> [u8; 2] {
 mod tests {
     use super::checksum;
     extern crate proptest;
+    use alloc::vec::Vec;
     use proptest::prelude::*;
 
     #[test]
@@ -98,7 +99,7 @@ mod tests {
 
     proptest! {
         #[test]
-        fn test_doesnt_panic(data in proptest::collection::vec(any::<u8>(), 0..100)) {
+        fn test_doesnt_panic(data: Vec<u8>) {
             checksum(&data[..]);
         }
     }

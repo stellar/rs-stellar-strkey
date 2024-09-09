@@ -1,7 +1,7 @@
 // TODO: Could encode and decode, and the functions upstream that call them, be
 // const fn's?
 
-use crate::{crc::checksum, error::DecodeError};
+use crate::{crc::checksum, error::DecodeError, typ};
 
 // PublicKeyEd25519      32-bytes
 // PrivateKeyEd25519     32-bytes
@@ -12,38 +12,11 @@ use crate::{crc::checksum, error::DecodeError};
 // Contract              32-bytes
 const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
 
-
-/// Get the length of the strkey encoded data.
-///
-/// # Arguments
-///
-/// * `input_len` - The length of the raw data.
 pub fn encode_len(input_len: usize) -> usize {
     let len = 1 + input_len + 2;
     data_encoding::BASE32_NOPAD.encode_len(len)
 }
 
-
-/// Encode the raw data to a strkey.
-///
-/// # Arguments
-///
-/// * `ver` - The version byte.
-/// * `input` - The raw data.
-/// * `output` - The encoded strkey. We assume it is the correct size, and you can get the correct size by calling [encode_len].
-///
-/// # Panics
-///
-/// This function will panic if the output buffer is not the correct size.
-///
-/// # Examples
-///
-/// ```rust
-/// let mut output = [0u8; 100];
-/// let input = [0u8; 32];
-/// // let output_len = encode_len(input.len());
-/// // encode(0, &input, &mut output[..output_len]);
-/// ```
 pub fn encode(ver: u8, input: &[u8], output: &mut [u8]) {
     let mut d = [0u8; 1 + MAX_PAYLOAD_LEN + 2];
     d[0] = ver;
@@ -55,16 +28,6 @@ pub fn encode(ver: u8, input: &[u8], output: &mut [u8]) {
     data_encoding::BASE32_NOPAD.encode_mut(&d[..input.len() + 3], output);
 }
 
-
-/// Get the length of the raw data from a strkey.
-///
-/// # Arguments
-///
-/// * `input_len` - The length of the strkey encoded data.
-///
-/// # Errors
-///
-/// This function will return an error if the strkey is invalid.
 pub fn decode_len(input_len: usize) -> Result<usize, DecodeError> {
     let len = data_encoding::BASE32_NOPAD
         .decode_len(input_len)
@@ -72,12 +35,12 @@ pub fn decode_len(input_len: usize) -> Result<usize, DecodeError> {
     if len < 3 || len > 1 + MAX_PAYLOAD_LEN + 2 {
         return Err(DecodeError::Invalid);
     }
-    Ok(len - 3) // remove version byte and crc length
+    Ok(len - 3)
 }
 
 pub fn decode(input: &[u8], output: &mut [u8]) -> Result<u8, DecodeError> {
     let len = decode_len(input.len())? + 3;
-    assert_eq!(output.len(), len - 3);
+
     let mut decoded = [0u8; 1 + MAX_PAYLOAD_LEN + 2];
     let _ = data_encoding::BASE32_NOPAD
         .decode_mut(input, &mut decoded[..len])
@@ -85,6 +48,27 @@ pub fn decode(input: &[u8], output: &mut [u8]) -> Result<u8, DecodeError> {
 
     let data = &decoded[..len];
     let ver = data[0];
+
+    match ver {
+        typ::PUBLIC_KEY | typ::PRIVATE_KEY | typ::PRE_AUTH_TX | typ::HASH_X | typ::CONTRACT => {
+            if len != 32 + 3 {
+                return Err(DecodeError::Invalid);
+            }
+        }
+        typ::MUXED_ACCOUNT => {
+            if len != 40 + 3 {
+                return Err(DecodeError::Invalid);
+            }
+        }
+        typ::SIGNED_PAYLOAD => {
+            if len < 40 + 3 || len > 100 + 3 {
+                return Err(DecodeError::Invalid);
+            }
+        }
+        _ => {
+            return Err(DecodeError::Invalid);
+        }
+    }
 
     let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
     let crc_expect = checksum(data_without_crc);

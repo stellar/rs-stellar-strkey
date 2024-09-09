@@ -12,4 +12,4 @@ impl core::fmt::Display for DecodeError {
     }
 }
 
-impl std::error::Error for DecodeError {}
+impl core::error::Error for DecodeError {}

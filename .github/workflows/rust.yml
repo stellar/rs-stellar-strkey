@@ -48,7 +48,7 @@ jobs:
       with:
         name: cargo-hack
         version: 0.5.28
-    - run: cargo-hack hack --feature-powerset --target ${{ matrix.target }}
+    - run: cargo-hack hack test --feature-powerset --target ${{ matrix.target }}
 
   publish-dry-run:
     if: startsWith(github.head_ref, 'release/')

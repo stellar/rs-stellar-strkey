@@ -1,7 +1,11 @@
 // TODO: Could encode and decode, and the functions upstream that call them, be
 // const fn's?
 
-use crate::{crc::checksum, error::DecodeError, typ};
+use crate::alloc::string::ToString;
+use crate::{crc::checksum, error::DecodeError};
+use alloc::string::String;
+use alloc::vec::Vec;
+use core::str;
 
 // PublicKeyEd25519      32-bytes
 // PrivateKeyEd25519     32-bytes
@@ -10,66 +14,37 @@ use crate::{crc::checksum, error::DecodeError, typ};
 // MuxedAccountEd25519   40-bytes
 // SignedPayloadEd25519  32 + 4 + 4 = 40-bytes min, 32 + 4 + 64 = 100-bytes max
 // Contract              32-bytes
-const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
+const MAX_PAYLOAD_SIZE: usize = 32 + 4 + 64;
+const MAX_ENCODED_LEN: usize = ((1 + MAX_PAYLOAD_SIZE + 2) * 8 + 4) / 5;
 
-pub fn encode_len(input_len: usize) -> usize {
-    let len = 1 + input_len + 2;
-    data_encoding::BASE32_NOPAD.encode_len(len)
-}
-
-pub fn encode(ver: u8, input: &[u8], output: &mut [u8]) {
-    let mut d = [0u8; 1 + MAX_PAYLOAD_LEN + 2];
+pub fn encode(ver: u8, payload: &[u8]) -> String {
+    let mut d = [0u8; 1 + MAX_PAYLOAD_SIZE + 2];
     d[0] = ver;
-    d[1..=input.len()].copy_from_slice(input);
-    let crc = checksum(&d[..=input.len()]);
-    d[1 + input.len()..1 + input.len() + 2].copy_from_slice(&crc);
-    // TODO
-    assert_eq!(encode_len(input.len()), output.len());
-    data_encoding::BASE32_NOPAD.encode_mut(&d[..input.len() + 3], output);
+    d[1..=payload.len()].copy_from_slice(payload);
+    let crc = checksum(&d[..=payload.len()]);
+    d[1 + payload.len()..1 + payload.len() + 2].copy_from_slice(&crc);
+    let len = data_encoding::BASE32_NOPAD.encode_len(1 + payload.len() + 2);
+    let mut encoded = [0u8; MAX_ENCODED_LEN];
+    data_encoding::BASE32_NOPAD.encode_mut(&d[..payload.len() + 3], &mut encoded[..len]);
+    str::from_utf8(&encoded[..len]).unwrap().to_string()
 }
 
-pub fn decode_len(input_len: usize) -> Result<usize, DecodeError> {
+pub fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
     let len = data_encoding::BASE32_NOPAD
-        .decode_len(input_len)
+        .decode_len(s.as_bytes().len())
         .map_err(|_| DecodeError::Invalid)?;
-    if len < 3 || len > 1 + MAX_PAYLOAD_LEN + 2 {
+
+    if len < 3 || len > MAX_ENCODED_LEN {
         return Err(DecodeError::Invalid);
     }
-    Ok(len - 3)
-}
 
-pub fn decode(input: &[u8], output: &mut [u8]) -> Result<u8, DecodeError> {
-    let len = decode_len(input.len())? + 3;
-
-    let mut decoded = [0u8; 1 + MAX_PAYLOAD_LEN + 2];
+    let mut decoded = [0u8; MAX_ENCODED_LEN];
     let _ = data_encoding::BASE32_NOPAD
-        .decode_mut(input, &mut decoded[..len])
+        .decode_mut(s.as_bytes(), &mut decoded[..len])
         .map_err(|_| DecodeError::Invalid)?;
 
     let data = &decoded[..len];
     let ver = data[0];
-
-    match ver {
-        typ::PUBLIC_KEY | typ::PRIVATE_KEY | typ::PRE_AUTH_TX | typ::HASH_X | typ::CONTRACT => {
-            if len != 32 + 3 {
-                return Err(DecodeError::Invalid);
-            }
-        }
-        typ::MUXED_ACCOUNT => {
-            if len != 40 + 3 {
-                return Err(DecodeError::Invalid);
-            }
-        }
-        typ::SIGNED_PAYLOAD => {
-            if len < 40 + 3 || len > 100 + 3 {
-                return Err(DecodeError::Invalid);
-            }
-        }
-        _ => {
-            return Err(DecodeError::Invalid);
-        }
-    }
-
     let (data_without_crc, crc_actual) = data.split_at(data.len() - 2);
     let crc_expect = checksum(data_without_crc);
     if crc_actual != crc_expect {
@@ -77,7 +52,5 @@ pub fn decode(input: &[u8], output: &mut [u8]) -> Result<u8, DecodeError> {
     }
 
     let payload = &data_without_crc[1..];
-
-    output[..payload.len()].copy_from_slice(payload);
-    Ok(ver)
+    Ok((ver, payload.to_vec()))
 }

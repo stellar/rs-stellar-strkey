@@ -12,8 +12,7 @@ rust-version = "1.67.0"
 
 [features]
 default = ["std"]
-std = ["alloc"]
-alloc = []
+std = []
 cli = ["std", "dep:clap"]
 
 [[bin]]

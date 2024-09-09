@@ -27,7 +27,6 @@ impl Debug for PrivateKey {
 }
 
 impl PrivateKey {
-    /// Returns the [String] representation of the [PrivateKey].
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let mut output = [0; typ::ENCODED_PRIVATE_KEY_LEN];
@@ -118,7 +117,6 @@ impl Debug for PublicKey {
 }
 
 impl PublicKey {
-    /// Returns the [String] representation of the [PublicKey].
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let mut output = [0; typ::ENCODED_PUBLIC_KEY_LEN];
@@ -221,7 +219,6 @@ impl Debug for MuxedAccount {
 }
 
 impl MuxedAccount {
-    /// Returns the [String] representation of the [MuxedAccount].
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let mut output = [0; typ::ENCODED_MUXED_ACCOUNT_LEN];
@@ -333,7 +330,7 @@ impl Debug for SignedPayload {
 }
 
 impl SignedPayload {
-    /// Returns the [String] representation of the [SignedPayload].
+    /// Returns the strkey string for the signed payload signer.
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let mut output = [0; typ::ENCODED_SIGNED_PAYLOAD_MAX_LEN];

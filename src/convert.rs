@@ -39,6 +39,7 @@ pub fn encode(ver: u8, input: &[u8], output: &mut [u8]) {
     d[1..=input.len()].copy_from_slice(input);
     let crc = checksum(&d[..=input.len()]);
     d[1 + input.len()..1 + input.len() + 2].copy_from_slice(&crc);
+    // TODO
     assert_eq!(encode_len(input.len()), output.len());
     data_encoding::BASE32_NOPAD.encode_mut(&d[..input.len() + 3], output);
 }
@@ -90,10 +91,8 @@ pub fn decode_len(input_len: usize) -> Result<usize, DecodeError> {
 /// // let v = decode(input, &mut output[..output_len]).unwrap();
 /// ```
 pub fn decode(input: &[u8], output: &mut [u8]) -> Result<u8, DecodeError> {
-    let len = decode_len(input.len())?;
-    assert_eq!(output.len(), len);
-
-    let len = 1 + len + 2;
+    let len = decode_len(input.len())? + 3;
+    assert_eq!(output.len(), len - 3);
     let mut decoded = [0u8; 1 + typ::MAX_PAYLOAD_LEN + 2];
     let _ = data_encoding::BASE32_NOPAD
         .decode_mut(input, &mut decoded[..len])

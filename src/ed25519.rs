@@ -350,7 +350,7 @@ impl SignedPayload {
     /// and [`typ::ENCODED_SIGNED_PAYLOAD_MAX_LEN`] bytes.
     pub fn encoded_len(&self) -> usize {
         let inner_payload_len = self.payload_len + (4 - self.payload_len % 4) % 4;
-        encode_len(typ::RAW_SIGNED_PAYLOAD_MAX_LEN + 4 + inner_payload_len)
+        encode_len(32 + 4 + inner_payload_len)
     }
 
     /// Encodes the [SignedPayload] into the provided buffer.
@@ -360,14 +360,13 @@ impl SignedPayload {
     /// If the output buffer's length is not equal to the encoded [SignedPayload] length.
     pub fn to_encoded(&self, output: &mut [u8]) {
         let mut payload = [0u8; typ::RAW_SIGNED_PAYLOAD_MAX_LEN];
-        let inner_payload_with_padding_len = self.payload_len + (4 - self.payload_len % 4) % 4;
-        payload[..typ::RAW_PUBLIC_KEY_LEN].copy_from_slice(&self.ed25519);
-        payload[typ::RAW_PUBLIC_KEY_LEN..typ::RAW_PUBLIC_KEY_LEN + 4]
-            .copy_from_slice(&(self.payload_len as u32).to_be_bytes());
-        payload[typ::RAW_PUBLIC_KEY_LEN + 4..].copy_from_slice(&self.payload);
+        let inner_payload_len = self.payload_len + (4 - self.payload_len % 4) % 4;
+        payload[..32].copy_from_slice(&self.ed25519);
+        payload[32..32 + 4].copy_from_slice(&(self.payload_len as u32).to_be_bytes());
+        payload[32 + 4..].copy_from_slice(&self.payload);
         encode(
             version::SIGNED_PAYLOAD_ED25519,
-            &payload[..typ::RAW_PUBLIC_KEY_LEN + 4 + inner_payload_with_padding_len],
+            &payload[..32 + 4 + inner_payload_len],
             output,
         );
     }

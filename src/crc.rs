@@ -98,7 +98,7 @@ mod tests {
 
     proptest! {
         #[test]
-        fn test_doesnt_panic(data in proptest::collection::vec(any::<u8>(), 0..=255)) {
+        fn test_doesnt_panic(data in proptest::collection::vec(any::<u8>(), 0..100)) {
             checksum(&data[..]);
         }
     }

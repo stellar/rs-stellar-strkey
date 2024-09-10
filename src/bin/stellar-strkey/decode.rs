@@ -3,11 +3,20 @@ use std::str::FromStr;
 use clap::Args;
 use stellar_strkey::DecodeError;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug)]
 pub enum Error {
-    #[error("decoding {0:?}: {1}")]
     Decode(String, DecodeError),
 }
+
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Error::Decode(s, inner) => f.write_fmt(format_args!("decoding {s:?}: {inner}")),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 #[derive(Args, Debug, Clone)]
 #[command()]

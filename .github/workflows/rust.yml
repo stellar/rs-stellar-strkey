@@ -44,10 +44,12 @@ jobs:
       # Rust will frequently add new warnings and checks.
       if: matrix.rust == 'msrv'
       run: echo RUSTFLAGS='-Dwarnings' >> $GITHUB_ENV
+    - run: cargo version
     - uses: stellar/binaries@v30
       with:
         name: cargo-hack
         version: 0.5.28
+    - run: cargo version
     - run: cargo-hack hack build --feature-powerset --target ${{ matrix.target }}
     - run: cargo-hack hack test --feature-powerset --target ${{ matrix.target }}
 

@@ -46,8 +46,12 @@ jobs:
       run: echo RUSTFLAGS='-Dwarnings' >> $GITHUB_ENV
     - run: rustup update
     - run: cargo version
-    - run: cargo build --target ${{ matrix.target }}
-    - run: cargo test --target ${{ matrix.target }}
+    - uses: stellar/binaries@v30
+      with:
+        name: cargo-hack
+        version: 0.5.28
+    - run: cargo-hack hack build --feature-powerset --target ${{ matrix.target }}
+    - run: cargo-hack hack test --feature-powerset --target ${{ matrix.target }}
 
   publish-dry-run:
     if: startsWith(github.head_ref, 'release/')

@@ -1,8 +1,6 @@
-use stellar_strkey::*;
-
 extern crate proptest;
-
-use proptest::prelude::*;
+use proptest::proptest;
+use stellar_strkey::*;
 
 #[test]
 fn test_valid_public_keys() {

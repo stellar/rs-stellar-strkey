@@ -1,4 +1,8 @@
-use std::{fmt::Debug, fmt::Display, str::FromStr};
+use alloc::{format, string::String};
+use core::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use crate::{
     convert::{decode, encode},
@@ -55,7 +59,7 @@ impl Strkey {
 }
 
 impl Display for Strkey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -72,7 +76,7 @@ impl FromStr for Strkey {
 pub struct PreAuthTx(pub [u8; 32]);
 
 impl Debug for PreAuthTx {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PreAuthTx(")?;
         write!(
             f,
@@ -107,7 +111,7 @@ impl PreAuthTx {
 }
 
 impl Display for PreAuthTx {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -124,7 +128,7 @@ impl FromStr for PreAuthTx {
 pub struct HashX(pub [u8; 32]);
 
 impl Debug for HashX {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "HashX(")?;
         write!(
             f,
@@ -159,7 +163,7 @@ impl HashX {
 }
 
 impl Display for HashX {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -176,7 +180,7 @@ impl FromStr for HashX {
 pub struct Contract(pub [u8; 32]);
 
 impl Debug for Contract {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Contract(")?;
         write!(
             f,
@@ -211,7 +215,7 @@ impl Contract {
 }
 
 impl Display for Contract {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }

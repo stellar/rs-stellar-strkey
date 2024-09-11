@@ -20,12 +20,12 @@ path = "src/bin/stellar-strkey/main.rs"
 required-features = ["cli"]
 doctest = false
 
-[build_dependencies]
+[build-dependencies]
 crate-git-revision = "0.0.6"
 
 [dev-dependencies]
 proptest = "1.0.0"
 
 [dependencies]
-data-encoding = "2.6.0"
+data-encoding = { version = "2.6.0", default-features = false, features = ["alloc"] }
 clap = { version = "4.2.4", default-features = false, features = ["std", "derive", "usage", "help"], optional = true }

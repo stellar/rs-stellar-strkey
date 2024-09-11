@@ -1,8 +1,4 @@
-#![no_std]
-
-extern crate alloc;
 extern crate proptest;
-use alloc::{format, string::String, vec, vec::Vec};
 use proptest::proptest;
 use stellar_strkey::*;
 

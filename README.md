@@ -16,7 +16,7 @@ To use the library, include in your toml:
 stellar-strkey = "..."
 ```
 
-This crate can be used in `no_std` environments. 
+This crate does not depend on the `std` crate and can be used in `no_std` environments.
 However, please note that it relies on the [`alloc`](https://docs.rust-embedded.org/book/collections/#using-alloc) crate for certain types such as `Vec`.
 
 #### CLI

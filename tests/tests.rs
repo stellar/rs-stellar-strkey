@@ -1,13 +1,10 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 
-#[cfg(not(feature = "std"))]
 extern crate alloc;
 extern crate proptest;
+use alloc::{format, string::String, vec, vec::Vec};
 use proptest::proptest;
 use stellar_strkey::*;
-
-#[cfg(not(feature = "std"))]
-use alloc::{format, string::String, vec, vec::Vec};
 
 #[test]
 fn test_valid_public_keys() {

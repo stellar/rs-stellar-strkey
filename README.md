@@ -16,7 +16,8 @@ To use the library, include in your toml:
 stellar-strkey = "..."
 ```
 
-By default, the library uses the standard library (std). If you want to use it in a `no_std` environment, you need to disable the `default` features and enable the `alloc` crate.
+This crate can be used in `no_std` environments. 
+However, please note that it relies on the [`alloc`](https://docs.rust-embedded.org/book/collections/#using-alloc) crate for certain types such as `Vec`.
 
 #### CLI
 

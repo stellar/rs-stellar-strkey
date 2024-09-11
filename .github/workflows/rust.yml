@@ -44,7 +44,7 @@ jobs:
       # Rust will frequently add new warnings and checks.
       if: matrix.rust == 'msrv'
       run: echo RUSTFLAGS='-Dwarnings' >> $GITHUB_ENV
-    - run: cargo update
+    - run: rustup update
     - run: cargo version
     - uses: stellar/binaries@v30
       with:

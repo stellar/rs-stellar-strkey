@@ -443,5 +443,21 @@ fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
     let strkey_result = Strkey::from_string(s).unwrap();
     assert_eq!(&strkey_result, strkey);
     let str_result = format!("{strkey}");
-    assert_eq!(s, str_result)
+    assert_eq!(s, str_result);
+    #[cfg(feature = "serde_with")]
+    test_serde_with(s, strkey);
+}
+
+#[cfg(feature = "serde_with")]
+fn test_serde_with(s: &str, strkey: &Strkey) {
+    #[derive(Debug, serde::Serialize, serde::Deserialize)]
+    struct StrKey {
+        strkey: Strkey,
+    }
+    let str_key_s = toml::to_string(&StrKey {
+        strkey: strkey.clone(),
+    })
+    .unwrap();
+    let str_key: StrKey = toml::from_str(&str_key_s).unwrap();
+    assert_eq!(strkey, &str_key.strkey);
 }

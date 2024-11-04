@@ -13,6 +13,7 @@ rust-version = "1.81.0"
 [features]
 default = []
 cli = ["dep:clap"]
+serde_with = ["dep:serde_with"]
 
 [[bin]]
 name = "stellar-strkey"
@@ -24,8 +25,11 @@ doctest = false
 crate-git-revision = "0.0.6"
 
 [dev-dependencies]
-proptest = "1.0.0"
+proptest ="1.0.0"
+serde = { version = "1.0.214", features = ["derive"] }
+toml = "0.8.19"
 
 [dependencies]
 data-encoding = { version = "2.6.0", default-features = false, features = ["alloc"] }
 clap = { version = "4.2.4", default-features = false, features = ["std", "derive", "usage", "help"], optional = true }
+serde_with = { version = "3.11.0", optional = true }

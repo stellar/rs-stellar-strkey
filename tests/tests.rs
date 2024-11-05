@@ -445,11 +445,11 @@ fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
     let str_result = format!("{strkey}");
     assert_eq!(s, str_result);
     #[cfg(feature = "serde_with")]
-    test_serde_with(s, strkey);
+    test_serde_with(strkey);
 }
 
 #[cfg(feature = "serde_with")]
-fn test_serde_with(s: &str, strkey: &Strkey) {
+fn test_serde_with(strkey: &Strkey) {
     #[derive(Debug, serde::Serialize, serde::Deserialize)]
     struct StrKey {
         strkey: Strkey,

@@ -4,6 +4,10 @@ export RUSTFLAGS=-Dwarnings
 
 test:
 	cargo test
+	cargo +nightly fuzz run fuzz_roundtrip -- -runs=0
+
+fuzz:
+	cargo +nightly fuzz run fuzz_roundtrip -j 4
 
 build:
 	cargo build
@@ -21,3 +25,5 @@ fmt:
 
 clean:
 	cargo clean
+
+.PHONY: all test fuzz build check install fmt clean

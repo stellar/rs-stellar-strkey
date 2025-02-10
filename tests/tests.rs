@@ -452,7 +452,25 @@ fn test_valid_liquidity_pool() {
 
 #[test]
 fn test_invalid_liquidity_pool() {
-    // TODO: Add invalid liquidity pool tests
+    // Invalid length (Liquidity pool should be 32 bytes, not 5).
+    let mut r: Result<Strkey, _> = "LAAAAAAAADLH2".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Invalid length (congruent to 1 mod 8).
+    r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Invalid length (base-32 decoding should yield 35 bytes, not 36).
+    r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAGPZA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Invalid algorithm (low 3 bits of version byte are 7).
+    r = "L47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUSV4".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Invalid length due to in stream padding bytes
+    r = "L=A7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJN".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 }
 
 #[test]

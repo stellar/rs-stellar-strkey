@@ -42,6 +42,10 @@ fn test_invalid_public_keys() {
     // Invalid algorithm (low 3 bits of version byte are 7).
     r = "G47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVP2I".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Invalid length due to in stream padding bytes
+    r = "G=3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 }
 
 #[test]

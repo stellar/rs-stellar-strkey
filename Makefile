@@ -4,6 +4,7 @@ export RUSTFLAGS=-Dwarnings
 
 test:
 	cargo test
+	cargo test --features serde
 	cargo +nightly fuzz run fuzz_roundtrip -- -runs=0
 
 fuzz:
@@ -11,10 +12,12 @@ fuzz:
 
 build:
 	cargo build
+	cargo build --features serde
 	cargo build --features cli
 
 check:
 	cargo check --all-targets
+	cargo check --all-targets --features serde
 	cargo check --all-targets --features cli
 
 install:

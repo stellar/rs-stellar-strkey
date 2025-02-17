@@ -200,6 +200,16 @@ fn test_valid_signed_payload_ed25519() {
     // Where:
     // - Unused bits are calculated as (5 - Bits % 5) % 5
     //
+    // Each character in base32 encodes 5-bits of data, but the last character
+    // may encode fewer bits. For example, in the the 1-bit case below, only
+    // 4-bits of the last character end up in the decoded data. The letter S in
+    // the below example is the 18th character in the alphabet, which in binary
+    // is 10010. The decoded binary for the 1-bit example below has its last
+    // 8-bits is 01101001, of which the last 4-bits are derived from the S and
+    // its trailing 1-bit does not appear in the decoded data. Any unused bits
+    // must be zero otherwise the encoding would not roundtrip into the same
+    // value.
+    //
     // Examples using key:
     let ed25519 = [
         0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5,
@@ -483,6 +493,29 @@ fn test_valid_claimable_balance() {
             0x05, 0xc7, 0xb1, 0x03,
         ])),
     );
+
+    // Unused trailing bits are zero
+    // A claimable balance with a 1 byte version, 1 byte sub-type, 32 byte hash,
+    // 2 byte crc, has a fixed number of unused tail bits.
+    //
+    // |Version|Sub|Hash|CRC|Total|Bits|Unused|
+    // |------:|--:|---:|--:|----:|---:|-----:|
+    // |      1|  1|  32|  2|   36| 288|     2|
+    //
+    // Where:
+    // - Unused bits are calculated as (5 - Bits % 5) % 5
+    //
+    // Each character in base32 encodes 5-bits of data, but the last character
+    // may encode fewer bits. For example, in the one case affecting claimable
+    // balances below, only 3-bits of the last character end up in the decoded
+    // data. The letter U in the below example is the 20th character in the
+    // alphabet, which in binary is 10100. The decoded binary for the below
+    // example's last 8-bits is 10011101, of which the last 3-bits is derived
+    // from the U and its trailing 2-bits do not appear in the decoded data. Any
+    // unused bits must be zero otherwise the encoding would not roundtrip into
+    // the same value.
+    //
+    // - 2 unused bits (U is 10100 in base32, with the two last bits being unused):
     assert_convert_roundtrip(
         "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TU",
         &Strkey::ClaimableBalance(ClaimableBalance::V0([
@@ -491,33 +524,44 @@ fn test_valid_claimable_balance() {
             0xfc, 0x7f, 0xe8, 0x9a,
         ])),
     );
-    // TODO: Trailing bits must be zero.
 }
 
 #[test]
 fn test_invalid_claimable_balances() {
-    // Invalid length (Liquidity pool should be 32 bytes, not 5).
-    let mut r: Result<Strkey, _> = "LAAAAAAAADLH2".parse();
+    // Invalid length (Claimable balance should be 1+32 bytes, not 6).
+    let mut r: Result<Strkey, _> = "BAAAAAAAAAAK3EY".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
-    // Invalid length (congruent to 1 mod 8).
-    r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNA".parse();
+    // TODO: Invalid length (congruent to 1 mod 8).
+    r = "TODO".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (base-32 decoding should yield 35 bytes, not 36).
-    r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAGPZA".parse();
+    r = "BA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUADTYY".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid algorithm (low 3 bits of version byte are 7).
-    r = "L47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUSV4".parse();
+    r = "B47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVA4D".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length due to in stream padding bytes
-    r = "L=A7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJN".parse();
+    r = "B=AAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TU".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
-    // TODO: Test the discrimnant being non-zero values.
-    // TODO: Trailing bits must be zero.
+    // TODO: Test the sub-type discrimnant being non-zero values.
+
+    // Unused trailing bits must be zero (see valid test case for comparisons)
+    // - 2 unused bits:
+    //   101__ U << The last character should be U, because the last two bits are unused in the decoded data, and in
+    //   10101 V << the base32 alphabet 10100 maps to Y. 10101 maps to V.
+    r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TV".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+    //   10110 W << 10110 maps to W.
+    r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TW".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+    //   10111 X << 10111 maps to X.
+    r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TX".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 }
 
 proptest! {

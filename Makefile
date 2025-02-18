@@ -24,7 +24,7 @@ fuzz-coverage:
 		> lcov.info
 	@$(RUST_LLVM_COV) report \
 		-instr-profile=fuzz/coverage/fuzz_roundtrip/coverage.profdata \
-        -object target/$(RUST_TARGET_TRIPLE)/coverage/$(RUST_TARGET_TRIPLE)/release/fuzz_roundtrip \
+		-object target/$(RUST_TARGET_TRIPLE)/coverage/$(RUST_TARGET_TRIPLE)/release/fuzz_roundtrip \
 		--ignore-filename-regex ".cargo/registry"
 	@echo "View the coverage in lcov.info in VSCode using the Coverage Gutters extension."
 

@@ -20,6 +20,11 @@ func main() {
 
 	input := os.Args[1]
 	fmt.Printf("Input: %s\n", input)
+	fmt.Printf("Len: %v\n", len(input))
+	fmt.Printf("Congruent 1 mod 8: %v\n", (len(input)%8) == (1%8))
+	fmt.Printf("Congruent 3 mod 8: %v\n", (len(input)%8) == (3%8))
+	fmt.Printf("Congruent 6 mod 8: %v\n", (len(input)%8) == (6%8))
+
 	fmt.Printf("Encoded (hex):\n")
 	for i := 0; i < len(input); i += 8 {
 		end := i + 8
@@ -58,6 +63,7 @@ func main() {
 		fmt.Printf("Error decoding: %v\n", err)
 		return
 	}
+	fmt.Printf("Decoded: %v (len %v)\n", decoded, len(decoded))
 	fmt.Printf("Decoded (hex):\n")
 	for i := 0; i < len(decoded); i += 8 {
 		end := i + 8

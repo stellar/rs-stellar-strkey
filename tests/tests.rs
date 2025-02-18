@@ -469,6 +469,12 @@ fn test_invalid_liquidity_pool() {
     // Invalid length (congruent to 1 mod 8).
     r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNA".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
+    // Invalid length (congruent to 3 mod 8).
+    r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNAAA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+    // Invalid length (congruent to 6 mod 8).
+    r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNAAAAAA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (base-32 decoding should yield 35 bytes, not 36).
     r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAGPZA".parse();
@@ -532,8 +538,21 @@ fn test_invalid_claimable_balances() {
     let mut r: Result<Strkey, _> = "BAAAAAAAAAAK3EY".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
-    // TODO: Invalid length (congruent to 1 mod 8).
-    r = "TODO".parse();
+    // Invalid length inputs below cannot be decoded into valid claimable
+    // balances, even with a permissive base32 decoder, because the payloads
+    // they decode to are not the correct length for a claimable balance.
+    // None-the-less they are included here for completeness because they are
+    // still a useful test vector to ensure that decoders with decoding strkeys
+    // with the B prefix still error on these cases. For some other strkey types
+    // the payloads can be valid.
+    // Invalid length (congruent to 3 mod 8).
+    r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+    // Invalid length (congruent to 6 mod 8).
+    r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEAAAA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+    // Invalid length (congruent to 1 mod 8).
+    r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEAAAAAAA".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (base-32 decoding should yield 35 bytes, not 36).
@@ -548,12 +567,12 @@ fn test_invalid_claimable_balances() {
     r = "B=AAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TU".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
-    // TODO: Test the sub-type discrimnant being non-zero values.
-
     // Unused trailing bits must be zero (see valid test case for comparisons)
     // - 2 unused bits:
-    //   101__ U << The last character should be U, because the last two bits are unused in the decoded data, and in
-    //   10101 V << the base32 alphabet 10100 maps to Y. 10101 maps to V.
+    //   101__ U << The last character should be U, because the last two bits
+    //              are unused in the decoded data, and in the base32 alphabet
+    //              10100 maps to U.
+    //   10101 V << 10101 maps to V.
     r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TV".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
     //   10110 W << 10110 maps to W.
@@ -561,6 +580,11 @@ fn test_invalid_claimable_balances() {
     assert_eq!(r, Err(DecodeError::Invalid));
     //   10111 X << 10111 maps to X.
     r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TX".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Invalid type of claimable balance, only V0 (0x00) is supported. This key
+    // contains 0x01.
+    r = "BAAT6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGXACA".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 }
 

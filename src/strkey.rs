@@ -12,6 +12,10 @@ use crate::{
 };
 
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
     PrivateKeyEd25519(ed25519::PrivateKey),
@@ -73,6 +77,10 @@ impl FromStr for Strkey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct PreAuthTx(pub [u8; 32]);
 
 impl Debug for PreAuthTx {
@@ -125,6 +133,10 @@ impl FromStr for PreAuthTx {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct HashX(pub [u8; 32]);
 
 impl Debug for HashX {
@@ -177,6 +189,10 @@ impl FromStr for HashX {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct Contract(pub [u8; 32]);
 
 impl Debug for Contract {

@@ -11,6 +11,10 @@ use core::{
 };
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {
@@ -66,6 +70,10 @@ impl FromStr for PrivateKey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct PublicKey(pub [u8; 32]);
 
 impl Debug for PublicKey {
@@ -121,6 +129,10 @@ impl FromStr for PublicKey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct MuxedAccount {
     pub ed25519: [u8; 32],
     pub id: u64,
@@ -192,6 +204,10 @@ impl FromStr for MuxedAccount {
 ///
 /// The payload must not have a size larger than u32::MAX.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct SignedPayload {
     pub ed25519: [u8; 32],
     pub payload: Vec<u8>,

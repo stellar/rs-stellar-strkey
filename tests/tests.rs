@@ -602,9 +602,16 @@ proptest! {
     }
 }
 
-fn assert_convert_roundtrip(s: &str, strkey: &Strkey) {
+fn assert_convert_roundtrip(s: &'static str, strkey: &Strkey) {
+    // Check that the string can be parsed into the expected Strkey.
     let strkey_result = Strkey::from_string(s).unwrap();
     assert_eq!(&strkey_result, strkey);
+
+    // Check that the Strkey can be converted into the original string.
     let str_result = format!("{strkey}");
-    assert_eq!(s, str_result)
+    assert_eq!(s, str_result);
+
+    // Check that the Strkey roundtrip string conversion works via serde.
+    #[cfg(feature = "serde")]
+    serde_test::assert_tokens(strkey, &[serde_test::Token::Str(s)]);
 }

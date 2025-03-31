@@ -52,6 +52,8 @@ jobs:
         version: 0.5.28
     - run: cargo-hack hack build --feature-powerset --target ${{ matrix.target }}
     - run: cargo-hack hack test --feature-powerset --target ${{ matrix.target }}
+    - name: Check no diffs exist
+      run: git add -N . && git diff HEAD --exit-code
 
   publish-dry-run:
     if: startsWith(github.head_ref, 'release/')
@@ -82,3 +84,5 @@ jobs:
         for target in $(cargo fuzz list); do
           cargo fuzz run $target -- -runs=0
         done
+    - name: Check no diffs exist
+      run: git add -N . && git diff HEAD --exit-code

@@ -30,7 +30,8 @@ impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
         let strkey = stellar_strkey::Strkey::from_str(&self.strkey)
             .map_err(|e| Error::Decode(self.strkey.clone(), e))?;
-        println!("{strkey:?}");
+        let json = serde_json::to_string_pretty(&strkey).unwrap();
+        println!("{json}");
         Ok(())
     }
 }

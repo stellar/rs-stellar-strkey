@@ -15,7 +15,16 @@ use core::{
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct PrivateKey(pub [u8; 32]);
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct PrivateKey(
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
+);
 
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -74,7 +83,16 @@ impl FromStr for PrivateKey {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct PublicKey(pub [u8; 32]);
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
+pub struct PublicKey(
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
+);
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -133,7 +151,15 @@ impl FromStr for PublicKey {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
 pub struct MuxedAccount {
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]
     pub ed25519: [u8; 32],
     pub id: u64,
 }
@@ -208,8 +234,17 @@ impl FromStr for MuxedAccount {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_with::serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case")
+)]
 pub struct SignedPayload {
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]
     pub ed25519: [u8; 32],
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]
     pub payload: Vec<u8>,
 }
 

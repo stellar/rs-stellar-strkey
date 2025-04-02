@@ -20,7 +20,6 @@ use crate::{
     feature = "cli",
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
-    serde(tag = "type", content = "value"),
 )]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
@@ -355,7 +354,6 @@ impl FromStr for LiquidityPool {
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
-    serde(tag = "type", content = "value"),
 )]
 pub enum ClaimableBalance {
     V0(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] [u8; 32]),

@@ -1,7 +1,7 @@
 mod decode;
 mod encode;
-mod zero;
 mod version;
+mod zero;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use std::{error::Error, fmt::Debug};

@@ -1,5 +1,7 @@
 use clap::{Args, ValueEnum};
-use stellar_strkey::{ed25519, LiquidityPool, Strkey, ClaimableBalance, Contract, HashX, PreAuthTx};
+use stellar_strkey::{
+    ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey,
+};
 
 #[derive(Args, Debug, Clone)]
 #[command()]
@@ -52,7 +54,9 @@ impl Cmd {
             }
             StrkeyType::Contract => Strkey::Contract(Contract([0; 32])),
             StrkeyType::LiquidityPool => Strkey::LiquidityPool(LiquidityPool([0; 32])),
-            StrkeyType::ClaimableBalanceV0 => Strkey::ClaimableBalance(ClaimableBalance::V0([0; 32])),
+            StrkeyType::ClaimableBalanceV0 => {
+                Strkey::ClaimableBalance(ClaimableBalance::V0([0; 32]))
+            }
         };
         match self.output {
             Output::Strkey => println!("{strkey}"),

@@ -7,3 +7,5 @@ pub const PRE_AUTH_TX: u8 = typ::PRE_AUTH_TX;
 pub const HASH_X: u8 = typ::HASH_X;
 pub const SIGNED_PAYLOAD_ED25519: u8 = typ::SIGNED_PAYLOAD | ED25519;
 pub const CONTRACT: u8 = typ::CONTRACT;
+pub const LIQUIDITY_POOL: u8 = typ::LIQUIDITY_POOL;
+pub const CLAIMABLE_BALANCE: u8 = typ::CLAIMABLE_BALANCE;

@@ -9,7 +9,7 @@ jobs:
 
   complete:
     if: always()
-    needs: [fmt, build-and-test, publish-dry-run]
+    needs: [fmt, build-and-test, publish-dry-run, fuzz-corpus]
     runs-on: ubuntu-latest
     steps:
     - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
@@ -46,8 +46,14 @@ jobs:
       run: echo RUSTFLAGS='-Dwarnings' >> $GITHUB_ENV
     - run: rustup update
     - run: cargo version
-    - run: cargo build --target ${{ matrix.target }}
-    - run: cargo test --target ${{ matrix.target }}
+    - uses: stellar/binaries@v30
+      with:
+        name: cargo-hack
+        version: 0.5.28
+    - run: cargo-hack hack build --feature-powerset --target ${{ matrix.target }}
+    - run: cargo-hack hack test --feature-powerset --target ${{ matrix.target }}
+    - name: Check no diffs exist
+      run: git add -N . && git diff HEAD --exit-code
 
   publish-dry-run:
     if: startsWith(github.head_ref, 'release/')
@@ -60,3 +66,23 @@ jobs:
     with:
       runs-on: ${{ matrix.os }}
       target: ${{ matrix.target }}
+
+  fuzz-corpus:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: stellar/actions/rust-cache@main
+    - uses: stellar/binaries@v33
+      with:
+        name: cargo-fuzz
+        version: 0.12.0
+    - run: rustup install nightly
+    - run: rustup default nightly
+    - name: Run fuzz corpus
+      run: |
+        cd fuzz
+        for target in $(cargo fuzz list); do
+          cargo fuzz run $target -- -runs=0
+        done
+    - name: Check no diffs exist
+      run: git add -N . && git diff HEAD --exit-code

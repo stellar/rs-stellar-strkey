@@ -1,19 +1,24 @@
-use std::{
-    fmt::{Debug, Display},
-    str::FromStr,
-};
-
 use crate::{
     convert::{decode, encode},
     error::DecodeError,
     version,
 };
 
+use alloc::{format, string::String, vec, vec::Vec};
+use core::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PrivateKey(")?;
         write!(
             f,
@@ -51,7 +56,7 @@ impl PrivateKey {
 }
 
 impl Display for PrivateKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -65,10 +70,14 @@ impl FromStr for PrivateKey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct PublicKey(pub [u8; 32]);
 
 impl Debug for PublicKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PublicKey(")?;
         write!(
             f,
@@ -106,7 +115,7 @@ impl PublicKey {
 }
 
 impl Display for PublicKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -120,13 +129,17 @@ impl FromStr for PublicKey {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct MuxedAccount {
     pub ed25519: [u8; 32],
     pub id: u64,
 }
 
 impl Debug for MuxedAccount {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "MuxedAccount(")?;
         write!(
             f,
@@ -174,7 +187,7 @@ impl MuxedAccount {
 }
 
 impl Display for MuxedAccount {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
@@ -191,13 +204,17 @@ impl FromStr for MuxedAccount {
 ///
 /// The payload must not have a size larger than u32::MAX.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct SignedPayload {
     pub ed25519: [u8; 32],
     pub payload: Vec<u8>,
 }
 
 impl Debug for SignedPayload {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "MuxedAccount(")?;
         write!(
             f,
@@ -255,21 +272,55 @@ impl SignedPayload {
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
         }
+
+        // Decode ed25519 public key. 32 bytes.
+        let mut offset = 0;
+        let ed25519: [u8; 32] = payload
+            .get(offset..offset + 32)
+            .ok_or(DecodeError::Invalid)?
+            .try_into()
+            .map_err(|_| DecodeError::Invalid)?;
+        offset += 32;
+
+        // Decode inner payload length. 4 bytes.
         let inner_payload_len = u32::from_be_bytes(
-            (&payload[32..32 + 4])
+            payload
+                .get(offset..offset + 4)
+                .ok_or(DecodeError::Invalid)?
                 .try_into()
                 .map_err(|_| DecodeError::Invalid)?,
         );
+        offset += 4;
+
+        // Check inner payload length is inside accepted range.
         if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
             return Err(DecodeError::Invalid);
         }
-        if (inner_payload_len + (4 - inner_payload_len % 4) % 4) as usize != payload_len - 32 - 4 {
+
+        // Decode inner payload.
+        let inner_payload = payload
+            .get(offset..offset + inner_payload_len as usize)
+            .ok_or(DecodeError::Invalid)?;
+        offset += inner_payload_len as usize;
+
+        // Calculate padding at end of inner payload. 0-3 bytes.
+        let padding_len = (4 - inner_payload_len % 4) % 4;
+
+        // Decode padding.
+        let padding = payload
+            .get(offset..offset + padding_len as usize)
+            .ok_or(DecodeError::Invalid)?;
+        offset += padding_len as usize;
+
+        // Check padding is all zeros.
+        if padding.iter().any(|b| *b != 0) {
             return Err(DecodeError::Invalid);
         }
-        let ed25519 = (&payload[0..32])
-            .try_into()
-            .map_err(|_| DecodeError::Invalid)?;
-        let inner_payload = &payload[32 + 4..32 + 4 + inner_payload_len as usize];
+
+        // Check that entire payload consumed.
+        if offset != payload_len {
+            return Err(DecodeError::Invalid);
+        }
 
         Ok(Self {
             ed25519,
@@ -287,7 +338,7 @@ impl SignedPayload {
 }
 
 impl Display for SignedPayload {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }

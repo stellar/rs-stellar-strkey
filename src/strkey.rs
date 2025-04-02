@@ -11,10 +11,19 @@ use crate::{
     version,
 };
 
+#[cfg(feature = "cli")]
+use serde_with::serde_as;
+
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[cfg_attr(
+    feature = "cli",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case"),
+    serde(tag = "type", content = "value"),
 )]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
@@ -91,7 +100,14 @@ impl FromStr for Strkey {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct PreAuthTx(pub [u8; 32]);
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case"),
+)]
+pub struct PreAuthTx(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
 
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -147,7 +163,14 @@ impl FromStr for PreAuthTx {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct HashX(pub [u8; 32]);
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case"),
+)]
+pub struct HashX(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
 
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -203,7 +226,14 @@ impl FromStr for HashX {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-pub struct Contract(pub [u8; 32]);
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case"),
+)]
+pub struct Contract(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
 
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -255,7 +285,18 @@ impl FromStr for Contract {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct LiquidityPool(pub [u8; 32]);
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case"),
+)]
+pub struct LiquidityPool(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
 
 impl Debug for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -307,8 +348,20 @@ impl FromStr for LiquidityPool {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+#[cfg_attr(
+    feature = "cli",
+    cfg_eval::cfg_eval,
+    serde_as,
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "snake_case"),
+    serde(tag = "type", content = "value"),
+)]
 pub enum ClaimableBalance {
-    V0([u8; 32]),
+    V0(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] [u8; 32]),
 }
 
 impl Debug for ClaimableBalance {

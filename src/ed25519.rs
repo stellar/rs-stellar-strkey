@@ -10,9 +10,6 @@ use core::{
     str::FromStr,
 };
 
-#[cfg(feature = "cli")]
-use serde_with::serde_as;
-
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -21,7 +18,7 @@ use serde_with::serde_as;
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]
@@ -87,7 +84,7 @@ impl FromStr for PrivateKey {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]
@@ -153,7 +150,7 @@ impl FromStr for PublicKey {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]
@@ -236,7 +233,7 @@ impl FromStr for MuxedAccount {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]

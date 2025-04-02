@@ -11,9 +11,6 @@ use crate::{
     version,
 };
 
-#[cfg(feature = "cli")]
-use serde_with::serde_as;
-
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -103,7 +100,7 @@ impl FromStr for Strkey {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]
@@ -166,7 +163,7 @@ impl FromStr for PreAuthTx {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]
@@ -229,7 +226,7 @@ impl FromStr for HashX {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]
@@ -292,7 +289,7 @@ impl FromStr for Contract {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
 )]
@@ -355,7 +352,7 @@ impl FromStr for LiquidityPool {
 #[cfg_attr(
     feature = "cli",
     cfg_eval::cfg_eval,
-    serde_as,
+    serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
     serde(rename_all = "snake_case"),
     serde(tag = "type", content = "value"),

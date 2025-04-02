@@ -255,6 +255,10 @@ impl FromStr for Contract {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub struct LiquidityPool(pub [u8; 32]);
 
 impl Debug for LiquidityPool {
@@ -307,6 +311,10 @@ impl FromStr for LiquidityPool {
 }
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub enum ClaimableBalance {
     V0([u8; 32]),
 }

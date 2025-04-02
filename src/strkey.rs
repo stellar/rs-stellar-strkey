@@ -19,7 +19,7 @@ use crate::{
 #[cfg_attr(
     feature = "cli",
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
@@ -101,9 +101,11 @@ impl FromStr for Strkey {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
-pub struct PreAuthTx(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
+pub struct PreAuthTx(
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
+);
 
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -164,7 +166,7 @@ impl FromStr for PreAuthTx {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
 pub struct HashX(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
 
@@ -227,9 +229,11 @@ impl FromStr for HashX {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
-pub struct Contract(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
+pub struct Contract(
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
+);
 
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -290,9 +294,11 @@ impl FromStr for Contract {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
-pub struct LiquidityPool(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
+pub struct LiquidityPool(
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
+);
 
 impl Debug for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -353,7 +359,7 @@ impl FromStr for LiquidityPool {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
 pub enum ClaimableBalance {
     V0(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] [u8; 32]),

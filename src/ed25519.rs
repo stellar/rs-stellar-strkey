@@ -20,9 +20,11 @@ use core::{
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
-pub struct PrivateKey(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
+pub struct PrivateKey(
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
+);
 
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -86,9 +88,11 @@ impl FromStr for PrivateKey {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
-pub struct PublicKey(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
+pub struct PublicKey(
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
+);
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -152,10 +156,10 @@ impl FromStr for PublicKey {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
 pub struct MuxedAccount {
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] 
+    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]
     pub ed25519: [u8; 32],
     pub id: u64,
 }
@@ -235,7 +239,7 @@ impl FromStr for MuxedAccount {
     cfg_eval::cfg_eval,
     serde_with::serde_as,
     derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case"),
+    serde(rename_all = "snake_case")
 )]
 pub struct SignedPayload {
     #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]

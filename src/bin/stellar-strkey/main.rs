@@ -1,5 +1,7 @@
 mod decode;
+mod encode;
 mod version;
+mod zero;
 
 use clap::{CommandFactory, Parser, Subcommand};
 use std::{error::Error, fmt::Debug};
@@ -24,6 +26,10 @@ struct Root {
 enum Cmd {
     /// Decode strkey
     Decode(decode::Cmd),
+    /// Encode strkey
+    Encode(encode::Cmd),
+    /// Generate the zero strkey
+    Zero(zero::Cmd),
     /// Print version information
     Version,
 }
@@ -32,6 +38,8 @@ fn run() -> Result<(), Box<dyn Error>> {
     let root = Root::parse();
     match root.cmd {
         Cmd::Decode(c) => c.run()?,
+        Cmd::Encode(c) => c.run()?,
+        Cmd::Zero(c) => c.run(),
         Cmd::Version => version::Cmd::run(),
     }
     Ok(())

@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
+use crate::{DecodeError, Strkey};
 use clap::Args;
-use crate::{Strkey, DecodeError};
 
 #[derive(Debug)]
 pub enum Error {
@@ -28,8 +28,8 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
-        let strkey = Strkey::from_str(&self.strkey)
-            .map_err(|e| Error::Decode(self.strkey.clone(), e))?;
+        let strkey =
+            Strkey::from_str(&self.strkey).map_err(|e| Error::Decode(self.strkey.clone(), e))?;
         let json = serde_json::to_string_pretty(&strkey).unwrap();
         println!("{json}");
         Ok(())

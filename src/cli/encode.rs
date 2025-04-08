@@ -27,8 +27,7 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
-        let strkey: Strkey =
-            serde_json::from_str(&self.json).map_err(Error::Json)?;
+        let strkey: Strkey = serde_json::from_str(&self.json).map_err(Error::Json)?;
         println!("{strkey}");
         Ok(())
     }

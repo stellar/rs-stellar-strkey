@@ -1,7 +1,5 @@
+use crate::{ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey};
 use clap::{Args, ValueEnum};
-use crate::{
-    ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey,
-};
 
 #[derive(Args, Debug, Clone)]
 #[command()]

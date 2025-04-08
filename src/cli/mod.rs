@@ -4,7 +4,7 @@ pub mod version;
 pub mod zero;
 
 use clap::{Parser, Subcommand};
-use std::{error::Error, ffi::OsString, fmt::Debug, boxed::Box};
+use std::{boxed::Box, error::Error, ffi::OsString, fmt::Debug};
 
 #[derive(Parser, Debug, Clone)]
 #[command(

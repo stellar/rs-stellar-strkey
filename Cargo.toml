@@ -12,7 +12,7 @@ rust-version = "1.81.0"
 
 [features]
 default = []
-cli = ["dep:clap", "dep:serde", "dep:cfg_eval", "dep:serde_with", "serde_with/hex", "dep:serde_json"]
+cli = ["dep:clap", "dep:serde", "dep:cfg_eval", "dep:serde_with", "serde_with/hex", "dep:serde_json", "dep:thiserror"]
 serde = ["dep:serde_with"]
 
 [[bin]]
@@ -35,3 +35,4 @@ serde_with = { version = "3.11.0", optional = true, features = ["hex"] }
 serde = { version = "1", optional = true, features = ["derive"] }
 serde_json = { version = "1", optional = true }
 cfg_eval = { version = "0.1.2", optional = true }
+thiserror = { version = "1.0", optional = true }

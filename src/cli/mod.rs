@@ -4,7 +4,7 @@ pub mod version;
 pub mod zero;
 
 use clap::{Parser, Subcommand};
-use std::{boxed::Box, error::Error, ffi::OsString, fmt::Debug};
+use std::{ffi::OsString, fmt::Debug};
 
 #[derive(Parser, Debug, Clone)]
 #[command(
@@ -40,7 +40,7 @@ impl Root {
     /// ## Errors
     ///
     /// If the root command is configured with state that is invalid.
-    pub fn run(&self) -> Result<(), Box<dyn Error>> {
+    pub fn run(&self) -> Result<(), Error> {
         match &self.cmd {
             Cmd::Decode(c) => c.run()?,
             Cmd::Encode(c) => c.run()?,
@@ -51,12 +51,22 @@ impl Root {
     }
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error(transparent)]
+    Clap(#[from] clap::Error),
+    #[error(transparent)]
+    Decode(#[from] decode::Error),
+    #[error(transparent)]
+    Encode(#[from] encode::Error),
+}
+
 /// Run the CLI with the given args.
 ///
 /// ## Errors
 ///
 /// If the input cannot be parsed.
-pub fn run<I, T>(args: I) -> Result<(), Box<dyn Error>>
+pub fn run<I, T>(args: I) -> Result<(), Error>
 where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,

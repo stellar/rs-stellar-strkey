@@ -1,5 +1,5 @@
 use clap::{Args, ValueEnum};
-use stellar_strkey::{
+use crate::{
     ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey,
 };
 

@@ -1,4 +1,4 @@
-#![no_std]
+#![cfg_attr(not(feature = "cli"), no_std)]
 extern crate alloc;
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
@@ -21,3 +21,6 @@ mod version;
 
 pub use error::*;
 pub use strkey::*;
+
+#[cfg(feature = "cli")]
+pub mod cli;

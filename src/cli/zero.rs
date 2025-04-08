@@ -1,7 +1,5 @@
+use crate::{ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey};
 use clap::{Args, ValueEnum};
-use stellar_strkey::{
-    ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey,
-};
 
 #[derive(Args, Debug, Clone)]
 #[command()]
@@ -15,7 +13,7 @@ pub struct Cmd {
 }
 
 #[derive(Clone, Debug, ValueEnum)]
-#[clap(rename_all = "snake_case")]
+#[value(rename_all = "snake_case")]
 pub enum StrkeyType {
     PublicKeyEd25519,
     // PrivateKeyEd25519 is intentionally omitted to reduce the chance someone accidentally thinks

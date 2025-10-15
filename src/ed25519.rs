@@ -250,7 +250,7 @@ pub struct SignedPayload {
 
 impl Debug for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "MuxedAccount(")?;
+        write!(f, "SignedPayload(")?;
         write!(
             f,
             "{}",

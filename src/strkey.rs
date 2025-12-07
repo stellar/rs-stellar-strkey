@@ -296,7 +296,7 @@ mod pre_auth_tx_object_format {
 
     impl Serialize for ObjectFormat<&PreAuthTx> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let PreAuthTx(bytes) = self.0;
+            let Self(PreAuthTx(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
@@ -384,7 +384,7 @@ mod hash_x_object_format {
 
     impl Serialize for ObjectFormat<&HashX> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let HashX(bytes) = self.0;
+            let Self(HashX(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
@@ -472,7 +472,7 @@ mod contract_object_format {
 
     impl Serialize for ObjectFormat<&Contract> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let Contract(bytes) = self.0;
+            let Self(Contract(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
@@ -560,7 +560,7 @@ mod liquidity_pool_object_format {
 
     impl Serialize for ObjectFormat<&LiquidityPool> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let LiquidityPool(bytes) = self.0;
+            let Self(LiquidityPool(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }

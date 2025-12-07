@@ -88,7 +88,7 @@ mod private_key_object_format {
 
     impl Serialize for ObjectFormat<&PrivateKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let PrivateKey(bytes) = self.0;
+            let Self(PrivateKey(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
@@ -179,7 +179,7 @@ mod public_key_object_format {
 
     impl Serialize for ObjectFormat<&PublicKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let PublicKey(bytes) = self.0;
+            let Self(PublicKey(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
@@ -289,7 +289,7 @@ mod muxed_account_object_format {
 
     impl Serialize for ObjectFormat<&MuxedAccount> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let MuxedAccount { ed25519, id } = self.0;
+            let Self(MuxedAccount { ed25519, id }) = self;
             Shadow { ed25519, id: *id }.serialize(serializer)
         }
     }
@@ -480,7 +480,7 @@ mod signed_payload_object_format {
 
     impl Serialize for ObjectFormat<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let SignedPayload { ed25519, payload } = self.0;
+            let Self(SignedPayload { ed25519, payload }) = self;
             Shadow { ed25519, payload }.serialize(serializer)
         }
     }

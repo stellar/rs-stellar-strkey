@@ -88,14 +88,15 @@ mod private_key_object_format {
 
     impl Serialize for ObjectFormat<&PrivateKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow(&self.0 .0).serialize(serializer)
+            let PrivateKey(bytes) = self.0;
+            Shadow(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<PrivateKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(PrivateKey(shadow.0)))
+            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(PrivateKey(bytes)))
         }
     }
 }
@@ -178,14 +179,15 @@ mod public_key_object_format {
 
     impl Serialize for ObjectFormat<&PublicKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow(&self.0 .0).serialize(serializer)
+            let PublicKey(bytes) = self.0;
+            Shadow(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<PublicKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(PublicKey(shadow.0)))
+            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(PublicKey(bytes)))
         }
     }
 }
@@ -287,21 +289,15 @@ mod muxed_account_object_format {
 
     impl Serialize for ObjectFormat<&MuxedAccount> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow {
-                ed25519: &self.0.ed25519,
-                id: self.0.id,
-            }
-            .serialize(serializer)
+            let MuxedAccount { ed25519, id } = self.0;
+            Shadow { ed25519, id: *id }.serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<MuxedAccount> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(MuxedAccount {
-                ed25519: shadow.ed25519,
-                id: shadow.id,
-            }))
+            let ShadowOwned { ed25519, id } = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(MuxedAccount { ed25519, id }))
         }
     }
 }
@@ -484,21 +480,15 @@ mod signed_payload_object_format {
 
     impl Serialize for ObjectFormat<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow {
-                ed25519: &self.0.ed25519,
-                payload: &self.0.payload,
-            }
-            .serialize(serializer)
+            let SignedPayload { ed25519, payload } = self.0;
+            Shadow { ed25519, payload }.serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(SignedPayload {
-                ed25519: shadow.ed25519,
-                payload: shadow.payload,
-            }))
+            let ShadowOwned { ed25519, payload } = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(SignedPayload { ed25519, payload }))
         }
     }
 }

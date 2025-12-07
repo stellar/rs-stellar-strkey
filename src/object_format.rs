@@ -1,5 +1,3 @@
-use alloc::{format, string::String, vec::Vec};
-
 /// Wrapper type that serializes the inner type as a JSON object with hex-encoded bytes.
 ///
 /// By default, strkey types serialize as their string representation (e.g.,
@@ -20,25 +18,3 @@ use alloc::{format, string::String, vec::Vec};
 /// // {"public_key_ed25519":"0000000000000000000000000000000000000000000000000000000000000000"}
 /// ```
 pub struct ObjectFormat<T>(pub T);
-
-/// Encode bytes as hex string.
-pub fn bytes_to_hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{b:02x}")).collect()
-}
-
-/// Decode hex string to bytes.
-pub fn hex_to_bytes(hex: &str) -> Result<Vec<u8>, &'static str> {
-    if hex.len() % 2 != 0 {
-        return Err("invalid hex length");
-    }
-    (0..hex.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&hex[i..i + 2], 16).map_err(|_| "invalid hex character"))
-        .collect()
-}
-
-/// Decode hex string to fixed-size array.
-pub fn hex_to_array<const N: usize>(hex: &str) -> Result<[u8; N], &'static str> {
-    let bytes = hex_to_bytes(hex)?;
-    bytes.try_into().map_err(|_| "invalid hex length")
-}

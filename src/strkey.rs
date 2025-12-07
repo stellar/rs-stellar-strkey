@@ -296,14 +296,15 @@ mod pre_auth_tx_object_format {
 
     impl Serialize for ObjectFormat<&PreAuthTx> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow(&self.0 .0).serialize(serializer)
+            let PreAuthTx(bytes) = self.0;
+            Shadow(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<PreAuthTx> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(PreAuthTx(shadow.0)))
+            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(PreAuthTx(bytes)))
         }
     }
 }
@@ -383,14 +384,15 @@ mod hash_x_object_format {
 
     impl Serialize for ObjectFormat<&HashX> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow(&self.0 .0).serialize(serializer)
+            let HashX(bytes) = self.0;
+            Shadow(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<HashX> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(HashX(shadow.0)))
+            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(HashX(bytes)))
         }
     }
 }
@@ -470,14 +472,15 @@ mod contract_object_format {
 
     impl Serialize for ObjectFormat<&Contract> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow(&self.0 .0).serialize(serializer)
+            let Contract(bytes) = self.0;
+            Shadow(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<Contract> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(Contract(shadow.0)))
+            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(Contract(bytes)))
         }
     }
 }
@@ -557,14 +560,15 @@ mod liquidity_pool_object_format {
 
     impl Serialize for ObjectFormat<&LiquidityPool> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            Shadow(&self.0 .0).serialize(serializer)
+            let LiquidityPool(bytes) = self.0;
+            Shadow(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<LiquidityPool> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(LiquidityPool(shadow.0)))
+            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(LiquidityPool(bytes)))
         }
     }
 }

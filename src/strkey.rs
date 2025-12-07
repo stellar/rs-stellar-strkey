@@ -89,55 +89,55 @@ impl FromStr for Strkey {
 #[cfg(feature = "serde")]
 mod strkey_decoded_json_format {
     use super::*;
-    use crate::decoded_json_format::DecodedJsonFormat;
+    use crate::decoded_json_format::Decoded;
     use serde::{
         de::{self, MapAccess, Visitor},
         ser::SerializeMap,
         Deserialize, Deserializer, Serialize, Serializer,
     };
 
-    impl Serialize for DecodedJsonFormat<&Strkey> {
+    impl Serialize for Decoded<&Strkey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let mut map = serializer.serialize_map(Some(1))?;
             match self.0 {
                 Strkey::PublicKeyEd25519(key) => {
-                    map.serialize_entry("public_key_ed25519", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("public_key_ed25519", &Decoded(key))?;
                 }
                 Strkey::PrivateKeyEd25519(key) => {
-                    map.serialize_entry("private_key_ed25519", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("private_key_ed25519", &Decoded(key))?;
                 }
                 Strkey::PreAuthTx(key) => {
-                    map.serialize_entry("pre_auth_tx", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("pre_auth_tx", &Decoded(key))?;
                 }
                 Strkey::HashX(key) => {
-                    map.serialize_entry("hash_x", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("hash_x", &Decoded(key))?;
                 }
                 Strkey::MuxedAccountEd25519(key) => {
-                    map.serialize_entry("muxed_account_ed25519", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("muxed_account_ed25519", &Decoded(key))?;
                 }
                 Strkey::SignedPayloadEd25519(key) => {
-                    map.serialize_entry("signed_payload_ed25519", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("signed_payload_ed25519", &Decoded(key))?;
                 }
                 Strkey::Contract(key) => {
-                    map.serialize_entry("contract", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("contract", &Decoded(key))?;
                 }
                 Strkey::LiquidityPool(key) => {
-                    map.serialize_entry("liquidity_pool", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("liquidity_pool", &Decoded(key))?;
                 }
                 Strkey::ClaimableBalance(key) => {
-                    map.serialize_entry("claimable_balance", &DecodedJsonFormat(key))?;
+                    map.serialize_entry("claimable_balance", &Decoded(key))?;
                 }
             }
             map.end()
         }
     }
 
-    impl<'de> Deserialize<'de> for DecodedJsonFormat<Strkey> {
+    impl<'de> Deserialize<'de> for Decoded<Strkey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             struct StrkeyVisitor;
 
             impl<'de> Visitor<'de> for StrkeyVisitor {
-                type Value = DecodedJsonFormat<Strkey>;
+                type Value = Decoded<Strkey>;
 
                 fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                     formatter.write_str("a strkey object")
@@ -150,49 +150,46 @@ mod strkey_decoded_json_format {
 
                     let strkey = match key {
                         "public_key_ed25519" => {
-                            let DecodedJsonFormat(inner) = map.next_value()?;
+                            let Decoded(inner) = map.next_value()?;
                             Strkey::PublicKeyEd25519(inner)
                         }
                         "private_key_ed25519" => {
-                            let DecodedJsonFormat(inner) = map.next_value()?;
+                            let Decoded(inner) = map.next_value()?;
                             Strkey::PrivateKeyEd25519(inner)
                         }
                         "pre_auth_tx" => {
-                            let DecodedJsonFormat(inner) = map.next_value()?;
+                            let Decoded(inner) = map.next_value()?;
                             Strkey::PreAuthTx(inner)
                         }
                         "hash_x" => {
-                            let DecodedJsonFormat(inner) = map.next_value()?;
+                            let Decoded(inner) = map.next_value()?;
                             Strkey::HashX(inner)
                         }
                         "muxed_account_ed25519" => {
-                            let DecodedJsonFormat(account) =
-                                DecodedJsonFormat::<ed25519::MuxedAccount>::deserialize(
-                                    de::value::MapAccessDeserializer::new(map),
-                                )?;
-                            return Ok(DecodedJsonFormat(Strkey::MuxedAccountEd25519(account)));
+                            let Decoded(account) = Decoded::<ed25519::MuxedAccount>::deserialize(
+                                de::value::MapAccessDeserializer::new(map),
+                            )?;
+                            return Ok(Decoded(Strkey::MuxedAccountEd25519(account)));
                         }
                         "signed_payload_ed25519" => {
-                            let DecodedJsonFormat(payload) =
-                                DecodedJsonFormat::<ed25519::SignedPayload>::deserialize(
-                                    de::value::MapAccessDeserializer::new(map),
-                                )?;
-                            return Ok(DecodedJsonFormat(Strkey::SignedPayloadEd25519(payload)));
+                            let Decoded(payload) = Decoded::<ed25519::SignedPayload>::deserialize(
+                                de::value::MapAccessDeserializer::new(map),
+                            )?;
+                            return Ok(Decoded(Strkey::SignedPayloadEd25519(payload)));
                         }
                         "contract" => {
-                            let DecodedJsonFormat(inner) = map.next_value()?;
+                            let Decoded(inner) = map.next_value()?;
                             Strkey::Contract(inner)
                         }
                         "liquidity_pool" => {
-                            let DecodedJsonFormat(inner) = map.next_value()?;
+                            let Decoded(inner) = map.next_value()?;
                             Strkey::LiquidityPool(inner)
                         }
                         "claimable_balance" => {
-                            let DecodedJsonFormat(balance) =
-                                DecodedJsonFormat::<ClaimableBalance>::deserialize(
-                                    de::value::MapAccessDeserializer::new(map),
-                                )?;
-                            return Ok(DecodedJsonFormat(Strkey::ClaimableBalance(balance)));
+                            let Decoded(balance) = Decoded::<ClaimableBalance>::deserialize(
+                                de::value::MapAccessDeserializer::new(map),
+                            )?;
+                            return Ok(Decoded(Strkey::ClaimableBalance(balance)));
                         }
                         _ => {
                             return Err(de::Error::unknown_variant(
@@ -212,7 +209,7 @@ mod strkey_decoded_json_format {
                         }
                     };
 
-                    Ok(DecodedJsonFormat(strkey))
+                    Ok(Decoded(strkey))
                 }
             }
 
@@ -280,7 +277,7 @@ impl FromStr for PreAuthTx {
 #[cfg(feature = "serde")]
 mod pre_auth_tx_decoded_json_format {
     use super::*;
-    use crate::decoded_json_format::DecodedJsonFormat;
+    use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -294,17 +291,17 @@ mod pre_auth_tx_decoded_json_format {
     #[serde(transparent)]
     struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for DecodedJsonFormat<&PreAuthTx> {
+    impl Serialize for Decoded<&PreAuthTx> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PreAuthTx(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for DecodedJsonFormat<PreAuthTx> {
+    impl<'de> Deserialize<'de> for Decoded<PreAuthTx> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
-            Ok(DecodedJsonFormat(PreAuthTx(bytes)))
+            Ok(Decoded(PreAuthTx(bytes)))
         }
     }
 }
@@ -368,7 +365,7 @@ impl FromStr for HashX {
 #[cfg(feature = "serde")]
 mod hash_x_decoded_json_format {
     use super::*;
-    use crate::decoded_json_format::DecodedJsonFormat;
+    use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -382,17 +379,17 @@ mod hash_x_decoded_json_format {
     #[serde(transparent)]
     struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for DecodedJsonFormat<&HashX> {
+    impl Serialize for Decoded<&HashX> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(HashX(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for DecodedJsonFormat<HashX> {
+    impl<'de> Deserialize<'de> for Decoded<HashX> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
-            Ok(DecodedJsonFormat(HashX(bytes)))
+            Ok(Decoded(HashX(bytes)))
         }
     }
 }
@@ -456,7 +453,7 @@ impl FromStr for Contract {
 #[cfg(feature = "serde")]
 mod contract_decoded_json_format {
     use super::*;
-    use crate::decoded_json_format::DecodedJsonFormat;
+    use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -470,17 +467,17 @@ mod contract_decoded_json_format {
     #[serde(transparent)]
     struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for DecodedJsonFormat<&Contract> {
+    impl Serialize for Decoded<&Contract> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(Contract(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for DecodedJsonFormat<Contract> {
+    impl<'de> Deserialize<'de> for Decoded<Contract> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
-            Ok(DecodedJsonFormat(Contract(bytes)))
+            Ok(Decoded(Contract(bytes)))
         }
     }
 }
@@ -544,7 +541,7 @@ impl FromStr for LiquidityPool {
 #[cfg(feature = "serde")]
 mod liquidity_pool_decoded_json_format {
     use super::*;
-    use crate::decoded_json_format::DecodedJsonFormat;
+    use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -558,17 +555,17 @@ mod liquidity_pool_decoded_json_format {
     #[serde(transparent)]
     struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for DecodedJsonFormat<&LiquidityPool> {
+    impl Serialize for Decoded<&LiquidityPool> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(LiquidityPool(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for DecodedJsonFormat<LiquidityPool> {
+    impl<'de> Deserialize<'de> for Decoded<LiquidityPool> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
-            Ok(DecodedJsonFormat(LiquidityPool(bytes)))
+            Ok(Decoded(LiquidityPool(bytes)))
         }
     }
 }
@@ -645,7 +642,7 @@ impl FromStr for ClaimableBalance {
 #[cfg(feature = "serde")]
 mod claimable_balance_decoded_json_format {
     use super::*;
-    use crate::decoded_json_format::DecodedJsonFormat;
+    use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -663,7 +660,7 @@ mod claimable_balance_decoded_json_format {
         V0(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]),
     }
 
-    impl Serialize for DecodedJsonFormat<&ClaimableBalance> {
+    impl Serialize for Decoded<&ClaimableBalance> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             match self.0 {
                 ClaimableBalance::V0(bytes) => Shadow::V0(bytes).serialize(serializer),
@@ -671,10 +668,10 @@ mod claimable_balance_decoded_json_format {
         }
     }
 
-    impl<'de> Deserialize<'de> for DecodedJsonFormat<ClaimableBalance> {
+    impl<'de> Deserialize<'de> for Decoded<ClaimableBalance> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(DecodedJsonFormat(match shadow {
+            Ok(Decoded(match shadow {
                 ShadowOwned::V0(bytes) => ClaimableBalance::V0(bytes),
             }))
         }

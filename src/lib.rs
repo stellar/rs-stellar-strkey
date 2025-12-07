@@ -25,7 +25,7 @@ pub use strkey::*;
 #[cfg(feature = "serde")]
 pub mod decoded_json_format;
 #[cfg(feature = "serde")]
-pub use decoded_json_format::DecodedJsonFormat;
+pub use decoded_json_format::Decoded;
 
 #[cfg(feature = "cli")]
 pub mod cli;

@@ -23,9 +23,9 @@ pub use error::*;
 pub use strkey::*;
 
 #[cfg(feature = "serde")]
-pub mod object_format;
+pub mod decoded_json_format;
 #[cfg(feature = "serde")]
-pub use object_format::ObjectFormat;
+pub use decoded_json_format::DecodedJsonFormat;
 
 #[cfg(feature = "cli")]
 pub mod cli;

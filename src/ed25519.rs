@@ -70,9 +70,9 @@ impl FromStr for PrivateKey {
 }
 
 #[cfg(feature = "serde")]
-mod private_key_object_format {
+mod private_key_decoded_json_format {
     use super::*;
-    use crate::object_format::ObjectFormat;
+    use crate::decoded_json_format::DecodedJsonFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -86,17 +86,17 @@ mod private_key_object_format {
     #[serde(transparent)]
     struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for ObjectFormat<&PrivateKey> {
+    impl Serialize for DecodedJsonFormat<&PrivateKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PrivateKey(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for ObjectFormat<PrivateKey> {
+    impl<'de> Deserialize<'de> for DecodedJsonFormat<PrivateKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(PrivateKey(bytes)))
+            Ok(DecodedJsonFormat(PrivateKey(bytes)))
         }
     }
 }
@@ -161,9 +161,9 @@ impl FromStr for PublicKey {
 }
 
 #[cfg(feature = "serde")]
-mod public_key_object_format {
+mod public_key_decoded_json_format {
     use super::*;
-    use crate::object_format::ObjectFormat;
+    use crate::decoded_json_format::DecodedJsonFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -177,17 +177,17 @@ mod public_key_object_format {
     #[serde(transparent)]
     struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for ObjectFormat<&PublicKey> {
+    impl Serialize for DecodedJsonFormat<&PublicKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PublicKey(bytes)) = self;
             Shadow(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for ObjectFormat<PublicKey> {
+    impl<'de> Deserialize<'de> for DecodedJsonFormat<PublicKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(PublicKey(bytes)))
+            Ok(DecodedJsonFormat(PublicKey(bytes)))
         }
     }
 }
@@ -265,9 +265,9 @@ impl FromStr for MuxedAccount {
 }
 
 #[cfg(feature = "serde")]
-mod muxed_account_object_format {
+mod muxed_account_decoded_json_format {
     use super::*;
-    use crate::object_format::ObjectFormat;
+    use crate::decoded_json_format::DecodedJsonFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -287,17 +287,17 @@ mod muxed_account_object_format {
         id: u64,
     }
 
-    impl Serialize for ObjectFormat<&MuxedAccount> {
+    impl Serialize for DecodedJsonFormat<&MuxedAccount> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(MuxedAccount { ed25519, id }) = self;
             Shadow { ed25519, id: *id }.serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for ObjectFormat<MuxedAccount> {
+    impl<'de> Deserialize<'de> for DecodedJsonFormat<MuxedAccount> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned { ed25519, id } = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(MuxedAccount { ed25519, id }))
+            Ok(DecodedJsonFormat(MuxedAccount { ed25519, id }))
         }
     }
 }
@@ -454,9 +454,9 @@ impl FromStr for SignedPayload {
 }
 
 #[cfg(feature = "serde")]
-mod signed_payload_object_format {
+mod signed_payload_decoded_json_format {
     use super::*;
-    use crate::object_format::ObjectFormat;
+    use crate::decoded_json_format::DecodedJsonFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -478,17 +478,17 @@ mod signed_payload_object_format {
         payload: Vec<u8>,
     }
 
-    impl Serialize for ObjectFormat<&SignedPayload> {
+    impl Serialize for DecodedJsonFormat<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(SignedPayload { ed25519, payload }) = self;
             Shadow { ed25519, payload }.serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for ObjectFormat<SignedPayload> {
+    impl<'de> Deserialize<'de> for DecodedJsonFormat<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let ShadowOwned { ed25519, payload } = ShadowOwned::deserialize(deserializer)?;
-            Ok(ObjectFormat(SignedPayload { ed25519, payload }))
+            Ok(DecodedJsonFormat(SignedPayload { ed25519, payload }))
         }
     }
 }

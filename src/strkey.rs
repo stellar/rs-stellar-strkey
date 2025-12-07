@@ -280,20 +280,30 @@ impl FromStr for PreAuthTx {
 #[cfg(feature = "serde")]
 mod pre_auth_tx_object_format {
     use super::*;
-    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use crate::object_format::ObjectFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    #[serde(transparent)]
+    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    #[serde(transparent)]
+    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for ObjectFormat<&PreAuthTx> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+            Shadow(&self.0 .0).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<PreAuthTx> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: &str = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
-            Ok(ObjectFormat(PreAuthTx(bytes)))
+            let shadow = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(PreAuthTx(shadow.0)))
         }
     }
 }
@@ -357,20 +367,30 @@ impl FromStr for HashX {
 #[cfg(feature = "serde")]
 mod hash_x_object_format {
     use super::*;
-    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use crate::object_format::ObjectFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    #[serde(transparent)]
+    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    #[serde(transparent)]
+    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for ObjectFormat<&HashX> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+            Shadow(&self.0 .0).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<HashX> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: &str = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
-            Ok(ObjectFormat(HashX(bytes)))
+            let shadow = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(HashX(shadow.0)))
         }
     }
 }
@@ -434,20 +454,30 @@ impl FromStr for Contract {
 #[cfg(feature = "serde")]
 mod contract_object_format {
     use super::*;
-    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use crate::object_format::ObjectFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    #[serde(transparent)]
+    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    #[serde(transparent)]
+    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for ObjectFormat<&Contract> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+            Shadow(&self.0 .0).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<Contract> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: &str = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
-            Ok(ObjectFormat(Contract(bytes)))
+            let shadow = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(Contract(shadow.0)))
         }
     }
 }
@@ -511,20 +541,30 @@ impl FromStr for LiquidityPool {
 #[cfg(feature = "serde")]
 mod liquidity_pool_object_format {
     use super::*;
-    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use crate::object_format::ObjectFormat;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    #[serde(transparent)]
+    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    #[serde(transparent)]
+    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for ObjectFormat<&LiquidityPool> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+            Shadow(&self.0 .0).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<LiquidityPool> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: &str = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
-            Ok(ObjectFormat(LiquidityPool(bytes)))
+            let shadow = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(LiquidityPool(shadow.0)))
         }
     }
 }
@@ -601,55 +641,38 @@ impl FromStr for ClaimableBalance {
 #[cfg(feature = "serde")]
 mod claimable_balance_object_format {
     use super::*;
-    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
-    use serde::{
-        de::{self, MapAccess, Visitor},
-        ser::SerializeMap,
-        Deserialize, Deserializer, Serialize, Serializer,
-    };
+    use crate::object_format::ObjectFormat;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    #[serde(rename_all = "snake_case")]
+    enum Shadow<'a> {
+        V0(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]),
+    }
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    #[serde(rename_all = "snake_case")]
+    enum ShadowOwned {
+        V0(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]),
+    }
 
     impl Serialize for ObjectFormat<&ClaimableBalance> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let mut map = serializer.serialize_map(Some(1))?;
             match self.0 {
-                ClaimableBalance::V0(bytes) => {
-                    map.serialize_entry("v0", &bytes_to_hex(bytes))?;
-                }
+                ClaimableBalance::V0(bytes) => Shadow::V0(bytes).serialize(serializer),
             }
-            map.end()
         }
     }
 
     impl<'de> Deserialize<'de> for ObjectFormat<ClaimableBalance> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            struct ClaimableBalanceVisitor;
-
-            impl<'de> Visitor<'de> for ClaimableBalanceVisitor {
-                type Value = ObjectFormat<ClaimableBalance>;
-
-                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
-                    formatter.write_str("a claimable balance object")
-                }
-
-                fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
-                    let key: &str = map
-                        .next_key()?
-                        .ok_or_else(|| de::Error::custom("expected a variant key"))?;
-
-                    let balance = match key {
-                        "v0" => {
-                            let hex: &str = map.next_value()?;
-                            let bytes: [u8; 32] = hex_to_array(hex).map_err(de::Error::custom)?;
-                            ClaimableBalance::V0(bytes)
-                        }
-                        _ => return Err(de::Error::unknown_variant(key, &["v0"])),
-                    };
-
-                    Ok(ObjectFormat(balance))
-                }
-            }
-
-            deserializer.deserialize_map(ClaimableBalanceVisitor)
+            let shadow = ShadowOwned::deserialize(deserializer)?;
+            Ok(ObjectFormat(match shadow {
+                ShadowOwned::V0(bytes) => ClaimableBalance::V0(bytes),
+            }))
         }
     }
 }

@@ -86,8 +86,8 @@ impl FromStr for Strkey {
     }
 }
 
-#[cfg(feature = "serde")]
-mod strkey_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod strkey_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{
@@ -274,8 +274,8 @@ impl FromStr for PreAuthTx {
     }
 }
 
-#[cfg(feature = "serde")]
-mod pre_auth_tx_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod pre_auth_tx_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -362,8 +362,8 @@ impl FromStr for HashX {
     }
 }
 
-#[cfg(feature = "serde")]
-mod hash_x_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod hash_x_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -450,8 +450,8 @@ impl FromStr for Contract {
     }
 }
 
-#[cfg(feature = "serde")]
-mod contract_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod contract_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -538,8 +538,8 @@ impl FromStr for LiquidityPool {
     }
 }
 
-#[cfg(feature = "serde")]
-mod liquidity_pool_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod liquidity_pool_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -639,8 +639,8 @@ impl FromStr for ClaimableBalance {
     }
 }
 
-#[cfg(feature = "serde")]
-mod claimable_balance_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod claimable_balance_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};

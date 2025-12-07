@@ -69,8 +69,8 @@ impl FromStr for PrivateKey {
     }
 }
 
-#[cfg(feature = "serde")]
-mod private_key_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod private_key_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -160,8 +160,8 @@ impl FromStr for PublicKey {
     }
 }
 
-#[cfg(feature = "serde")]
-mod public_key_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod public_key_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -264,8 +264,8 @@ impl FromStr for MuxedAccount {
     }
 }
 
-#[cfg(feature = "serde")]
-mod muxed_account_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod muxed_account_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -453,8 +453,8 @@ impl FromStr for SignedPayload {
     }
 }
 
-#[cfg(feature = "serde")]
-mod signed_payload_decoded_json_format {
+#[cfg(feature = "serde-decoded")]
+mod signed_payload_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};

@@ -122,3 +122,33 @@ fn test_ed25519_signed_payload() {
 }"#,
     );
 }
+
+#[test]
+fn test_roundtrip_muxed_account() {
+    let original = Strkey::MuxedAccountEd25519(ed25519::MuxedAccount {
+        ed25519: [0x00; 32],
+        id: 42,
+    });
+    let json = serde_json::to_string(&Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
+    assert_eq!(original, deserialized);
+}
+
+#[test]
+fn test_roundtrip_signed_payload() {
+    let original = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+        ed25519: [0x00; 32],
+        payload: vec![1, 2, 3, 4],
+    });
+    let json = serde_json::to_string(&Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
+    assert_eq!(original, deserialized);
+}
+
+#[test]
+fn test_roundtrip_claimable_balance() {
+    let original = Strkey::ClaimableBalance(ClaimableBalance::V0([0x00; 32]));
+    let json = serde_json::to_string(&Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
+    assert_eq!(original, deserialized);
+}

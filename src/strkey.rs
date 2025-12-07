@@ -166,16 +166,12 @@ mod strkey_decoded_serde_impl {
                             Strkey::HashX(inner)
                         }
                         "muxed_account_ed25519" => {
-                            let Decoded(account) = Decoded::<ed25519::MuxedAccount>::deserialize(
-                                de::value::MapAccessDeserializer::new(map),
-                            )?;
-                            return Ok(Decoded(Strkey::MuxedAccountEd25519(account)));
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::MuxedAccountEd25519(inner)
                         }
                         "signed_payload_ed25519" => {
-                            let Decoded(payload) = Decoded::<ed25519::SignedPayload>::deserialize(
-                                de::value::MapAccessDeserializer::new(map),
-                            )?;
-                            return Ok(Decoded(Strkey::SignedPayloadEd25519(payload)));
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::SignedPayloadEd25519(inner)
                         }
                         "contract" => {
                             let Decoded(inner) = map.next_value()?;
@@ -186,10 +182,8 @@ mod strkey_decoded_serde_impl {
                             Strkey::LiquidityPool(inner)
                         }
                         "claimable_balance" => {
-                            let Decoded(balance) = Decoded::<ClaimableBalance>::deserialize(
-                                de::value::MapAccessDeserializer::new(map),
-                            )?;
-                            return Ok(Decoded(Strkey::ClaimableBalance(balance)));
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::ClaimableBalance(inner)
                         }
                         _ => {
                             return Err(de::Error::unknown_variant(

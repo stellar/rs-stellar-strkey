@@ -79,23 +79,23 @@ mod private_key_decoded_serde_impl {
     #[serde_as]
     #[derive(Serialize)]
     #[serde(transparent)]
-    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
 
     #[serde_as]
     #[derive(Deserialize)]
     #[serde(transparent)]
-    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for Decoded<&PrivateKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PrivateKey(bytes)) = self;
-            Shadow(bytes).serialize(serializer)
+            DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<PrivateKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(PrivateKey(bytes)))
         }
     }
@@ -170,23 +170,23 @@ mod public_key_decoded_serde_impl {
     #[serde_as]
     #[derive(Serialize)]
     #[serde(transparent)]
-    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
 
     #[serde_as]
     #[derive(Deserialize)]
     #[serde(transparent)]
-    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for Decoded<&PublicKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PublicKey(bytes)) = self;
-            Shadow(bytes).serialize(serializer)
+            DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<PublicKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(PublicKey(bytes)))
         }
     }
@@ -273,7 +273,7 @@ mod muxed_account_decoded_serde_impl {
 
     #[serde_as]
     #[derive(Serialize)]
-    struct Shadow<'a> {
+    struct DecodedBorrowed<'a> {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: &'a [u8; 32],
         id: u64,
@@ -281,7 +281,7 @@ mod muxed_account_decoded_serde_impl {
 
     #[serde_as]
     #[derive(Deserialize)]
-    struct ShadowOwned {
+    struct DecodedOwned {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: [u8; 32],
         id: u64,
@@ -290,13 +290,13 @@ mod muxed_account_decoded_serde_impl {
     impl Serialize for Decoded<&MuxedAccount> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(MuxedAccount { ed25519, id }) = self;
-            Shadow { ed25519, id: *id }.serialize(serializer)
+            DecodedBorrowed { ed25519, id: *id }.serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<MuxedAccount> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned { ed25519, id } = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned { ed25519, id } = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(MuxedAccount { ed25519, id }))
         }
     }
@@ -462,7 +462,7 @@ mod signed_payload_decoded_serde_impl {
 
     #[serde_as]
     #[derive(Serialize)]
-    struct Shadow<'a> {
+    struct DecodedBorrowed<'a> {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: &'a [u8; 32],
         #[serde_as(as = "serde_with::hex::Hex")]
@@ -471,7 +471,7 @@ mod signed_payload_decoded_serde_impl {
 
     #[serde_as]
     #[derive(Deserialize)]
-    struct ShadowOwned {
+    struct DecodedOwned {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: [u8; 32],
         #[serde_as(as = "serde_with::hex::Hex")]
@@ -481,13 +481,13 @@ mod signed_payload_decoded_serde_impl {
     impl Serialize for Decoded<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(SignedPayload { ed25519, payload }) = self;
-            Shadow { ed25519, payload }.serialize(serializer)
+            DecodedBorrowed { ed25519, payload }.serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned { ed25519, payload } = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(SignedPayload { ed25519, payload }))
         }
     }

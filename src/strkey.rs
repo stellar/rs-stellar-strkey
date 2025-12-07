@@ -284,23 +284,23 @@ mod pre_auth_tx_decoded_serde_impl {
     #[serde_as]
     #[derive(Serialize)]
     #[serde(transparent)]
-    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
 
     #[serde_as]
     #[derive(Deserialize)]
     #[serde(transparent)]
-    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for Decoded<&PreAuthTx> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PreAuthTx(bytes)) = self;
-            Shadow(bytes).serialize(serializer)
+            DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<PreAuthTx> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(PreAuthTx(bytes)))
         }
     }
@@ -372,23 +372,23 @@ mod hash_x_decoded_serde_impl {
     #[serde_as]
     #[derive(Serialize)]
     #[serde(transparent)]
-    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
 
     #[serde_as]
     #[derive(Deserialize)]
     #[serde(transparent)]
-    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for Decoded<&HashX> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(HashX(bytes)) = self;
-            Shadow(bytes).serialize(serializer)
+            DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<HashX> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(HashX(bytes)))
         }
     }
@@ -460,23 +460,23 @@ mod contract_decoded_serde_impl {
     #[serde_as]
     #[derive(Serialize)]
     #[serde(transparent)]
-    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
 
     #[serde_as]
     #[derive(Deserialize)]
     #[serde(transparent)]
-    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for Decoded<&Contract> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(Contract(bytes)) = self;
-            Shadow(bytes).serialize(serializer)
+            DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<Contract> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(Contract(bytes)))
         }
     }
@@ -548,23 +548,23 @@ mod liquidity_pool_decoded_serde_impl {
     #[serde_as]
     #[derive(Serialize)]
     #[serde(transparent)]
-    struct Shadow<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
 
     #[serde_as]
     #[derive(Deserialize)]
     #[serde(transparent)]
-    struct ShadowOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
     impl Serialize for Decoded<&LiquidityPool> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(LiquidityPool(bytes)) = self;
-            Shadow(bytes).serialize(serializer)
+            DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<LiquidityPool> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let ShadowOwned(bytes) = ShadowOwned::deserialize(deserializer)?;
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(LiquidityPool(bytes)))
         }
     }
@@ -649,30 +649,30 @@ mod claimable_balance_decoded_serde_impl {
     #[serde_as]
     #[derive(Serialize)]
     #[serde(rename_all = "snake_case")]
-    enum Shadow<'a> {
+    enum DecodedBorrowed<'a> {
         V0(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]),
     }
 
     #[serde_as]
     #[derive(Deserialize)]
     #[serde(rename_all = "snake_case")]
-    enum ShadowOwned {
+    enum DecodedOwned {
         V0(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]),
     }
 
     impl Serialize for Decoded<&ClaimableBalance> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             match self.0 {
-                ClaimableBalance::V0(bytes) => Shadow::V0(bytes).serialize(serializer),
+                ClaimableBalance::V0(bytes) => DecodedBorrowed::V0(bytes).serialize(serializer),
             }
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<ClaimableBalance> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let shadow = ShadowOwned::deserialize(deserializer)?;
-            Ok(Decoded(match shadow {
-                ShadowOwned::V0(bytes) => ClaimableBalance::V0(bytes),
+            let decoded = DecodedOwned::deserialize(deserializer)?;
+            Ok(Decoded(match decoded {
+                DecodedOwned::V0(bytes) => ClaimableBalance::V0(bytes),
             }))
         }
     }

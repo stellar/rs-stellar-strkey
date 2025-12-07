@@ -83,8 +83,8 @@ mod private_key_object_format {
 
     impl<'de> Deserialize<'de> for ObjectFormat<PrivateKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: String = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            let hex: &str = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
             Ok(ObjectFormat(PrivateKey(bytes)))
         }
     }
@@ -163,8 +163,8 @@ mod public_key_object_format {
 
     impl<'de> Deserialize<'de> for ObjectFormat<PublicKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: String = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            let hex: &str = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
             Ok(ObjectFormat(PublicKey(bytes)))
         }
     }
@@ -279,8 +279,8 @@ mod muxed_account_object_format {
                     while let Some(key) = map.next_key::<&str>()? {
                         match key {
                             "ed25519" => {
-                                let hex: String = map.next_value()?;
-                                ed25519 = Some(hex_to_array(&hex).map_err(de::Error::custom)?);
+                                let hex: &str = map.next_value()?;
+                                ed25519 = Some(hex_to_array(hex).map_err(de::Error::custom)?);
                             }
                             "id" => {
                                 id = Some(map.next_value()?);
@@ -491,12 +491,12 @@ mod signed_payload_object_format {
                     while let Some(key) = map.next_key::<&str>()? {
                         match key {
                             "ed25519" => {
-                                let hex: String = map.next_value()?;
-                                ed25519 = Some(hex_to_array(&hex).map_err(de::Error::custom)?);
+                                let hex: &str = map.next_value()?;
+                                ed25519 = Some(hex_to_array(hex).map_err(de::Error::custom)?);
                             }
                             "payload" => {
-                                let hex: String = map.next_value()?;
-                                payload = Some(hex_to_bytes(&hex).map_err(de::Error::custom)?);
+                                let hex: &str = map.next_value()?;
+                                payload = Some(hex_to_bytes(hex).map_err(de::Error::custom)?);
                             }
                             _ => {
                                 let _: de::IgnoredAny = map.next_value()?;

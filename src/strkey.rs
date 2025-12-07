@@ -90,7 +90,6 @@ impl FromStr for Strkey {
 mod strkey_object_format {
     use super::*;
     use crate::object_format::ObjectFormat;
-    use alloc::string::String;
     use serde::{
         de::{self, MapAccess, Visitor},
         ser::SerializeMap,
@@ -145,11 +144,11 @@ mod strkey_object_format {
                 }
 
                 fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
-                    let key: String = map
+                    let key: &str = map
                         .next_key()?
                         .ok_or_else(|| de::Error::custom("expected a variant key"))?;
 
-                    let strkey = match key.as_str() {
+                    let strkey = match key {
                         "public_key_ed25519" => {
                             let ObjectFormat(inner) = map.next_value()?;
                             Strkey::PublicKeyEd25519(inner)
@@ -197,7 +196,7 @@ mod strkey_object_format {
                         }
                         _ => {
                             return Err(de::Error::unknown_variant(
-                                &key,
+                                key,
                                 &[
                                     "public_key_ed25519",
                                     "private_key_ed25519",
@@ -292,8 +291,8 @@ mod pre_auth_tx_object_format {
 
     impl<'de> Deserialize<'de> for ObjectFormat<PreAuthTx> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: String = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            let hex: &str = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
             Ok(ObjectFormat(PreAuthTx(bytes)))
         }
     }
@@ -369,8 +368,8 @@ mod hash_x_object_format {
 
     impl<'de> Deserialize<'de> for ObjectFormat<HashX> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: String = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            let hex: &str = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
             Ok(ObjectFormat(HashX(bytes)))
         }
     }
@@ -446,8 +445,8 @@ mod contract_object_format {
 
     impl<'de> Deserialize<'de> for ObjectFormat<Contract> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: String = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            let hex: &str = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
             Ok(ObjectFormat(Contract(bytes)))
         }
     }
@@ -523,8 +522,8 @@ mod liquidity_pool_object_format {
 
     impl<'de> Deserialize<'de> for ObjectFormat<LiquidityPool> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-            let hex: String = Deserialize::deserialize(deserializer)?;
-            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            let hex: &str = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(hex).map_err(serde::de::Error::custom)?;
             Ok(ObjectFormat(LiquidityPool(bytes)))
         }
     }
@@ -603,7 +602,6 @@ impl FromStr for ClaimableBalance {
 mod claimable_balance_object_format {
     use super::*;
     use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
-    use alloc::string::String;
     use serde::{
         de::{self, MapAccess, Visitor},
         ser::SerializeMap,
@@ -634,17 +632,17 @@ mod claimable_balance_object_format {
                 }
 
                 fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
-                    let key: String = map
+                    let key: &str = map
                         .next_key()?
                         .ok_or_else(|| de::Error::custom("expected a variant key"))?;
 
-                    let balance = match key.as_str() {
+                    let balance = match key {
                         "v0" => {
-                            let hex: String = map.next_value()?;
-                            let bytes: [u8; 32] = hex_to_array(&hex).map_err(de::Error::custom)?;
+                            let hex: &str = map.next_value()?;
+                            let bytes: [u8; 32] = hex_to_array(hex).map_err(de::Error::custom)?;
                             ClaimableBalance::V0(bytes)
                         }
-                        _ => return Err(de::Error::unknown_variant(&key, &["v0"])),
+                        _ => return Err(de::Error::unknown_variant(key, &["v0"])),
                     };
 
                     Ok(ObjectFormat(balance))

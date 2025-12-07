@@ -16,11 +16,6 @@ use crate::{
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
     PrivateKeyEd25519(ed25519::PrivateKey),
@@ -91,21 +86,148 @@ impl FromStr for Strkey {
     }
 }
 
+#[cfg(feature = "serde")]
+mod strkey_object_format {
+    use super::*;
+    use crate::object_format::ObjectFormat;
+    use alloc::string::String;
+    use serde::{
+        de::{self, MapAccess, Visitor},
+        ser::SerializeMap,
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
+
+    impl Serialize for ObjectFormat<&Strkey> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let mut map = serializer.serialize_map(Some(1))?;
+            match self.0 {
+                Strkey::PublicKeyEd25519(key) => {
+                    map.serialize_entry("public_key_ed25519", &ObjectFormat(key))?;
+                }
+                Strkey::PrivateKeyEd25519(key) => {
+                    map.serialize_entry("private_key_ed25519", &ObjectFormat(key))?;
+                }
+                Strkey::PreAuthTx(key) => {
+                    map.serialize_entry("pre_auth_tx", &ObjectFormat(key))?;
+                }
+                Strkey::HashX(key) => {
+                    map.serialize_entry("hash_x", &ObjectFormat(key))?;
+                }
+                Strkey::MuxedAccountEd25519(key) => {
+                    map.serialize_entry("muxed_account_ed25519", &ObjectFormat(key))?;
+                }
+                Strkey::SignedPayloadEd25519(key) => {
+                    map.serialize_entry("signed_payload_ed25519", &ObjectFormat(key))?;
+                }
+                Strkey::Contract(key) => {
+                    map.serialize_entry("contract", &ObjectFormat(key))?;
+                }
+                Strkey::LiquidityPool(key) => {
+                    map.serialize_entry("liquidity_pool", &ObjectFormat(key))?;
+                }
+                Strkey::ClaimableBalance(key) => {
+                    map.serialize_entry("claimable_balance", &ObjectFormat(key))?;
+                }
+            }
+            map.end()
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ObjectFormat<Strkey> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            struct StrkeyVisitor;
+
+            impl<'de> Visitor<'de> for StrkeyVisitor {
+                type Value = ObjectFormat<Strkey>;
+
+                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    formatter.write_str("a strkey object")
+                }
+
+                fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+                    let key: String = map
+                        .next_key()?
+                        .ok_or_else(|| de::Error::custom("expected a variant key"))?;
+
+                    let strkey = match key.as_str() {
+                        "public_key_ed25519" => {
+                            let ObjectFormat(inner) = map.next_value()?;
+                            Strkey::PublicKeyEd25519(inner)
+                        }
+                        "private_key_ed25519" => {
+                            let ObjectFormat(inner) = map.next_value()?;
+                            Strkey::PrivateKeyEd25519(inner)
+                        }
+                        "pre_auth_tx" => {
+                            let ObjectFormat(inner) = map.next_value()?;
+                            Strkey::PreAuthTx(inner)
+                        }
+                        "hash_x" => {
+                            let ObjectFormat(inner) = map.next_value()?;
+                            Strkey::HashX(inner)
+                        }
+                        "muxed_account_ed25519" => {
+                            let ObjectFormat(account) =
+                                ObjectFormat::<ed25519::MuxedAccount>::deserialize(
+                                    de::value::MapAccessDeserializer::new(map),
+                                )?;
+                            return Ok(ObjectFormat(Strkey::MuxedAccountEd25519(account)));
+                        }
+                        "signed_payload_ed25519" => {
+                            let ObjectFormat(payload) =
+                                ObjectFormat::<ed25519::SignedPayload>::deserialize(
+                                    de::value::MapAccessDeserializer::new(map),
+                                )?;
+                            return Ok(ObjectFormat(Strkey::SignedPayloadEd25519(payload)));
+                        }
+                        "contract" => {
+                            let ObjectFormat(inner) = map.next_value()?;
+                            Strkey::Contract(inner)
+                        }
+                        "liquidity_pool" => {
+                            let ObjectFormat(inner) = map.next_value()?;
+                            Strkey::LiquidityPool(inner)
+                        }
+                        "claimable_balance" => {
+                            let ObjectFormat(balance) =
+                                ObjectFormat::<ClaimableBalance>::deserialize(
+                                    de::value::MapAccessDeserializer::new(map),
+                                )?;
+                            return Ok(ObjectFormat(Strkey::ClaimableBalance(balance)));
+                        }
+                        _ => {
+                            return Err(de::Error::unknown_variant(
+                                &key,
+                                &[
+                                    "public_key_ed25519",
+                                    "private_key_ed25519",
+                                    "pre_auth_tx",
+                                    "hash_x",
+                                    "muxed_account_ed25519",
+                                    "signed_payload_ed25519",
+                                    "contract",
+                                    "liquidity_pool",
+                                    "claimable_balance",
+                                ],
+                            ))
+                        }
+                    };
+
+                    Ok(ObjectFormat(strkey))
+                }
+            }
+
+            deserializer.deserialize_map(StrkeyVisitor)
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct PreAuthTx(
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
-);
+pub struct PreAuthTx(pub [u8; 32]);
 
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -156,19 +278,33 @@ impl FromStr for PreAuthTx {
     }
 }
 
+#[cfg(feature = "serde")]
+mod pre_auth_tx_object_format {
+    use super::*;
+    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    impl Serialize for ObjectFormat<&PreAuthTx> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ObjectFormat<PreAuthTx> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let hex: String = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            Ok(ObjectFormat(PreAuthTx(bytes)))
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct HashX(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32]);
+pub struct HashX(pub [u8; 32]);
 
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -219,21 +355,33 @@ impl FromStr for HashX {
     }
 }
 
+#[cfg(feature = "serde")]
+mod hash_x_object_format {
+    use super::*;
+    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    impl Serialize for ObjectFormat<&HashX> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ObjectFormat<HashX> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let hex: String = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            Ok(ObjectFormat(HashX(bytes)))
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct Contract(
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
-);
+pub struct Contract(pub [u8; 32]);
 
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -284,21 +432,33 @@ impl FromStr for Contract {
     }
 }
 
+#[cfg(feature = "serde")]
+mod contract_object_format {
+    use super::*;
+    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    impl Serialize for ObjectFormat<&Contract> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ObjectFormat<Contract> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let hex: String = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            Ok(ObjectFormat(Contract(bytes)))
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct LiquidityPool(
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
-);
+pub struct LiquidityPool(pub [u8; 32]);
 
 impl Debug for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -349,20 +509,34 @@ impl FromStr for LiquidityPool {
     }
 }
 
+#[cfg(feature = "serde")]
+mod liquidity_pool_object_format {
+    use super::*;
+    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    impl Serialize for ObjectFormat<&LiquidityPool> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            serializer.serialize_str(&bytes_to_hex(&self.0 .0))
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ObjectFormat<LiquidityPool> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let hex: String = Deserialize::deserialize(deserializer)?;
+            let bytes: [u8; 32] = hex_to_array(&hex).map_err(serde::de::Error::custom)?;
+            Ok(ObjectFormat(LiquidityPool(bytes)))
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
 pub enum ClaimableBalance {
-    V0(#[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] [u8; 32]),
+    V0([u8; 32]),
 }
 
 impl Debug for ClaimableBalance {
@@ -422,5 +596,62 @@ impl FromStr for ClaimableBalance {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         ClaimableBalance::from_string(s)
+    }
+}
+
+#[cfg(feature = "serde")]
+mod claimable_balance_object_format {
+    use super::*;
+    use crate::object_format::{bytes_to_hex, hex_to_array, ObjectFormat};
+    use alloc::string::String;
+    use serde::{
+        de::{self, MapAccess, Visitor},
+        ser::SerializeMap,
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
+
+    impl Serialize for ObjectFormat<&ClaimableBalance> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let mut map = serializer.serialize_map(Some(1))?;
+            match self.0 {
+                ClaimableBalance::V0(bytes) => {
+                    map.serialize_entry("v0", &bytes_to_hex(bytes))?;
+                }
+            }
+            map.end()
+        }
+    }
+
+    impl<'de> Deserialize<'de> for ObjectFormat<ClaimableBalance> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            struct ClaimableBalanceVisitor;
+
+            impl<'de> Visitor<'de> for ClaimableBalanceVisitor {
+                type Value = ObjectFormat<ClaimableBalance>;
+
+                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    formatter.write_str("a claimable balance object")
+                }
+
+                fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+                    let key: String = map
+                        .next_key()?
+                        .ok_or_else(|| de::Error::custom("expected a variant key"))?;
+
+                    let balance = match key.as_str() {
+                        "v0" => {
+                            let hex: String = map.next_value()?;
+                            let bytes: [u8; 32] = hex_to_array(&hex).map_err(de::Error::custom)?;
+                            ClaimableBalance::V0(bytes)
+                        }
+                        _ => return Err(de::Error::unknown_variant(&key, &["v0"])),
+                    };
+
+                    Ok(ObjectFormat(balance))
+                }
+            }
+
+            deserializer.deserialize_map(ClaimableBalanceVisitor)
+        }
     }
 }

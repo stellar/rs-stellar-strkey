@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::Strkey;
+use crate::{Decoded, Strkey};
 
 #[derive(Debug)]
 pub enum Error {
@@ -27,7 +27,8 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
-        let strkey: Strkey = serde_json::from_str(&self.json).map_err(Error::Json)?;
+        let Decoded(strkey): Decoded<Strkey> =
+            serde_json::from_str(&self.json).map_err(Error::Json)?;
         println!("{strkey}");
         Ok(())
     }

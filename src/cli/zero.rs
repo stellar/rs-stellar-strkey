@@ -1,4 +1,6 @@
-use crate::{ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey};
+use crate::{
+    ed25519, ClaimableBalance, Contract, Decoded, HashX, LiquidityPool, PreAuthTx, Strkey,
+};
 use clap::{Args, ValueEnum};
 
 #[derive(Args, Debug, Clone)]
@@ -58,7 +60,12 @@ impl Cmd {
         };
         match self.output {
             Output::Strkey => println!("{strkey}"),
-            Output::Json => println!("{}", serde_json::to_string_pretty(&strkey).unwrap()),
+            Output::Json => {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&Decoded(&strkey)).unwrap()
+                )
+            }
         }
     }
 }

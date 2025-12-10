@@ -15,16 +15,7 @@ use core::{
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct PrivateKey(
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
-);
+pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -78,21 +69,44 @@ impl FromStr for PrivateKey {
     }
 }
 
+#[cfg(feature = "serde-decoded")]
+mod private_key_decoded_serde_impl {
+    use super::*;
+    use crate::decoded_json_format::Decoded;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    #[serde(transparent)]
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    #[serde(transparent)]
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+
+    impl Serialize for Decoded<&PrivateKey> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let Self(PrivateKey(bytes)) = self;
+            DecodedBorrowed(bytes).serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Decoded<PrivateKey> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
+            Ok(Decoded(PrivateKey(bytes)))
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
-pub struct PublicKey(
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))] pub [u8; 32],
-);
+pub struct PublicKey(pub [u8; 32]);
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -146,20 +160,44 @@ impl FromStr for PublicKey {
     }
 }
 
+#[cfg(feature = "serde-decoded")]
+mod public_key_decoded_serde_impl {
+    use super::*;
+    use crate::decoded_json_format::Decoded;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    #[serde(transparent)]
+    struct DecodedBorrowed<'a>(#[serde_as(as = "serde_with::hex::Hex")] &'a [u8; 32]);
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    #[serde(transparent)]
+    struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
+
+    impl Serialize for Decoded<&PublicKey> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let Self(PublicKey(bytes)) = self;
+            DecodedBorrowed(bytes).serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Decoded<PublicKey> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
+            Ok(Decoded(PublicKey(bytes)))
+        }
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
 pub struct MuxedAccount {
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]
     pub ed25519: [u8; 32],
     pub id: u64,
 }
@@ -226,6 +264,44 @@ impl FromStr for MuxedAccount {
     }
 }
 
+#[cfg(feature = "serde-decoded")]
+mod muxed_account_decoded_serde_impl {
+    use super::*;
+    use crate::decoded_json_format::Decoded;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    struct DecodedBorrowed<'a> {
+        #[serde_as(as = "serde_with::hex::Hex")]
+        ed25519: &'a [u8; 32],
+        id: u64,
+    }
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    struct DecodedOwned {
+        #[serde_as(as = "serde_with::hex::Hex")]
+        ed25519: [u8; 32],
+        id: u64,
+    }
+
+    impl Serialize for Decoded<&MuxedAccount> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let Self(MuxedAccount { ed25519, id }) = self;
+            DecodedBorrowed { ed25519, id: *id }.serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Decoded<MuxedAccount> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let DecodedOwned { ed25519, id } = DecodedOwned::deserialize(deserializer)?;
+            Ok(Decoded(MuxedAccount { ed25519, id }))
+        }
+    }
+}
+
 /// Stores a signed payload ed25519 signer.
 ///
 /// The payload must not have a size larger than u32::MAX.
@@ -234,17 +310,8 @@ impl FromStr for MuxedAccount {
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
-#[cfg_attr(
-    feature = "cli",
-    cfg_eval::cfg_eval,
-    serde_with::serde_as,
-    derive(serde::Serialize, serde::Deserialize),
-    serde(rename_all = "snake_case")
-)]
 pub struct SignedPayload {
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]
     pub ed25519: [u8; 32],
-    #[cfg_attr(feature = "cli", serde_as(as = "serde_with::hex::Hex"))]
     pub payload: Vec<u8>,
 }
 
@@ -383,5 +450,45 @@ impl FromStr for SignedPayload {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         SignedPayload::from_string(s)
+    }
+}
+
+#[cfg(feature = "serde-decoded")]
+mod signed_payload_decoded_serde_impl {
+    use super::*;
+    use crate::decoded_json_format::Decoded;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    struct DecodedBorrowed<'a> {
+        #[serde_as(as = "serde_with::hex::Hex")]
+        ed25519: &'a [u8; 32],
+        #[serde_as(as = "serde_with::hex::Hex")]
+        payload: &'a [u8],
+    }
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    struct DecodedOwned {
+        #[serde_as(as = "serde_with::hex::Hex")]
+        ed25519: [u8; 32],
+        #[serde_as(as = "serde_with::hex::Hex")]
+        payload: Vec<u8>,
+    }
+
+    impl Serialize for Decoded<&SignedPayload> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let Self(SignedPayload { ed25519, payload }) = self;
+            DecodedBorrowed { ed25519, payload }.serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
+            Ok(Decoded(SignedPayload { ed25519, payload }))
+        }
     }
 }

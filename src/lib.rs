@@ -22,5 +22,10 @@ mod version;
 pub use error::*;
 pub use strkey::*;
 
+#[cfg(feature = "serde-decoded")]
+pub mod decoded_json_format;
+#[cfg(feature = "serde-decoded")]
+pub use decoded_json_format::Decoded;
+
 #[cfg(feature = "cli")]
 pub mod cli;

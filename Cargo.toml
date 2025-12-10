@@ -6,7 +6,7 @@ repository = "https://github.com/stellar/rs-stellar-strkey"
 authors = ["Stellar Development Foundation <info@stellar.org>"]
 license = "Apache-2.0"
 readme = "README.md"
-version = "0.0.14"
+version = "0.0.15"
 edition = "2021"
 rust-version = "1.81.0"
 

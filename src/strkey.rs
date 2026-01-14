@@ -5,7 +5,7 @@ use core::{
 };
 
 use crate::{
-    convert::{decode, encode},
+    convert::{decode, encode, encode_to_fmt},
     ed25519,
     error::DecodeError,
     version,
@@ -74,7 +74,17 @@ impl Strkey {
 
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        match self {
+            Self::PublicKeyEd25519(x) => x.fmt(f),
+            Self::PrivateKeyEd25519(x) => x.fmt(f),
+            Self::PreAuthTx(x) => x.fmt(f),
+            Self::HashX(x) => x.fmt(f),
+            Self::MuxedAccountEd25519(x) => x.fmt(f),
+            Self::SignedPayloadEd25519(x) => x.fmt(f),
+            Self::Contract(x) => x.fmt(f),
+            Self::LiquidityPool(x) => x.fmt(f),
+            Self::ClaimableBalance(x) => x.fmt(f),
+        }
     }
 }
 
@@ -249,7 +259,7 @@ impl PreAuthTx {
 
 impl Display for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        encode_to_fmt(version::PRE_AUTH_TX, &self.0, f)
     }
 }
 
@@ -330,7 +340,7 @@ impl HashX {
 
 impl Display for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        encode_to_fmt(version::HASH_X, &self.0, f)
     }
 }
 
@@ -411,7 +421,7 @@ impl Contract {
 
 impl Display for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        encode_to_fmt(version::CONTRACT, &self.0, f)
     }
 }
 
@@ -492,7 +502,7 @@ impl LiquidityPool {
 
 impl Display for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        encode_to_fmt(version::LIQUIDITY_POOL, &self.0, f)
     }
 }
 
@@ -592,7 +602,14 @@ impl ClaimableBalance {
 
 impl Display for ClaimableBalance {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        match self {
+            Self::V0(v0) => {
+                // First byte is zero for v0
+                let mut payload = [0; 33];
+                payload[1..].copy_from_slice(v0);
+                encode_to_fmt(version::CLAIMABLE_BALANCE, &payload, f)
+            }
+        }
     }
 }
 

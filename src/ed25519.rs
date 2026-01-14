@@ -1,5 +1,5 @@
 use crate::{
-    convert::{decode, encode},
+    convert::{decode, encode, encode_to_fmt},
     error::DecodeError,
     version,
 };
@@ -50,7 +50,7 @@ impl PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        encode_to_fmt(version::PRIVATE_KEY_ED25519, &self.0, f)
     }
 }
 
@@ -134,7 +134,7 @@ impl PublicKey {
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        encode_to_fmt(version::PUBLIC_KEY_ED25519, &self.0, f)
     }
 }
 
@@ -229,7 +229,11 @@ impl MuxedAccount {
 
 impl Display for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        let mut payload: [u8; 40] = [0; 40];
+        let (ed25519, id) = payload.split_at_mut(32);
+        ed25519.copy_from_slice(&self.ed25519);
+        id.copy_from_slice(&self.id.to_be_bytes());
+        encode_to_fmt(version::MUXED_ACCOUNT_ED25519, &payload, f)
     }
 }
 
@@ -409,7 +413,19 @@ impl SignedPayload {
 
 impl Display for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        let inner_payload_len = self.payload.len();
+        let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
+
+        let inner_payload_len_u32: u32 = inner_payload_len
+            .try_into()
+            .expect("payload length larger than u32::MAX");
+
+        let mut payload = vec![0; payload_len];
+        payload[..32].copy_from_slice(&self.ed25519);
+        payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
+        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
+
+        encode_to_fmt(version::SIGNED_PAYLOAD_ED25519, &payload, f)
     }
 }
 

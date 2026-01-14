@@ -15,7 +15,7 @@ pub fn encode(ver: u8, payload: &[u8]) -> String {
 }
 
 pub fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
-    let data = data_encoding::BASE32_NOPAD
+    let mut data = data_encoding::BASE32_NOPAD
         .decode(s.as_bytes())
         .map_err(|_| DecodeError::Invalid)?;
     if data.len() < 3 {
@@ -27,6 +27,9 @@ pub fn decode(s: &str) -> Result<(u8, Vec<u8>), DecodeError> {
     if crc_actual != crc_expect {
         return Err(DecodeError::Invalid);
     }
-    let payload = &data_without_crc[1..];
-    Ok((ver, payload.to_vec()))
+    // Reuse the existing Vec by removing the version byte and CRC bytes
+    let payload_len = data.len() - 3;
+    data.copy_within(1..1 + payload_len, 0);
+    data.truncate(payload_len);
+    Ok((ver, data))
 }

@@ -19,6 +19,7 @@ pub mod ed25519;
 mod error;
 mod strkey;
 mod typ;
+#[cfg(not(feature = "alloc"))]
 pub mod vec;
 mod version;
 

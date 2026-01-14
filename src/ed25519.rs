@@ -196,12 +196,16 @@ impl Debug for MuxedAccount {
 }
 
 impl MuxedAccount {
-    pub fn to_string(&self) -> String {
+    fn payload(&self) -> [u8; 40] {
         let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
         id.copy_from_slice(&self.id.to_be_bytes());
-        encode(version::MUXED_ACCOUNT_ED25519, &payload)
+        payload
+    }
+
+    pub fn to_string(&self) -> String {
+        encode(version::MUXED_ACCOUNT_ED25519, &self.payload())
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -226,11 +230,7 @@ impl MuxedAccount {
 
 impl Display for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut payload: [u8; 40] = [0; 40];
-        let (ed25519, id) = payload.split_at_mut(32);
-        ed25519.copy_from_slice(&self.ed25519);
-        id.copy_from_slice(&self.id.to_be_bytes());
-        encode_to_fmt(version::MUXED_ACCOUNT_ED25519, &payload, f)
+        encode_to_fmt(version::MUXED_ACCOUNT_ED25519, &self.payload(), f)
     }
 }
 

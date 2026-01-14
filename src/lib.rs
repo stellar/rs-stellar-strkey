@@ -15,6 +15,7 @@ mod convert;
 mod crc;
 pub mod ed25519;
 mod error;
+mod hex;
 mod strkey;
 mod typ;
 mod version;

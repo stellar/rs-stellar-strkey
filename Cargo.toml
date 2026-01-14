@@ -11,10 +11,9 @@ edition = "2021"
 rust-version = "1.81.0"
 
 [features]
-default = ["std"]
-std = ["alloc"]
+default = ["alloc"]
 alloc = ["data-encoding/alloc"]
-cli = ["std", "serde-decoded", "dep:clap", "dep:serde_json", "dep:thiserror"]
+cli = ["alloc", "serde-decoded", "dep:clap", "dep:serde_json", "dep:thiserror"]
 serde = ["dep:serde", "dep:serde_with"]
 serde-decoded = ["serde", "alloc"]
 

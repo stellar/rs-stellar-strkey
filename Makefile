@@ -4,21 +4,15 @@ export RUSTFLAGS=-Dwarnings
 
 test:
 	cargo test
-	cargo test --no-default-features --features alloc
 	cargo test --no-default-features
 	cargo test --features serde
 	cargo test --features serde-decoded
-	cargo +nightly fuzz run fuzz_roundtrip                                        -- -runs=0
-	cargo +nightly fuzz run fuzz_roundtrip --no-default-features --features alloc -- -runs=0
-	cargo +nightly fuzz run fuzz_roundtrip --no-default-features                  -- -runs=0
-	cargo +nightly fuzz run fuzz_roundtrip --features serde                       -- -runs=0
-	cargo +nightly fuzz run fuzz_roundtrip --features serde-decoded               -- -runs=0
+	cargo +nightly fuzz run fuzz_roundtrip                       -- -runs=0
+	cargo +nightly fuzz run fuzz_roundtrip --no-default-features -- -runs=0
+	cargo +nightly fuzz run fuzz_roundtrip --features serde      -- -runs=0
 
 fuzz:
 	cargo +nightly fuzz run fuzz_roundtrip -j 4
-
-fuzz-nostd:
-	cargo +nightly fuzz run fuzz_roundtrip -j 4 --no-default-features --features alloc
 
 fuzz-noalloc:
 	cargo +nightly fuzz run fuzz_roundtrip -j 4 --no-default-features
@@ -44,7 +38,6 @@ fuzz-coverage:
 
 build:
 	cargo build
-	cargo build --no-default-features --features alloc
 	cargo build --no-default-features
 	cargo build --features serde
 	cargo build --features serde-decoded
@@ -52,10 +45,9 @@ build:
 
 check:
 	cargo check --all-targets
-	cargo check --all-targets --no-default-features --features alloc
 	cargo check --all-targets --no-default-features
 	cargo check --all-targets --features serde
-	cargo build --all-targets --features serde-decoded
+	cargo check --all-targets --features serde-decoded
 	cargo check --all-targets --features cli
 
 install:

@@ -12,15 +12,6 @@ impl<const N: usize> Default for Vec<u8, N> {
     }
 }
 
-impl<T, const N: usize> Vec<T, N> {
-    /// Creates a new vector from a buffer and length.
-    /// # Safety
-    /// The first `len` elements of `buf` must be initialized.
-    pub const fn from_raw_parts(buf: [T; N], len: usize) -> Self {
-        Self { buf, len }
-    }
-}
-
 impl<const N: usize> Vec<u8, N> {
     /// Creates a new empty vector.
     pub const fn new() -> Self {
@@ -176,3 +167,12 @@ impl_from_array!(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
     26, 27, 28, 29, 30, 31, 32
 );
+
+#[cfg(feature = "alloc")]
+impl<const N: usize> TryFrom<alloc::vec::Vec<u8>> for Vec<u8, N> {
+    type Error = ();
+
+    fn try_from(v: alloc::vec::Vec<u8>) -> Result<Self, Self::Error> {
+        Self::try_from(v.as_slice())
+    }
+}

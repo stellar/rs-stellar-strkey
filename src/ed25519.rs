@@ -322,14 +322,18 @@ mod muxed_account_decoded_serde_impl {
 
 /// Stores a signed payload ed25519 signer.
 ///
-/// The payload must not have a size larger than 32 bytes.
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+/// The payload must not have a size larger than 64 bytes (or 32 bytes without alloc).
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(not(feature = "alloc"), derive(Copy))]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct SignedPayload {
     pub ed25519: [u8; 32],
+    #[cfg(feature = "alloc")]
+    pub payload: alloc::vec::Vec<u8>,
+    #[cfg(not(feature = "alloc"))]
     pub payload: crate::vec::Vec<u8, 32>,
 }
 
@@ -395,6 +399,74 @@ impl SignedPayload {
         encode(version::SIGNED_PAYLOAD_ED25519, &payload)
     }
 
+    #[cfg(feature = "alloc")]
+    pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
+        // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
+        // min or 64-byte for the max payload
+        const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
+        const MIN_LENGTH: usize = 32 + 4 + 4;
+        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);
+        let payload_len = payload.len();
+        if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
+            return Err(DecodeError::Invalid);
+        }
+
+        // Decode ed25519 public key. 32 bytes.
+        let mut offset = 0;
+        let ed25519: [u8; 32] = payload
+            .get(offset..offset + 32)
+            .ok_or(DecodeError::Invalid)?
+            .try_into()
+            .map_err(|_| DecodeError::Invalid)?;
+        offset += 32;
+
+        // Decode inner payload length. 4 bytes.
+        let inner_payload_len = u32::from_be_bytes(
+            payload
+                .get(offset..offset + 4)
+                .ok_or(DecodeError::Invalid)?
+                .try_into()
+                .map_err(|_| DecodeError::Invalid)?,
+        );
+        offset += 4;
+
+        // Check inner payload length is inside accepted range.
+        if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
+            return Err(DecodeError::Invalid);
+        }
+
+        // Decode inner payload.
+        let inner_payload = payload
+            .get(offset..offset + inner_payload_len as usize)
+            .ok_or(DecodeError::Invalid)?;
+        offset += inner_payload_len as usize;
+
+        // Calculate padding at end of inner payload. 0-3 bytes.
+        let padding_len = (4 - inner_payload_len % 4) % 4;
+
+        // Decode padding.
+        let padding = payload
+            .get(offset..offset + padding_len as usize)
+            .ok_or(DecodeError::Invalid)?;
+        offset += padding_len as usize;
+
+        // Check padding is all zeros.
+        if padding.iter().any(|b| *b != 0) {
+            return Err(DecodeError::Invalid);
+        }
+
+        // Check that entire payload consumed.
+        if offset != payload_len {
+            return Err(DecodeError::Invalid);
+        }
+
+        Ok(Self {
+            ed25519,
+            payload: inner_payload.to_vec(),
+        })
+    }
+
+    #[cfg(not(feature = "alloc"))]
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
         // min or 32-byte for the max payload (limited to 32 bytes in no_alloc)
@@ -509,7 +581,7 @@ mod signed_payload_decoded_serde_impl {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: [u8; 32],
         #[serde_as(as = "serde_with::hex::Hex")]
-        payload: crate::vec::Vec<u8, 32>,
+        payload: alloc::vec::Vec<u8>,
     }
 
     impl Serialize for Decoded<&SignedPayload> {

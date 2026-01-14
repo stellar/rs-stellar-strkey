@@ -84,10 +84,9 @@ pub fn checksum(data: &[u8]) -> [u8; 2] {
 
 #[cfg(test)]
 mod tests {
-    use super::checksum;
     extern crate proptest;
-    use alloc::vec::Vec;
     use proptest::prelude::*;
+    use super::checksum;
 
     #[test]
     fn test_checksum() {
@@ -96,11 +95,10 @@ mod tests {
         let cs = checksum(&[0x12, 0x34, 0x56, 0x78, 0x90]);
         assert_eq!(cs, [0xe6, 0x48]);
     }
-
     proptest! {
         #[test]
-        fn test_doesnt_panic(data: Vec<u8>) {
-            checksum(&data[..]);
+        fn test_doesnt_panic(data: [u8; 128], len: usize) {
+            checksum(&data[..len % 129]);
         }
     }
 }

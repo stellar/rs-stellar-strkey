@@ -68,7 +68,7 @@ impl PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -159,7 +159,7 @@ impl PublicKey {
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -267,7 +267,7 @@ impl MuxedAccount {
 
 impl Display for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -340,7 +340,7 @@ impl Debug for SignedPayload {
             write!(f, "{b:02x}")?;
         }
         write!(f, ", ")?;
-        for b in self.payload.as_slice() {
+        for b in &self.payload {
             write!(f, "{b:02x}")?;
         }
         write!(f, ")")
@@ -359,8 +359,8 @@ impl SignedPayload {
 
         let mut payload = alloc::vec![0; payload_len];
         payload[..32].copy_from_slice(&self.ed25519);
-        payload[32..32 + 4].copy_from_slice(&inner_payload_len_u32.to_be_bytes());
-        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
+        payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
+        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
         encode(version::SIGNED_PAYLOAD_ED25519, &payload)
     }
@@ -376,8 +376,8 @@ impl SignedPayload {
 
         let mut payload = [0u8; 104]; // Max: 32 + 4 + 64 + 4 padding = 104
         payload[..32].copy_from_slice(&self.ed25519);
-        payload[32..32 + 4].copy_from_slice(&inner_payload_len_u32.to_be_bytes());
-        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
+        payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
+        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
         encode(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len])
     }
@@ -462,7 +462,7 @@ impl SignedPayload {
 
 impl Display for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 

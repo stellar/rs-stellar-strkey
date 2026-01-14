@@ -16,7 +16,7 @@ use core::{
     str::FromStr,
 };
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
@@ -102,7 +102,7 @@ impl Strkey {
 
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -284,7 +284,7 @@ impl PreAuthTx {
 
 impl Display for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -372,7 +372,7 @@ impl HashX {
 
 impl Display for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -460,7 +460,7 @@ impl Contract {
 
 impl Display for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -548,7 +548,7 @@ impl LiquidityPool {
 
 impl Display for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -662,7 +662,7 @@ impl ClaimableBalance {
 
 impl Display for ClaimableBalance {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.to_string())
+        write!(f, "{}", self.to_string())
     }
 }
 

@@ -1,12 +1,12 @@
 use crate::{
     convert::decode_to_slice,
-    ed25519,
-    error::{DecodeError, EncodeError},
+    ed25519::{self, STRKEY_LEN_104, STRKEY_LEN_32, STRKEY_LEN_36},
+    error::DecodeError,
     version,
 };
 
-#[cfg(feature = "alloc")]
 use crate::convert::encode;
+
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 
@@ -33,22 +33,6 @@ pub enum Strkey {
 }
 
 impl Strkey {
-    /// Encodes the strkey to a string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        match self {
-            Self::PublicKeyEd25519(x) => x.to_str(buf),
-            Self::PrivateKeyEd25519(x) => x.to_str(buf),
-            Self::PreAuthTx(x) => x.to_str(buf),
-            Self::HashX(x) => x.to_str(buf),
-            Self::MuxedAccountEd25519(x) => x.to_str(buf),
-            Self::SignedPayloadEd25519(x) => x.to_str(buf),
-            Self::Contract(x) => x.to_str(buf),
-            Self::LiquidityPool(x) => x.to_str(buf),
-            Self::ClaimableBalance(x) => x.to_str(buf),
-        }
-    }
-
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         match self {
@@ -61,6 +45,26 @@ impl Strkey {
             Self::Contract(x) => x.to_string(),
             Self::LiquidityPool(x) => x.to_string(),
             Self::ClaimableBalance(x) => x.to_string(),
+        }
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_104> {
+        fn resize<const FROM: usize>(
+            s: heapless::String<FROM>,
+        ) -> heapless::String<STRKEY_LEN_104> {
+            heapless::String::try_from(s.as_str()).expect("STRKEY_LEN_104 >= FROM")
+        }
+        match self {
+            Self::PublicKeyEd25519(x) => resize(x.to_string()),
+            Self::PrivateKeyEd25519(x) => resize(x.to_string()),
+            Self::PreAuthTx(x) => resize(x.to_string()),
+            Self::HashX(x) => resize(x.to_string()),
+            Self::MuxedAccountEd25519(x) => resize(x.to_string()),
+            Self::SignedPayloadEd25519(x) => x.to_string(),
+            Self::Contract(x) => resize(x.to_string()),
+            Self::LiquidityPool(x) => resize(x.to_string()),
+            Self::ClaimableBalance(x) => resize(x.to_string()),
         }
     }
 
@@ -97,9 +101,7 @@ impl Strkey {
 
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 176]; // base32 of 107 bytes = 172 chars (for SignedPayload max)
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -255,15 +257,13 @@ impl Debug for PreAuthTx {
 }
 
 impl PreAuthTx {
-    /// Encodes the pre-auth transaction to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = crate::convert::encode_to_slice(version::PRE_AUTH_TX, &self.0, buf)?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
-    }
-
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
+        encode(version::PRE_AUTH_TX, &self.0)
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
         encode(version::PRE_AUTH_TX, &self.0)
     }
 
@@ -283,9 +283,7 @@ impl PreAuthTx {
 
 impl Display for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 64];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -347,15 +345,13 @@ impl Debug for HashX {
 }
 
 impl HashX {
-    /// Encodes the hash-x to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = crate::convert::encode_to_slice(version::HASH_X, &self.0, buf)?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
-    }
-
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
+        encode(version::HASH_X, &self.0)
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
         encode(version::HASH_X, &self.0)
     }
 
@@ -375,9 +371,7 @@ impl HashX {
 
 impl Display for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 64];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -439,15 +433,13 @@ impl Debug for Contract {
 }
 
 impl Contract {
-    /// Encodes the contract to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = crate::convert::encode_to_slice(version::CONTRACT, &self.0, buf)?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
-    }
-
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
+        encode(version::CONTRACT, &self.0)
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
         encode(version::CONTRACT, &self.0)
     }
 
@@ -467,9 +459,7 @@ impl Contract {
 
 impl Display for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 64];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -531,15 +521,13 @@ impl Debug for LiquidityPool {
 }
 
 impl LiquidityPool {
-    /// Encodes the liquidity pool to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = crate::convert::encode_to_slice(version::LIQUIDITY_POOL, &self.0, buf)?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
-    }
-
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
+        encode(version::LIQUIDITY_POOL, &self.0)
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
         encode(version::LIQUIDITY_POOL, &self.0)
     }
 
@@ -559,9 +547,7 @@ impl LiquidityPool {
 
 impl Display for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 64];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -631,23 +617,20 @@ impl Debug for ClaimableBalance {
 }
 
 impl ClaimableBalance {
-    /// Encodes the claimable balance to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> String {
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0
                 let mut payload = [0; 33];
                 payload[1..].copy_from_slice(v0);
-                let len =
-                    crate::convert::encode_to_slice(version::CLAIMABLE_BALANCE, &payload, buf)?;
-                Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+                encode(version::CLAIMABLE_BALANCE, &payload)
             }
         }
     }
 
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_36> {
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0
@@ -678,9 +661,7 @@ impl ClaimableBalance {
 
 impl Display for ClaimableBalance {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 64];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 

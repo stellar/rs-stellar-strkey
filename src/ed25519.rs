@@ -1,11 +1,9 @@
 use crate::{
-    convert::{decode_to_slice, encode_to_slice},
-    error::{DecodeError, EncodeError},
+    convert::{decode_to_slice, encode},
+    error::DecodeError,
     version,
 };
 
-#[cfg(feature = "alloc")]
-use crate::convert::encode;
 #[cfg(feature = "alloc")]
 use alloc::string::String;
 
@@ -31,16 +29,23 @@ impl Debug for PrivateKey {
     }
 }
 
-impl PrivateKey {
-    /// Encodes the private key to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = encode_to_slice(version::PRIVATE_KEY_ED25519, &self.0, buf)?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
-    }
+/// Max encoded length for 32-byte payload strkeys (1 ver + 32 payload + 2 crc = 35 bytes -> 56 base32 chars)
+pub const STRKEY_LEN_32: usize = 56;
+/// Max encoded length for 36-byte payload strkeys (ClaimableBalance)
+pub const STRKEY_LEN_36: usize = 63;
+/// Max encoded length for 40-byte payload strkeys (MuxedAccount)
+pub const STRKEY_LEN_40: usize = 69;
+/// Max encoded length for 104-byte payload strkeys (SignedPayload)
+pub const STRKEY_LEN_104: usize = 172;
 
+impl PrivateKey {
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
+        encode(version::PRIVATE_KEY_ED25519, &self.0)
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
         encode(version::PRIVATE_KEY_ED25519, &self.0)
     }
 
@@ -63,9 +68,7 @@ impl PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 64];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -127,15 +130,13 @@ impl Debug for PublicKey {
 }
 
 impl PublicKey {
-    /// Encodes the public key to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = encode_to_slice(version::PUBLIC_KEY_ED25519, &self.0, buf)?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
-    }
-
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
+        encode(version::PUBLIC_KEY_ED25519, &self.0)
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
         encode(version::PUBLIC_KEY_ED25519, &self.0)
     }
 
@@ -158,9 +159,7 @@ impl PublicKey {
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 64];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -227,19 +226,17 @@ impl Debug for MuxedAccount {
 }
 
 impl MuxedAccount {
-    /// Encodes the muxed account to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> String {
         let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
         id.copy_from_slice(&self.id.to_be_bytes());
-        let len = encode_to_slice(version::MUXED_ACCOUNT_ED25519, &payload, buf)?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+        encode(version::MUXED_ACCOUNT_ED25519, &payload)
     }
 
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_40> {
         let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
@@ -270,9 +267,7 @@ impl MuxedAccount {
 
 impl Display for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 80];
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 
@@ -335,7 +330,7 @@ pub struct SignedPayload {
     #[cfg(feature = "alloc")]
     pub payload: alloc::vec::Vec<u8>,
     #[cfg(not(feature = "alloc"))]
-    pub payload: crate::vec::Vec<u8, 64>,
+    pub payload: heapless::Vec<u8, 64>,
 }
 
 impl Debug for SignedPayload {
@@ -353,36 +348,6 @@ impl Debug for SignedPayload {
 }
 
 impl SignedPayload {
-    /// Encodes the signed payload to a strkey string in the provided buffer.
-    /// Returns the encoded string slice.
-    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let inner_payload_len = self.payload.len();
-        let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
-
-        let inner_payload_len_u32: u32 = inner_payload_len
-            .try_into()
-            .expect("payload length larger than u32::MAX");
-
-        let mut payload = [0u8; 104]; // Max: 32 + 4 + 64 + 4 padding = 104
-        if payload_len > payload.len() {
-            return Err(EncodeError::BufferTooSmall {
-                buf_len: payload.len(),
-                required_len: payload_len,
-            });
-        }
-
-        payload[..32].copy_from_slice(&self.ed25519);
-        payload[32..32 + 4].copy_from_slice(&inner_payload_len_u32.to_be_bytes());
-        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
-
-        let len = encode_to_slice(
-            version::SIGNED_PAYLOAD_ED25519,
-            &payload[..payload_len],
-            buf,
-        )?;
-        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
-    }
-
     #[cfg(feature = "alloc")]
     pub fn to_string(&self) -> String {
         let inner_payload_len = self.payload.len();
@@ -398,6 +363,23 @@ impl SignedPayload {
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
 
         encode(version::SIGNED_PAYLOAD_ED25519, &payload)
+    }
+
+    #[cfg(not(feature = "alloc"))]
+    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_104> {
+        let inner_payload_len = self.payload.len();
+        let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
+
+        let inner_payload_len_u32: u32 = inner_payload_len
+            .try_into()
+            .expect("payload length larger than u32::MAX");
+
+        let mut payload = [0u8; 104]; // Max: 32 + 4 + 64 + 4 padding = 104
+        payload[..32].copy_from_slice(&self.ed25519);
+        payload[32..32 + 4].copy_from_slice(&inner_payload_len_u32.to_be_bytes());
+        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
+
+        encode(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len])
     }
 
     #[cfg(feature = "alloc")]
@@ -530,7 +512,7 @@ impl SignedPayload {
 
         Ok(Self {
             ed25519,
-            payload: inner_payload.try_into().map_err(|_| DecodeError::Invalid)?,
+            payload: heapless::Vec::from_slice(inner_payload).map_err(|_| DecodeError::Invalid)?,
         })
     }
 
@@ -546,9 +528,7 @@ impl SignedPayload {
 
 impl Display for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 176]; // base32 of 107 bytes (1 ver + 104 payload + 2 crc) = 172 chars
-        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
-        f.write_str(s)
+        f.write_str(&self.to_string())
     }
 }
 

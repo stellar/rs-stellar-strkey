@@ -95,3 +95,21 @@ pub fn encode(ver: u8, payload: &[u8]) -> String {
     d.extend_from_slice(&checksum(&d));
     data_encoding::BASE32_NOPAD.encode(&d)
 }
+
+#[cfg(not(feature = "alloc"))]
+pub fn encode<const N: usize>(ver: u8, payload: &[u8]) -> heapless::String<N> {
+    let data_len = 1 + payload.len() + 2;
+    let mut data = [0u8; MAX_BINARY_SIZE];
+    data[0] = ver;
+    data[1..1 + payload.len()].copy_from_slice(payload);
+    let crc = checksum(&data[..1 + payload.len()]);
+    data[1 + payload.len()..data_len].copy_from_slice(&crc);
+
+    let encoded_len = data_encoding::BASE32_NOPAD.encode_len(data_len);
+    assert!(N >= encoded_len, "heapless::String capacity too small");
+
+    let mut out = [0u8; N];
+    data_encoding::BASE32_NOPAD.encode_mut(&data[..data_len], &mut out[..encoded_len]);
+    let s = core::str::from_utf8(&out[..encoded_len]).expect("base32 is valid utf8");
+    heapless::String::try_from(s).expect("length already checked")
+}

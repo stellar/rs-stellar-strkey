@@ -1,6 +1,6 @@
 /// A fixed-capacity vector that stores elements on the stack.
 /// Similar to heapless::Vec but defined locally to avoid dependencies.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Vec<T, const N: usize> {
     buf: [T; N],
     len: usize,

@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum DecodeError {
     // TODO: Add meaningful errors for each problem that can occur.
     Invalid,
@@ -14,7 +14,7 @@ impl core::fmt::Display for DecodeError {
 
 impl core::error::Error for DecodeError {}
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum EncodeError {
     /// The output buffer is too small to hold the encoded strkey.
     BufferTooSmall {

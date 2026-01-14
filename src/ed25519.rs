@@ -324,7 +324,6 @@ mod muxed_account_decoded_serde_impl {
 ///
 /// The payload must not have a size larger than 64 bytes.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(not(feature = "alloc"), derive(Copy))]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)

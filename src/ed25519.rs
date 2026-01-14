@@ -38,14 +38,13 @@ pub const STRKEY_LEN_40: usize = 69;
 /// Max encoded length for 104-byte payload strkeys (SignedPayload)
 pub const STRKEY_LEN_104: usize = 172;
 
-impl PrivateKey {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        encode(version::PRIVATE_KEY_ED25519, &self.0)
-    }
+#[cfg(feature = "alloc")]
+pub type PrivateKeyString = String;
+#[cfg(not(feature = "alloc"))]
+pub type PrivateKeyString = heapless::String<STRKEY_LEN_32>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
+impl PrivateKey {
+    pub fn to_string(&self) -> PrivateKeyString {
         encode(version::PRIVATE_KEY_ED25519, &self.0)
     }
 
@@ -128,14 +127,13 @@ impl Debug for PublicKey {
     }
 }
 
-impl PublicKey {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        encode(version::PUBLIC_KEY_ED25519, &self.0)
-    }
+#[cfg(feature = "alloc")]
+pub type PublicKeyString = String;
+#[cfg(not(feature = "alloc"))]
+pub type PublicKeyString = heapless::String<STRKEY_LEN_32>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
+impl PublicKey {
+    pub fn to_string(&self) -> PublicKeyString {
         encode(version::PUBLIC_KEY_ED25519, &self.0)
     }
 
@@ -223,18 +221,13 @@ impl Debug for MuxedAccount {
     }
 }
 
-impl MuxedAccount {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        let mut payload: [u8; 40] = [0; 40];
-        let (ed25519, id) = payload.split_at_mut(32);
-        ed25519.copy_from_slice(&self.ed25519);
-        id.copy_from_slice(&self.id.to_be_bytes());
-        encode(version::MUXED_ACCOUNT_ED25519, &payload)
-    }
+#[cfg(feature = "alloc")]
+pub type MuxedAccountString = String;
+#[cfg(not(feature = "alloc"))]
+pub type MuxedAccountString = heapless::String<STRKEY_LEN_40>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_40> {
+impl MuxedAccount {
+    pub fn to_string(&self) -> MuxedAccountString {
         let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
@@ -316,7 +309,9 @@ mod muxed_account_decoded_serde_impl {
 
 /// Stores a signed payload ed25519 signer.
 ///
-/// The payload must not have a size larger than 64 bytes.
+/// The payload must not have a size larger than 64 bytes. Note that SEP-23 does not define a limit
+/// on SignedPayloads, however this implementation sets a practical limit based off the use cases
+/// that SignedPayload is intended to be used in.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -344,26 +339,13 @@ impl Debug for SignedPayload {
     }
 }
 
+#[cfg(feature = "alloc")]
+pub type SignedPayloadString = String;
+#[cfg(not(feature = "alloc"))]
+pub type SignedPayloadString = heapless::String<STRKEY_LEN_104>;
+
 impl SignedPayload {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        let inner_payload_len = self.payload.len();
-        let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
-
-        let inner_payload_len_u32: u32 = inner_payload_len
-            .try_into()
-            .expect("payload length larger than u32::MAX");
-
-        let mut payload = alloc::vec![0; payload_len];
-        payload[..32].copy_from_slice(&self.ed25519);
-        payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
-        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
-
-        encode(version::SIGNED_PAYLOAD_ED25519, &payload)
-    }
-
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_104> {
+    pub fn to_string(&self) -> SignedPayloadString {
         let inner_payload_len = self.payload.len();
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 

@@ -5,11 +5,11 @@ use crate::{
     version,
 };
 
-#[cfg(not(feature = "alloc"))]
-use crate::ed25519::{STRKEY_LEN_104, STRKEY_LEN_32, STRKEY_LEN_36};
-
 #[cfg(feature = "alloc")]
 use alloc::string::String;
+
+#[cfg(not(feature = "alloc"))]
+use crate::ed25519::{STRKEY_LEN_104, STRKEY_LEN_32, STRKEY_LEN_36};
 
 use core::{
     fmt::{Debug, Display},
@@ -33,9 +33,14 @@ pub enum Strkey {
     ClaimableBalance(ClaimableBalance),
 }
 
+#[cfg(feature = "alloc")]
+pub type StrkeyEnumString = String;
+#[cfg(not(feature = "alloc"))]
+pub type StrkeyEnumString = heapless::String<STRKEY_LEN_104>;
+
 impl Strkey {
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StrkeyEnumString {
         match self {
             Self::PublicKeyEd25519(x) => x.to_string(),
             Self::PrivateKeyEd25519(x) => x.to_string(),
@@ -50,10 +55,8 @@ impl Strkey {
     }
 
     #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_104> {
-        fn resize<const FROM: usize>(
-            s: heapless::String<FROM>,
-        ) -> heapless::String<STRKEY_LEN_104> {
+    pub fn to_string(&self) -> StrkeyEnumString {
+        fn resize<const FROM: usize>(s: heapless::String<FROM>) -> StrkeyEnumString {
             heapless::String::try_from(s.as_str()).expect("STRKEY_LEN_104 >= FROM")
         }
         match self {
@@ -255,14 +258,13 @@ impl Debug for PreAuthTx {
     }
 }
 
-impl PreAuthTx {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        encode(version::PRE_AUTH_TX, &self.0)
-    }
+#[cfg(feature = "alloc")]
+pub type PreAuthTxString = String;
+#[cfg(not(feature = "alloc"))]
+pub type PreAuthTxString = heapless::String<STRKEY_LEN_32>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
+impl PreAuthTx {
+    pub fn to_string(&self) -> PreAuthTxString {
         encode(version::PRE_AUTH_TX, &self.0)
     }
 
@@ -342,14 +344,13 @@ impl Debug for HashX {
     }
 }
 
-impl HashX {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        encode(version::HASH_X, &self.0)
-    }
+#[cfg(feature = "alloc")]
+pub type HashXString = String;
+#[cfg(not(feature = "alloc"))]
+pub type HashXString = heapless::String<STRKEY_LEN_32>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
+impl HashX {
+    pub fn to_string(&self) -> HashXString {
         encode(version::HASH_X, &self.0)
     }
 
@@ -429,14 +430,13 @@ impl Debug for Contract {
     }
 }
 
-impl Contract {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        encode(version::CONTRACT, &self.0)
-    }
+#[cfg(feature = "alloc")]
+pub type ContractString = String;
+#[cfg(not(feature = "alloc"))]
+pub type ContractString = heapless::String<STRKEY_LEN_32>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
+impl Contract {
+    pub fn to_string(&self) -> ContractString {
         encode(version::CONTRACT, &self.0)
     }
 
@@ -516,14 +516,13 @@ impl Debug for LiquidityPool {
     }
 }
 
-impl LiquidityPool {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        encode(version::LIQUIDITY_POOL, &self.0)
-    }
+#[cfg(feature = "alloc")]
+pub type LiquidityPoolString = String;
+#[cfg(not(feature = "alloc"))]
+pub type LiquidityPoolString = heapless::String<STRKEY_LEN_32>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_32> {
+impl LiquidityPool {
+    pub fn to_string(&self) -> LiquidityPoolString {
         encode(version::LIQUIDITY_POOL, &self.0)
     }
 
@@ -611,21 +610,13 @@ impl Debug for ClaimableBalance {
     }
 }
 
-impl ClaimableBalance {
-    #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> String {
-        match self {
-            Self::V0(v0) => {
-                // First byte is zero for v0
-                let mut payload = [0; 33];
-                payload[1..].copy_from_slice(v0);
-                encode(version::CLAIMABLE_BALANCE, &payload)
-            }
-        }
-    }
+#[cfg(feature = "alloc")]
+pub type ClaimableBalanceString = String;
+#[cfg(not(feature = "alloc"))]
+pub type ClaimableBalanceString = heapless::String<STRKEY_LEN_36>;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn to_string(&self) -> heapless::String<STRKEY_LEN_36> {
+impl ClaimableBalance {
+    pub fn to_string(&self) -> ClaimableBalanceString {
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0

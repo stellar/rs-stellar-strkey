@@ -17,6 +17,12 @@ test:
 fuzz:
 	cargo +nightly fuzz run fuzz_roundtrip -j 4
 
+fuzz-nostd:
+	cargo +nightly fuzz run fuzz_roundtrip -j 4 --no-default-features --features alloc
+
+fuzz-noalloc:
+	cargo +nightly fuzz run fuzz_roundtrip -j 4 --no-default-features
+
 # Generate a lcov.info file for tools like VSCode's Coverage Gutters extension,
 # and output basic coverage information on the command line.
 RUST_LLVM_COV=$(shell find $(shell rustc --print sysroot) -name llvm-cov)

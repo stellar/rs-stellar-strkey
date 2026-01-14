@@ -369,7 +369,6 @@ fn test_invalid_signed_payload_ed25519() {
     assert_eq!(r, Err(DecodeError::Invalid));
 }
 
-#[cfg(feature = "alloc")]
 #[test]
 fn test_signed_payload_ed25519_payload_sizes() {
     // Test payload sizes from 1 to 64 bytes (the maximum per Stellar protocol)
@@ -378,7 +377,6 @@ fn test_signed_payload_ed25519_payload_sizes() {
         (0..payload_size).for_each(|i| {
             payload_arr[i] = i as u8;
         });
-        let payload = payload_arr[..payload_size].to_vec();
 
         let signed_payload = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519: [
@@ -386,34 +384,11 @@ fn test_signed_payload_ed25519_payload_sizes() {
                 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3,
                 0xfc, 0x7f, 0xe8, 0x9a,
             ],
-            payload,
-        });
-
-        let encoded = signed_payload.to_string();
-        let decoded = Strkey::from_string(&encoded).unwrap();
-        assert_eq!(signed_payload, decoded);
-    }
-}
-
-#[cfg(not(feature = "alloc"))]
-#[test]
-fn test_signed_payload_ed25519_payload_sizes() {
-    // Test payload sizes from 1 to 32 bytes (the maximum for no_alloc)
-    for payload_size in 1..=32 {
-        let mut payload_arr = [0u8; 32];
-        (0..payload_size).for_each(|i| {
-            payload_arr[i] = i as u8;
-        });
-        let payload =
-            stellar_strkey::vec::Vec::<u8, 32>::try_from(&payload_arr[..payload_size]).unwrap();
-
-        let signed_payload = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
-            ed25519: [
-                0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
-                0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3,
-                0xfc, 0x7f, 0xe8, 0x9a,
-            ],
-            payload,
+            #[cfg(feature = "alloc")]
+            payload: payload_arr[..payload_size].to_vec(),
+            #[cfg(not(feature = "alloc"))]
+            payload: stellar_strkey::vec::Vec::<u8, 64>::try_from(&payload_arr[..payload_size])
+                .unwrap(),
         });
 
         let encoded = signed_payload.to_string();

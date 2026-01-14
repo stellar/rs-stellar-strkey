@@ -322,7 +322,7 @@ mod muxed_account_decoded_serde_impl {
 
 /// Stores a signed payload ed25519 signer.
 ///
-/// The payload must not have a size larger than 64 bytes (or 32 bytes without alloc).
+/// The payload must not have a size larger than 64 bytes.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(not(feature = "alloc"), derive(Copy))]
 #[cfg_attr(
@@ -334,7 +334,7 @@ pub struct SignedPayload {
     #[cfg(feature = "alloc")]
     pub payload: alloc::vec::Vec<u8>,
     #[cfg(not(feature = "alloc"))]
-    pub payload: crate::vec::Vec<u8, 32>,
+    pub payload: crate::vec::Vec<u8, 64>,
 }
 
 impl Debug for SignedPayload {
@@ -362,7 +362,7 @@ impl SignedPayload {
             .try_into()
             .expect("payload length larger than u32::MAX");
 
-        let mut payload = [0u8; 72]; // Max: 32 + 4 + 32 + 4 padding = 72
+        let mut payload = [0u8; 104]; // Max: 32 + 4 + 64 + 4 padding = 104
         if payload_len > payload.len() {
             return Err(EncodeError::BufferTooSmall {
                 buf_len: payload.len(),
@@ -469,10 +469,10 @@ impl SignedPayload {
     #[cfg(not(feature = "alloc"))]
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
-        // min or 32-byte for the max payload (limited to 32 bytes in no_alloc)
-        const MAX_INNER_PAYLOAD_LENGTH: u32 = 32;
+        // min or 64-byte for the max payload
+        const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
         const MIN_LENGTH: usize = 32 + 4 + 4;
-        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize) + 4; // +4 for padding
+        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
@@ -545,7 +545,7 @@ impl SignedPayload {
 
 impl Display for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 128];
+        let mut buf = [0u8; 176]; // base32 of 107 bytes (1 ver + 104 payload + 2 crc) = 172 chars
         let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
         f.write_str(s)
     }

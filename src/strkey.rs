@@ -111,7 +111,7 @@ impl Strkey {
 
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf = [0u8; 128];
+        let mut buf = [0u8; 176]; // base32 of 107 bytes = 172 chars (for SignedPayload max)
         let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
         f.write_str(s)
     }

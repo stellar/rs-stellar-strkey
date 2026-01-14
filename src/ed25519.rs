@@ -1,5 +1,5 @@
 use crate::{
-    convert::{decode_to_slice, encode},
+    convert::{decode, encode},
     error::DecodeError,
     version,
 };
@@ -57,10 +57,9 @@ impl PrivateKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::PRIVATE_KEY_ED25519 => Self::from_payload(&buf[..len]),
+            version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -148,10 +147,9 @@ impl PublicKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::PUBLIC_KEY_ED25519 => Self::from_payload(&buf[..len]),
+            version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -256,10 +254,9 @@ impl MuxedAccount {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&buf[..len]),
+            version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -451,10 +448,9 @@ impl SignedPayload {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&buf[..len]),
+            version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }

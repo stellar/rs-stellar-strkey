@@ -1,5 +1,5 @@
 use crate::{
-    convert::{decode_to_slice, encode},
+    convert::{decode, encode},
     ed25519,
     error::DecodeError,
     version,
@@ -70,30 +70,28 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
-        let payload = &buf[..len];
+        let (ver, payload) = decode(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
-                ed25519::PublicKey::from_payload(payload)?,
+                ed25519::PublicKey::from_payload(&payload)?,
             )),
             version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(
-                ed25519::PrivateKey::from_payload(payload)?,
+                ed25519::PrivateKey::from_payload(&payload)?,
             )),
-            version::PRE_AUTH_TX => Ok(Self::PreAuthTx(PreAuthTx::from_payload(payload)?)),
-            version::HASH_X => Ok(Self::HashX(HashX::from_payload(payload)?)),
+            version::PRE_AUTH_TX => Ok(Self::PreAuthTx(PreAuthTx::from_payload(&payload)?)),
+            version::HASH_X => Ok(Self::HashX(HashX::from_payload(&payload)?)),
             version::MUXED_ACCOUNT_ED25519 => Ok(Self::MuxedAccountEd25519(
-                ed25519::MuxedAccount::from_payload(payload)?,
+                ed25519::MuxedAccount::from_payload(&payload)?,
             )),
             version::SIGNED_PAYLOAD_ED25519 => Ok(Self::SignedPayloadEd25519(
-                ed25519::SignedPayload::from_payload(payload)?,
+                ed25519::SignedPayload::from_payload(&payload)?,
             )),
-            version::CONTRACT => Ok(Self::Contract(Contract::from_payload(payload)?)),
+            version::CONTRACT => Ok(Self::Contract(Contract::from_payload(&payload)?)),
             version::LIQUIDITY_POOL => {
-                Ok(Self::LiquidityPool(LiquidityPool::from_payload(payload)?))
+                Ok(Self::LiquidityPool(LiquidityPool::from_payload(&payload)?))
             }
             version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
-                ClaimableBalance::from_payload(payload)?,
+                ClaimableBalance::from_payload(&payload)?,
             )),
             _ => Err(DecodeError::Invalid),
         }
@@ -273,10 +271,9 @@ impl PreAuthTx {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::PRE_AUTH_TX => Self::from_payload(&buf[..len]),
+            version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -361,10 +358,9 @@ impl HashX {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::HASH_X => Self::from_payload(&buf[..len]),
+            version::HASH_X => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -449,10 +445,9 @@ impl Contract {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::CONTRACT => Self::from_payload(&buf[..len]),
+            version::CONTRACT => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -537,10 +532,9 @@ impl LiquidityPool {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::LIQUIDITY_POOL => Self::from_payload(&buf[..len]),
+            version::LIQUIDITY_POOL => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -651,10 +645,9 @@ impl ClaimableBalance {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let mut buf = [0u8; 128];
-        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let (ver, payload) = decode(s)?;
         match ver {
-            version::CLAIMABLE_BALANCE => Self::from_payload(&buf[..len]),
+            version::CLAIMABLE_BALANCE => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
         }
     }

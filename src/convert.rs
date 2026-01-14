@@ -17,9 +17,12 @@ use crate::{crc::checksum, error::DecodeError};
 // Max binary size: 1 (version) + 104 (max payload) + 2 (crc) = 107 bytes
 const MAX_BINARY_SIZE: usize = 107;
 
-/// Decodes a strkey string into a version byte and payload, writing to the provided buffer.
-/// Returns the version byte and number of payload bytes written.
-pub fn decode_to_slice(s: &str, out: &mut [u8]) -> Result<(u8, usize), DecodeError> {
+/// Max payload size: 104 bytes (SignedPayloadEd25519: 32 ed25519 key + 4 len + 64 payload + 4 padding)
+const MAX_PAYLOAD_SIZE: usize = 104;
+
+/// Decodes a strkey string into a version byte and payload.
+/// Returns the version byte and payload as a heapless Vec.
+pub fn decode(s: &str) -> Result<(u8, heapless::Vec<u8, MAX_PAYLOAD_SIZE>), DecodeError> {
     let decoded_len = data_encoding::BASE32_NOPAD
         .decode_len(s.len())
         .map_err(|_| DecodeError::Invalid)?;
@@ -45,14 +48,8 @@ pub fn decode_to_slice(s: &str, out: &mut [u8]) -> Result<(u8, usize), DecodeErr
     }
 
     let payload = &data_without_crc[1..];
-    let payload_len = payload.len();
-
-    if out.len() < payload_len {
-        return Err(DecodeError::Invalid);
-    }
-
-    out[..payload_len].copy_from_slice(payload);
-    Ok((ver, payload_len))
+    let payload_vec = heapless::Vec::from_slice(payload).map_err(|_| DecodeError::Invalid)?;
+    Ok((ver, payload_vec))
 }
 
 #[cfg(feature = "alloc")]

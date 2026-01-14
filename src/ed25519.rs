@@ -502,11 +502,7 @@ mod signed_payload_decoded_serde_impl {
     impl Serialize for Decoded<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(SignedPayload { ed25519, payload }) = self;
-            DecodedBorrowed {
-                ed25519,
-                payload: payload.as_slice(),
-            }
-            .serialize(serializer)
+            DecodedBorrowed { ed25519, payload }.serialize(serializer)
         }
     }
 

@@ -7,6 +7,12 @@ edition = "2021"
 [package.metadata]
 cargo-fuzz = true
 
+[features]
+std = ["stellar-strkey/std"]
+alloc = ["stellar-strkey/alloc"]
+serde = ["stellar-strkey/serde"]
+serde-decoded = ["stellar-strkey/serde-decoded"]
+
 [dependencies]
 libfuzzer-sys = "0.4"
 

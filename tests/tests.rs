@@ -371,7 +371,6 @@ fn test_invalid_signed_payload_ed25519() {
 
 #[test]
 fn test_signed_payload_ed25519_payload_sizes() {
-    // Test payload sizes from 1 to 64 bytes (the maximum per Stellar protocol)
     for payload_size in 1..=64 {
         let mut payload_arr = [0u8; 64];
         let payload = &mut payload_arr[..payload_size];

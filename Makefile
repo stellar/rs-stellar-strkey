@@ -59,4 +59,4 @@ fmt:
 clean:
 	cargo clean
 
-.PHONY: all test fuzz build check install fmt clean
+.PHONY: all test fuzz fuzz-noalloc fuzz-coverage build check install fmt clean

@@ -92,33 +92,12 @@ impl<T, const N: usize> core::ops::DerefMut for Vec<T, N> {
     }
 }
 
-impl<T, const N: usize> AsRef<[T]> for Vec<T, N> {
-    fn as_ref(&self) -> &[T] {
-        self.as_slice()
-    }
-}
-
-impl<T, const N: usize> AsMut<[T]> for Vec<T, N> {
-    fn as_mut(&mut self) -> &mut [T] {
-        self.as_mut_slice()
-    }
-}
-
 impl<'a, T, const N: usize> IntoIterator for &'a Vec<T, N> {
     type Item = &'a T;
     type IntoIter = core::slice::Iter<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.as_slice().iter()
-    }
-}
-
-impl<'a, T, const N: usize> IntoIterator for &'a mut Vec<T, N> {
-    type Item = &'a mut T;
-    type IntoIter = core::slice::IterMut<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.as_mut_slice().iter_mut()
     }
 }
 
@@ -157,11 +136,8 @@ macro_rules! impl_from_array {
             impl<const N: usize> From<[u8; $m]> for Vec<u8, N> {
                 #[allow(unused_comparisons)]
                 fn from(arr: [u8; $m]) -> Self {
-                    // This will compile but panic at runtime if M > N
-                    // Compile-time check would require const generics improvements
                     assert!($m <= N, "array size exceeds Vec capacity");
                     let mut v = Self::new();
-                    // Safety: we just checked that M <= N
                     let _ = v.extend_from_slice(&arr);
                     v
                 }
@@ -170,18 +146,8 @@ macro_rules! impl_from_array {
     };
 }
 
-// Implement for common sizes (0 to 64)
 impl_from_array!(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,
     26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
     50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64
 );
-
-#[cfg(feature = "alloc")]
-impl<const N: usize> TryFrom<alloc::vec::Vec<u8>> for Vec<u8, N> {
-    type Error = ();
-
-    fn try_from(v: alloc::vec::Vec<u8>) -> Result<Self, Self::Error> {
-        Self::try_from(v.as_slice())
-    }
-}

@@ -13,7 +13,7 @@ use core::{
     str::FromStr,
 };
 
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
@@ -28,22 +28,6 @@ pub enum Strkey {
     Contract(Contract),
     LiquidityPool(LiquidityPool),
     ClaimableBalance(ClaimableBalance),
-}
-
-impl Debug for Strkey {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::PublicKeyEd25519(x) => write!(f, "PublicKeyEd25519({x:?})"),
-            Self::PrivateKeyEd25519(x) => write!(f, "PrivateKeyEd25519({x:?})"),
-            Self::PreAuthTx(x) => write!(f, "PreAuthTx({x:?})"),
-            Self::HashX(x) => write!(f, "HashX({x:?})"),
-            Self::MuxedAccountEd25519(x) => write!(f, "MuxedAccountEd25519({x:?})"),
-            Self::SignedPayloadEd25519(x) => write!(f, "SignedPayloadEd25519({x:?})"),
-            Self::Contract(x) => write!(f, "Contract({x:?})"),
-            Self::LiquidityPool(x) => write!(f, "LiquidityPool({x:?})"),
-            Self::ClaimableBalance(x) => write!(f, "ClaimableBalance({x:?})"),
-        }
-    }
 }
 
 impl Strkey {

@@ -8,7 +8,6 @@ edition = "2021"
 cargo-fuzz = true
 
 [features]
-std = ["stellar-strkey/std"]
 alloc = ["stellar-strkey/alloc"]
 serde = ["stellar-strkey/serde"]
 serde-decoded = ["stellar-strkey/serde-decoded"]

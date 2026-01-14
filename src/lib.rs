@@ -1,4 +1,9 @@
-#![cfg_attr(not(feature = "cli"), no_std)]
+#![no_std]
+
+#[cfg(feature = "std")]
+extern crate std;
+
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
@@ -17,6 +22,7 @@ pub mod ed25519;
 mod error;
 mod strkey;
 mod typ;
+pub mod vec;
 mod version;
 
 pub use error::*;

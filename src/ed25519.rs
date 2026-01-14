@@ -1,10 +1,12 @@
 use crate::{
-    convert::{decode, encode},
-    error::DecodeError,
+    convert::decode_to_slice,
+    error::{DecodeError, EncodeError},
     version,
 };
 
-use alloc::{format, string::String, vec, vec::Vec};
+#[cfg(feature = "alloc")]
+use crate::convert::encode;
+
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
@@ -20,22 +22,23 @@ pub struct PrivateKey(pub [u8; 32]);
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PrivateKey(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl PrivateKey {
-    pub fn to_string(&self) -> String {
+    /// Encodes the private key to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        let len = crate::convert::encode_to_slice(version::PRIVATE_KEY_ED25519, &self.0, buf)?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         encode(version::PRIVATE_KEY_ED25519, &self.0)
     }
 
@@ -47,9 +50,10 @@ impl PrivateKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
+            version::PRIVATE_KEY_ED25519 => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -57,7 +61,9 @@ impl PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 64];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -111,22 +117,23 @@ pub struct PublicKey(pub [u8; 32]);
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PublicKey(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl PublicKey {
-    pub fn to_string(&self) -> String {
+    /// Encodes the public key to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        let len = crate::convert::encode_to_slice(version::PUBLIC_KEY_ED25519, &self.0, buf)?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         encode(version::PUBLIC_KEY_ED25519, &self.0)
     }
 
@@ -138,9 +145,10 @@ impl PublicKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
+            version::PUBLIC_KEY_ED25519 => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -148,7 +156,9 @@ impl PublicKey {
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 64];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -205,24 +215,29 @@ pub struct MuxedAccount {
 impl Debug for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "MuxedAccount(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .ed25519
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
+        for b in &self.ed25519 {
+            write!(f, "{b:02x}")?;
+        }
         write!(f, ", ")?;
         write!(f, "{}", self.id)?;
-        write!(f, ")")?;
-        Ok(())
+        write!(f, ")")
     }
 }
 
 impl MuxedAccount {
-    pub fn to_string(&self) -> String {
+    /// Encodes the muxed account to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        let mut payload: [u8; 40] = [0; 40];
+        let (ed25519, id) = payload.split_at_mut(32);
+        ed25519.copy_from_slice(&self.ed25519);
+        id.copy_from_slice(&self.id.to_be_bytes());
+        let len = crate::convert::encode_to_slice(version::MUXED_ACCOUNT_ED25519, &payload, buf)?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
@@ -242,9 +257,10 @@ impl MuxedAccount {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&payload),
+            version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -252,7 +268,9 @@ impl MuxedAccount {
 
 impl Display for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 80];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -304,51 +322,35 @@ mod muxed_account_decoded_serde_impl {
 
 /// Stores a signed payload ed25519 signer.
 ///
-/// The payload must not have a size larger than u32::MAX.
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+/// The payload must not have a size larger than 32 bytes.
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct SignedPayload {
     pub ed25519: [u8; 32],
-    pub payload: Vec<u8>,
+    pub payload: crate::vec::Vec<u8, 32>,
 }
 
 impl Debug for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "SignedPayload(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .ed25519
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
+        for b in &self.ed25519 {
+            write!(f, "{b:02x}")?;
+        }
         write!(f, ", ")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .payload
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in self.payload.as_slice() {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl SignedPayload {
-    /// Returns the strkey string for the signed payload signer.
-    ///
-    /// ### Panics
-    ///
-    /// When the payload is larger than u32::MAX.
-    pub fn to_string(&self) -> String {
+    /// Encodes the signed payload to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
         let inner_payload_len = self.payload.len();
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
@@ -356,20 +358,49 @@ impl SignedPayload {
             .try_into()
             .expect("payload length larger than u32::MAX");
 
-        let mut payload = vec![0; payload_len];
+        let mut payload = [0u8; 72]; // Max: 32 + 4 + 32 + 4 padding = 72
+        if payload_len > payload.len() {
+            return Err(EncodeError::BufferTooSmall {
+                buf_len: payload.len(),
+                required_len: payload_len,
+            });
+        }
+
         payload[..32].copy_from_slice(&self.ed25519);
-        payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
-        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
+        payload[32..32 + 4].copy_from_slice(&inner_payload_len_u32.to_be_bytes());
+        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
+
+        let len = crate::convert::encode_to_slice(
+            version::SIGNED_PAYLOAD_ED25519,
+            &payload[..payload_len],
+            buf,
+        )?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
+        let inner_payload_len = self.payload.len();
+        let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
+
+        let inner_payload_len_u32: u32 = inner_payload_len
+            .try_into()
+            .expect("payload length larger than u32::MAX");
+
+        let mut payload = alloc::vec![0; payload_len];
+        payload[..32].copy_from_slice(&self.ed25519);
+        payload[32..32 + 4].copy_from_slice(&inner_payload_len_u32.to_be_bytes());
+        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
 
         encode(version::SIGNED_PAYLOAD_ED25519, &payload)
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
-        // min or 64-byte for the max payload
-        const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
+        // min or 32-byte for the max payload (limited to 32 bytes in no_alloc)
+        const MAX_INNER_PAYLOAD_LENGTH: u32 = 32;
         const MIN_LENGTH: usize = 32 + 4 + 4;
-        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);
+        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize) + 4; // +4 for padding
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
@@ -426,14 +457,15 @@ impl SignedPayload {
 
         Ok(Self {
             ed25519,
-            payload: inner_payload.to_vec(),
+            payload: inner_payload.try_into().map_err(|_| DecodeError::Invalid)?,
         })
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&payload),
+            version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -441,7 +473,9 @@ impl SignedPayload {
 
 impl Display for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 128];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -475,13 +509,17 @@ mod signed_payload_decoded_serde_impl {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: [u8; 32],
         #[serde_as(as = "serde_with::hex::Hex")]
-        payload: Vec<u8>,
+        payload: crate::vec::Vec<u8, 32>,
     }
 
     impl Serialize for Decoded<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(SignedPayload { ed25519, payload }) = self;
-            DecodedBorrowed { ed25519, payload }.serialize(serializer)
+            DecodedBorrowed {
+                ed25519,
+                payload: payload.as_slice(),
+            }
+            .serialize(serializer)
         }
     }
 

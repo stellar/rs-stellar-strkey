@@ -1,17 +1,19 @@
-use alloc::{format, string::String};
+use crate::{
+    convert::decode_to_slice,
+    ed25519,
+    error::{DecodeError, EncodeError},
+    version,
+};
+
+#[cfg(feature = "alloc")]
+use crate::convert::encode;
+
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
 };
 
-use crate::{
-    convert::{decode, encode},
-    ed25519,
-    error::DecodeError,
-    version,
-};
-
-#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
@@ -28,8 +30,41 @@ pub enum Strkey {
     ClaimableBalance(ClaimableBalance),
 }
 
+impl Debug for Strkey {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::PublicKeyEd25519(x) => write!(f, "PublicKeyEd25519({x:?})"),
+            Self::PrivateKeyEd25519(x) => write!(f, "PrivateKeyEd25519({x:?})"),
+            Self::PreAuthTx(x) => write!(f, "PreAuthTx({x:?})"),
+            Self::HashX(x) => write!(f, "HashX({x:?})"),
+            Self::MuxedAccountEd25519(x) => write!(f, "MuxedAccountEd25519({x:?})"),
+            Self::SignedPayloadEd25519(x) => write!(f, "SignedPayloadEd25519({x:?})"),
+            Self::Contract(x) => write!(f, "Contract({x:?})"),
+            Self::LiquidityPool(x) => write!(f, "LiquidityPool({x:?})"),
+            Self::ClaimableBalance(x) => write!(f, "ClaimableBalance({x:?})"),
+        }
+    }
+}
+
 impl Strkey {
-    pub fn to_string(&self) -> String {
+    /// Encodes the strkey to a string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        match self {
+            Self::PublicKeyEd25519(x) => x.to_str(buf),
+            Self::PrivateKeyEd25519(x) => x.to_str(buf),
+            Self::PreAuthTx(x) => x.to_str(buf),
+            Self::HashX(x) => x.to_str(buf),
+            Self::MuxedAccountEd25519(x) => x.to_str(buf),
+            Self::SignedPayloadEd25519(x) => x.to_str(buf),
+            Self::Contract(x) => x.to_str(buf),
+            Self::LiquidityPool(x) => x.to_str(buf),
+            Self::ClaimableBalance(x) => x.to_str(buf),
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         match self {
             Self::PublicKeyEd25519(x) => x.to_string(),
             Self::PrivateKeyEd25519(x) => x.to_string(),
@@ -44,28 +79,30 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
+        let payload = &buf[..len];
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
-                ed25519::PublicKey::from_payload(&payload)?,
+                ed25519::PublicKey::from_payload(payload)?,
             )),
             version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(
-                ed25519::PrivateKey::from_payload(&payload)?,
+                ed25519::PrivateKey::from_payload(payload)?,
             )),
-            version::PRE_AUTH_TX => Ok(Self::PreAuthTx(PreAuthTx::from_payload(&payload)?)),
-            version::HASH_X => Ok(Self::HashX(HashX::from_payload(&payload)?)),
+            version::PRE_AUTH_TX => Ok(Self::PreAuthTx(PreAuthTx::from_payload(payload)?)),
+            version::HASH_X => Ok(Self::HashX(HashX::from_payload(payload)?)),
             version::MUXED_ACCOUNT_ED25519 => Ok(Self::MuxedAccountEd25519(
-                ed25519::MuxedAccount::from_payload(&payload)?,
+                ed25519::MuxedAccount::from_payload(payload)?,
             )),
             version::SIGNED_PAYLOAD_ED25519 => Ok(Self::SignedPayloadEd25519(
-                ed25519::SignedPayload::from_payload(&payload)?,
+                ed25519::SignedPayload::from_payload(payload)?,
             )),
-            version::CONTRACT => Ok(Self::Contract(Contract::from_payload(&payload)?)),
+            version::CONTRACT => Ok(Self::Contract(Contract::from_payload(payload)?)),
             version::LIQUIDITY_POOL => {
-                Ok(Self::LiquidityPool(LiquidityPool::from_payload(&payload)?))
+                Ok(Self::LiquidityPool(LiquidityPool::from_payload(payload)?))
             }
             version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
-                ClaimableBalance::from_payload(&payload)?,
+                ClaimableBalance::from_payload(payload)?,
             )),
             _ => Err(DecodeError::Invalid),
         }
@@ -74,7 +111,9 @@ impl Strkey {
 
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 128];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -222,22 +261,23 @@ pub struct PreAuthTx(pub [u8; 32]);
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PreAuthTx(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl PreAuthTx {
-    pub fn to_string(&self) -> String {
+    /// Encodes the pre-auth transaction to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        let len = crate::convert::encode_to_slice(version::PRE_AUTH_TX, &self.0, buf)?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         encode(version::PRE_AUTH_TX, &self.0)
     }
 
@@ -246,9 +286,10 @@ impl PreAuthTx {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::PRE_AUTH_TX => Self::from_payload(&payload),
+            version::PRE_AUTH_TX => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -256,7 +297,9 @@ impl PreAuthTx {
 
 impl Display for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 64];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -310,22 +353,23 @@ pub struct HashX(pub [u8; 32]);
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "HashX(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl HashX {
-    pub fn to_string(&self) -> String {
+    /// Encodes the hash-x to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        let len = crate::convert::encode_to_slice(version::HASH_X, &self.0, buf)?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         encode(version::HASH_X, &self.0)
     }
 
@@ -334,9 +378,10 @@ impl HashX {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::HASH_X => Self::from_payload(&payload),
+            version::HASH_X => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -344,7 +389,9 @@ impl HashX {
 
 impl Display for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 64];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -398,22 +445,23 @@ pub struct Contract(pub [u8; 32]);
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Contract(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl Contract {
-    pub fn to_string(&self) -> String {
+    /// Encodes the contract to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        let len = crate::convert::encode_to_slice(version::CONTRACT, &self.0, buf)?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         encode(version::CONTRACT, &self.0)
     }
 
@@ -422,9 +470,10 @@ impl Contract {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::CONTRACT => Self::from_payload(&payload),
+            version::CONTRACT => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -432,7 +481,9 @@ impl Contract {
 
 impl Display for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 64];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -486,22 +537,23 @@ pub struct LiquidityPool(pub [u8; 32]);
 impl Debug for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "LiquidityPool(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl LiquidityPool {
-    pub fn to_string(&self) -> String {
+    /// Encodes the liquidity pool to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        let len = crate::convert::encode_to_slice(version::LIQUIDITY_POOL, &self.0, buf)?;
+        Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         encode(version::LIQUIDITY_POOL, &self.0)
     }
 
@@ -510,9 +562,10 @@ impl LiquidityPool {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::LIQUIDITY_POOL => Self::from_payload(&payload),
+            version::LIQUIDITY_POOL => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -520,7 +573,9 @@ impl LiquidityPool {
 
 impl Display for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 64];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 
@@ -578,20 +633,35 @@ impl Debug for ClaimableBalance {
         write!(f, "ClaimableBalance(")?;
         match self {
             Self::V0(v0) => {
-                write!(
-                    f,
-                    "V0({})",
-                    &v0.iter().map(|b| format!("{b:02x}")).collect::<String>()
-                )?;
+                write!(f, "V0(")?;
+                for b in v0 {
+                    write!(f, "{b:02x}")?;
+                }
+                write!(f, ")")?;
             }
         }
-        write!(f, ")")?;
-        Ok(())
+        write!(f, ")")
     }
 }
 
 impl ClaimableBalance {
-    pub fn to_string(&self) -> String {
+    /// Encodes the claimable balance to a strkey string in the provided buffer.
+    /// Returns the encoded string slice.
+    pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
+        match self {
+            Self::V0(v0) => {
+                // First byte is zero for v0
+                let mut payload = [0; 33];
+                payload[1..].copy_from_slice(v0);
+                let len =
+                    crate::convert::encode_to_slice(version::CLAIMABLE_BALANCE, &payload, buf)?;
+                Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
+            }
+        }
+    }
+
+    #[cfg(feature = "alloc")]
+    pub fn to_string(&self) -> alloc::string::String {
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0
@@ -611,9 +681,10 @@ impl ClaimableBalance {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let mut buf = [0u8; 128];
+        let (ver, len) = decode_to_slice(s, &mut buf)?;
         match ver {
-            version::CLAIMABLE_BALANCE => Self::from_payload(&payload),
+            version::CLAIMABLE_BALANCE => Self::from_payload(&buf[..len]),
             _ => Err(DecodeError::Invalid),
         }
     }
@@ -621,7 +692,9 @@ impl ClaimableBalance {
 
 impl Display for ClaimableBalance {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf = [0u8; 64];
+        let s = self.to_str(&mut buf).map_err(|_| core::fmt::Error)?;
+        f.write_str(s)
     }
 }
 

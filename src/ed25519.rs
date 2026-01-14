@@ -189,7 +189,9 @@ impl Debug for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str("MuxedAccount(")?;
         write_hex(f, &self.ed25519)?;
-        write!(f, ", {})", self.id)
+        f.write_str(", ")?;
+        Display::fmt(&self.id, f)?;
+        f.write_str(")")
     }
 }
 

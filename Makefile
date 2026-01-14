@@ -7,6 +7,7 @@ test:
 	cargo test --no-default-features --features alloc
 	cargo test --no-default-features
 	cargo test --features serde
+	cargo test --features serde-decoded
 	cargo +nightly fuzz run fuzz_roundtrip -- -runs=0
 
 fuzz:

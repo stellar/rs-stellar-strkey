@@ -1,5 +1,5 @@
 use crate::{
-    convert::decode_to_slice,
+    convert::{decode_to_slice, encode_to_slice},
     error::{DecodeError, EncodeError},
     version,
 };
@@ -33,7 +33,7 @@ impl PrivateKey {
     /// Encodes the private key to a strkey string in the provided buffer.
     /// Returns the encoded string slice.
     pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = crate::convert::encode_to_slice(version::PRIVATE_KEY_ED25519, &self.0, buf)?;
+        let len = encode_to_slice(version::PRIVATE_KEY_ED25519, &self.0, buf)?;
         Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
     }
 
@@ -128,7 +128,7 @@ impl PublicKey {
     /// Encodes the public key to a strkey string in the provided buffer.
     /// Returns the encoded string slice.
     pub fn to_str<'a>(&self, buf: &'a mut [u8]) -> Result<&'a str, EncodeError> {
-        let len = crate::convert::encode_to_slice(version::PUBLIC_KEY_ED25519, &self.0, buf)?;
+        let len = encode_to_slice(version::PUBLIC_KEY_ED25519, &self.0, buf)?;
         Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
     }
 
@@ -232,7 +232,7 @@ impl MuxedAccount {
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
         id.copy_from_slice(&self.id.to_be_bytes());
-        let len = crate::convert::encode_to_slice(version::MUXED_ACCOUNT_ED25519, &payload, buf)?;
+        let len = encode_to_slice(version::MUXED_ACCOUNT_ED25519, &payload, buf)?;
         Ok(core::str::from_utf8(&buf[..len]).expect("base32 is valid utf8"))
     }
 
@@ -373,7 +373,7 @@ impl SignedPayload {
         payload[32..32 + 4].copy_from_slice(&inner_payload_len_u32.to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(self.payload.as_slice());
 
-        let len = crate::convert::encode_to_slice(
+        let len = encode_to_slice(
             version::SIGNED_PAYLOAD_ED25519,
             &payload[..payload_len],
             buf,

@@ -2,6 +2,16 @@ use stellar_strkey::*;
 
 extern crate proptest;
 
+#[cfg(feature = "alloc")]
+fn make_payload<const N: usize>(arr: [u8; N]) -> Vec<u8> {
+    arr.to_vec()
+}
+
+#[cfg(not(feature = "alloc"))]
+fn make_payload<const N: usize>(arr: [u8; N]) -> heapless::Vec<u8, 64> {
+    heapless::Vec::from_slice(&arr).unwrap()
+}
+
 #[test]
 fn test_ed25519_public_key() {
     assert_eq!(
@@ -106,7 +116,7 @@ fn test_ed25519_signed_payload() {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1, 2, 3, 4].into(),
+                payload: make_payload([1, 2, 3, 4]),
             })
         ),
         "SignedPayloadEd25519(SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304))",

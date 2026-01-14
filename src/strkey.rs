@@ -1,11 +1,12 @@
 use crate::{
-    convert::decode_to_slice,
-    ed25519::{self, STRKEY_LEN_104, STRKEY_LEN_32, STRKEY_LEN_36},
+    convert::{decode_to_slice, encode},
+    ed25519,
     error::DecodeError,
     version,
 };
 
-use crate::convert::encode;
+#[cfg(not(feature = "alloc"))]
+use crate::ed25519::{STRKEY_LEN_104, STRKEY_LEN_32, STRKEY_LEN_36};
 
 #[cfg(feature = "alloc")]
 use alloc::string::String;

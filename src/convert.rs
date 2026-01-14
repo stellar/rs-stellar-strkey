@@ -1,10 +1,7 @@
 // TODO: Could encode and decode, and the functions upstream that call them, be
 // const fn's?
 
-use crate::{
-    crc::checksum,
-    error::{DecodeError, EncodeError},
-};
+use crate::{crc::checksum, error::DecodeError};
 
 // Max payload sizes by strkey type:
 //   PublicKeyEd25519:      32 bytes (ed25519 key)
@@ -19,32 +16,6 @@ use crate::{
 //
 // Max binary size: 1 (version) + 104 (max payload) + 2 (crc) = 107 bytes
 const MAX_BINARY_SIZE: usize = 107;
-
-/// Encodes a version byte and payload into a strkey, writing to the provided buffer.
-/// Returns the number of bytes written, or an error if the buffer is too small.
-pub fn encode_to_slice(ver: u8, payload: &[u8], out: &mut [u8]) -> Result<usize, EncodeError> {
-    let data_len = 1 + payload.len() + 2;
-
-    let mut data = [0u8; MAX_BINARY_SIZE];
-
-    data[0] = ver;
-    data[1..1 + payload.len()].copy_from_slice(payload);
-
-    let crc = checksum(&data[..1 + payload.len()]);
-    data[1 + payload.len()..data_len].copy_from_slice(&crc);
-
-    // Calculate the encoded length
-    let encoded_len = data_encoding::BASE32_NOPAD.encode_len(data_len);
-    if out.len() < encoded_len {
-        return Err(EncodeError::BufferTooSmall {
-            buf_len: out.len(),
-            required_len: encoded_len,
-        });
-    }
-
-    data_encoding::BASE32_NOPAD.encode_mut(&data[..data_len], &mut out[..encoded_len]);
-    Ok(encoded_len)
-}
 
 /// Decodes a strkey string into a version byte and payload, writing to the provided buffer.
 /// Returns the version byte and number of payload bytes written.

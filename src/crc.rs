@@ -76,8 +76,8 @@ const CRC16_TABLE: [u16; 256] = [
 /// byte-order.
 pub fn checksum(data: &[u8]) -> [u8; 2] {
     let mut crc: u16 = 0;
-    for b in data.iter() {
-        crc = (crc << 8) ^ CRC16_TABLE[((crc >> 8) as u8 ^ *b) as usize];
+    for &b in data {
+        crc = (crc << 8) ^ CRC16_TABLE[((crc >> 8) as u8 ^ b) as usize];
     }
     [(crc & 0xff) as u8, (crc >> 8) as u8]
 }

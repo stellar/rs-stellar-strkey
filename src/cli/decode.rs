@@ -11,7 +11,7 @@ pub enum Error {
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            Error::Decode(s, inner) => f.write_fmt(format_args!("decoding {s:?}: {inner}")),
+            Error::Decode(s, inner) => write!(f, "decoding {s:?}: {inner}"),
         }
     }
 }

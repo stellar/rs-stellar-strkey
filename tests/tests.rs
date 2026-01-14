@@ -374,8 +374,9 @@ fn test_signed_payload_ed25519_payload_sizes() {
     // Test payload sizes from 1 to 64 bytes (the maximum per Stellar protocol)
     for payload_size in 1..=64 {
         let mut payload_arr = [0u8; 64];
+        let payload = &mut payload_arr[..payload_size];
         (0..payload_size).for_each(|i| {
-            payload_arr[i] = i as u8;
+            payload[i] = i as u8;
         });
 
         let signed_payload = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
@@ -385,10 +386,9 @@ fn test_signed_payload_ed25519_payload_sizes() {
                 0xfc, 0x7f, 0xe8, 0x9a,
             ],
             #[cfg(feature = "alloc")]
-            payload: payload_arr[..payload_size].to_vec(),
+            payload: payload.to_vec(),
             #[cfg(not(feature = "alloc"))]
-            payload: stellar_strkey::vec::Vec::<u8, 64>::try_from(&payload_arr[..payload_size])
-                .unwrap(),
+            payload: payload.try_into().unwrap(),
         });
 
         let encoded = signed_payload.to_string();

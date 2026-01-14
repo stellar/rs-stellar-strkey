@@ -135,6 +135,14 @@ impl<const N: usize> TryFrom<&[u8]> for Vec<u8, N> {
     }
 }
 
+impl<const N: usize> TryFrom<&mut [u8]> for Vec<u8, N> {
+    type Error = ();
+
+    fn try_from(slice: &mut [u8]) -> Result<Self, Self::Error> {
+        Self::try_from(slice as &[u8])
+    }
+}
+
 impl<T: core::fmt::Debug, const N: usize> core::fmt::Debug for Vec<T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_list().entries(self.as_slice()).finish()

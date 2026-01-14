@@ -10,6 +10,34 @@ use core::{
     str::FromStr,
 };
 
+const HEX_CHARS: &[u8; 16] = b"0123456789abcdef";
+
+/// Write bytes as hex to a formatter efficiently using a stack buffer.
+fn write_hex(f: &mut core::fmt::Formatter<'_>, bytes: &[u8]) -> core::fmt::Result {
+    // Use a fixed-size stack buffer for the hex string (64 bytes covers 32 input bytes)
+    // For longer inputs, fall back to heap allocation
+    if bytes.len() <= 32 {
+        let mut buf = [0u8; 64];
+        for (i, &b) in bytes.iter().enumerate() {
+            buf[i * 2] = HEX_CHARS[(b >> 4) as usize];
+            buf[i * 2 + 1] = HEX_CHARS[(b & 0xf) as usize];
+        }
+        // SAFETY: HEX_CHARS only contains ASCII characters
+        let s = unsafe { core::str::from_utf8_unchecked(&buf[..bytes.len() * 2]) };
+        f.write_str(s)
+    } else {
+        // Fallback for larger inputs (e.g., SignedPayload)
+        let mut buf = alloc::vec![0u8; bytes.len() * 2];
+        for (i, &b) in bytes.iter().enumerate() {
+            buf[i * 2] = HEX_CHARS[(b >> 4) as usize];
+            buf[i * 2 + 1] = HEX_CHARS[(b & 0xf) as usize];
+        }
+        // SAFETY: HEX_CHARS only contains ASCII characters
+        let s = unsafe { core::str::from_utf8_unchecked(&buf) };
+        f.write_str(s)
+    }
+}
+
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -19,11 +47,9 @@ pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "PrivateKey(")?;
-        for b in &self.0 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("PrivateKey(")?;
+        write_hex(f, &self.0)?;
+        f.write_str(")")
     }
 }
 
@@ -103,11 +129,9 @@ pub struct PublicKey(pub [u8; 32]);
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "PublicKey(")?;
-        for b in &self.0 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("PublicKey(")?;
+        write_hex(f, &self.0)?;
+        f.write_str(")")
     }
 }
 
@@ -190,10 +214,8 @@ pub struct MuxedAccount {
 
 impl Debug for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "MuxedAccount(")?;
-        for b in &self.ed25519 {
-            write!(f, "{b:02x}")?;
-        }
+        f.write_str("MuxedAccount(")?;
+        write_hex(f, &self.ed25519)?;
         write!(f, ", {})", self.id)
     }
 }
@@ -298,15 +320,11 @@ pub struct SignedPayload {
 
 impl Debug for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "SignedPayload(")?;
-        for b in &self.ed25519 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ", ")?;
-        for b in &self.payload {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("SignedPayload(")?;
+        write_hex(f, &self.ed25519)?;
+        f.write_str(", ")?;
+        write_hex(f, &self.payload)?;
+        f.write_str(")")
     }
 }
 

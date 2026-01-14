@@ -11,6 +11,34 @@ use crate::{
     version,
 };
 
+const HEX_CHARS: &[u8; 16] = b"0123456789abcdef";
+
+/// Write bytes as hex to a formatter efficiently using a stack buffer.
+fn write_hex(f: &mut core::fmt::Formatter<'_>, bytes: &[u8]) -> core::fmt::Result {
+    // Use a fixed-size stack buffer for the hex string (64 bytes covers 32 input bytes)
+    // For longer inputs, fall back to heap allocation
+    if bytes.len() <= 32 {
+        let mut buf = [0u8; 64];
+        for (i, &b) in bytes.iter().enumerate() {
+            buf[i * 2] = HEX_CHARS[(b >> 4) as usize];
+            buf[i * 2 + 1] = HEX_CHARS[(b & 0xf) as usize];
+        }
+        // SAFETY: HEX_CHARS only contains ASCII characters
+        let s = unsafe { core::str::from_utf8_unchecked(&buf[..bytes.len() * 2]) };
+        f.write_str(s)
+    } else {
+        // Fallback for larger inputs
+        let mut buf = alloc::vec![0u8; bytes.len() * 2];
+        for (i, &b) in bytes.iter().enumerate() {
+            buf[i * 2] = HEX_CHARS[(b >> 4) as usize];
+            buf[i * 2 + 1] = HEX_CHARS[(b & 0xf) as usize];
+        }
+        // SAFETY: HEX_CHARS only contains ASCII characters
+        let s = unsafe { core::str::from_utf8_unchecked(&buf) };
+        f.write_str(s)
+    }
+}
+
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -231,11 +259,9 @@ pub struct PreAuthTx(pub [u8; 32]);
 
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "PreAuthTx(")?;
-        for b in &self.0 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("PreAuthTx(")?;
+        write_hex(f, &self.0)?;
+        f.write_str(")")
     }
 }
 
@@ -312,11 +338,9 @@ pub struct HashX(pub [u8; 32]);
 
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "HashX(")?;
-        for b in &self.0 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("HashX(")?;
+        write_hex(f, &self.0)?;
+        f.write_str(")")
     }
 }
 
@@ -393,11 +417,9 @@ pub struct Contract(pub [u8; 32]);
 
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "Contract(")?;
-        for b in &self.0 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("Contract(")?;
+        write_hex(f, &self.0)?;
+        f.write_str(")")
     }
 }
 
@@ -474,11 +496,9 @@ pub struct LiquidityPool(pub [u8; 32]);
 
 impl Debug for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "LiquidityPool(")?;
-        for b in &self.0 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("LiquidityPool(")?;
+        write_hex(f, &self.0)?;
+        f.write_str(")")
     }
 }
 
@@ -557,17 +577,15 @@ pub enum ClaimableBalance {
 
 impl Debug for ClaimableBalance {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "ClaimableBalance(")?;
+        f.write_str("ClaimableBalance(")?;
         match self {
             Self::V0(v0) => {
-                write!(f, "V0(")?;
-                for b in v0 {
-                    write!(f, "{b:02x}")?;
-                }
-                write!(f, ")")?;
+                f.write_str("V0(")?;
+                write_hex(f, v0)?;
+                f.write_str(")")?;
             }
         }
-        write!(f, ")")
+        f.write_str(")")
     }
 }
 

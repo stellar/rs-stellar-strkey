@@ -37,13 +37,15 @@ build:
 	cargo build --no-default-features --features alloc
 	cargo build --no-default-features
 	cargo build --features serde
+	cargo build --features serde-decoded
 	cargo build --features cli
 
 check:
 	cargo check --all-targets
-	cargo check --no-default-features --features alloc
-	cargo check --no-default-features
+	cargo check --all-targets --no-default-features --features alloc
+	cargo check --all-targets --no-default-features
 	cargo check --all-targets --features serde
+	cargo build --all-targets --features serde-decoded
 	cargo check --all-targets --features cli
 
 install:

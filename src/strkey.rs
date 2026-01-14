@@ -74,7 +74,7 @@ impl Strkey {
 
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 
@@ -249,7 +249,7 @@ impl PreAuthTx {
 
 impl Display for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 
@@ -330,7 +330,7 @@ impl HashX {
 
 impl Display for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 
@@ -411,7 +411,7 @@ impl Contract {
 
 impl Display for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 
@@ -492,7 +492,7 @@ impl LiquidityPool {
 
 impl Display for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 
@@ -592,7 +592,7 @@ impl ClaimableBalance {
 
 impl Display for ClaimableBalance {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        f.write_str(&self.to_string())
     }
 }
 

@@ -383,7 +383,7 @@ impl SignedPayload {
         offset += padding_len as usize;
 
         // Check padding is all zeros.
-        if padding.iter().any(|b| *b != 0) {
+        if padding.iter().any(|&b| b != 0) {
             return Err(DecodeError::Invalid);
         }
 

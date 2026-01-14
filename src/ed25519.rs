@@ -5,7 +5,7 @@ use crate::{
     version,
 };
 
-use alloc::{string::String, vec, vec::Vec};
+use alloc::{string::String, vec::Vec};
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
@@ -310,18 +310,21 @@ impl SignedPayload {
     ///
     /// When the payload is larger than 64 bytes.
     pub fn to_string(&self) -> String {
+        // Max payload: 32 (ed25519) + 4 (len) + 64 (max inner payload) = 100 bytes
+        const MAX_PAYLOAD_LEN: usize = 100;
+
         let inner_payload_len = self.payload.len();
         assert!(inner_payload_len <= 64, "payload length larger than 64");
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
         let inner_payload_len_u32: u32 = inner_payload_len as u32;
 
-        let mut payload = vec![0; payload_len];
+        let mut payload = [0u8; MAX_PAYLOAD_LEN];
         payload[..32].copy_from_slice(&self.ed25519);
         payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
-        encode(version::SIGNED_PAYLOAD_ED25519, &payload)
+        encode(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len])
     }
 
     /// Decodes a signed payload from raw bytes.
@@ -406,6 +409,9 @@ impl SignedPayload {
 
 impl Display for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        // Max payload: 32 (ed25519) + 4 (len) + 64 (max inner payload) = 100 bytes
+        const MAX_PAYLOAD_LEN: usize = 100;
+
         let inner_payload_len = self.payload.len();
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
@@ -413,12 +419,12 @@ impl Display for SignedPayload {
             .try_into()
             .expect("payload length larger than u32::MAX");
 
-        let mut payload = vec![0; payload_len];
+        let mut payload = [0u8; MAX_PAYLOAD_LEN];
         payload[..32].copy_from_slice(&self.ed25519);
         payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
-        encode_to_fmt(version::SIGNED_PAYLOAD_ED25519, &payload, f)
+        encode_to_fmt(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len], f)
     }
 }
 

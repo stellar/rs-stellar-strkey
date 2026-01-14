@@ -6,6 +6,8 @@ use crate::{
 
 #[cfg(feature = "alloc")]
 use crate::convert::encode;
+#[cfg(feature = "alloc")]
+use alloc::string::String;
 
 use core::{
     fmt::{Debug, Display},
@@ -38,7 +40,7 @@ impl PrivateKey {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         encode(version::PRIVATE_KEY_ED25519, &self.0)
     }
 
@@ -133,7 +135,7 @@ impl PublicKey {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         encode(version::PUBLIC_KEY_ED25519, &self.0)
     }
 
@@ -237,7 +239,7 @@ impl MuxedAccount {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         let mut payload: [u8; 40] = [0; 40];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
@@ -382,7 +384,7 @@ impl SignedPayload {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         let inner_payload_len = self.payload.len();
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 

@@ -7,6 +7,8 @@ use crate::{
 
 #[cfg(feature = "alloc")]
 use crate::convert::encode;
+#[cfg(feature = "alloc")]
+use alloc::string::String;
 
 use core::{
     fmt::{Debug, Display},
@@ -48,7 +50,7 @@ impl Strkey {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         match self {
             Self::PublicKeyEd25519(x) => x.to_string(),
             Self::PrivateKeyEd25519(x) => x.to_string(),
@@ -261,7 +263,7 @@ impl PreAuthTx {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         encode(version::PRE_AUTH_TX, &self.0)
     }
 
@@ -353,7 +355,7 @@ impl HashX {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         encode(version::HASH_X, &self.0)
     }
 
@@ -445,7 +447,7 @@ impl Contract {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         encode(version::CONTRACT, &self.0)
     }
 
@@ -537,7 +539,7 @@ impl LiquidityPool {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         encode(version::LIQUIDITY_POOL, &self.0)
     }
 
@@ -645,7 +647,7 @@ impl ClaimableBalance {
     }
 
     #[cfg(feature = "alloc")]
-    pub fn to_string(&self) -> alloc::string::String {
+    pub fn to_string(&self) -> String {
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0

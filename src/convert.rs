@@ -85,8 +85,11 @@ pub fn decode_to_slice(s: &str, out: &mut [u8]) -> Result<(u8, usize), DecodeErr
 }
 
 #[cfg(feature = "alloc")]
-pub fn encode(ver: u8, payload: &[u8]) -> alloc::string::String {
-    let mut d: alloc::vec::Vec<u8> = alloc::vec::Vec::with_capacity(1 + payload.len() + 2);
+use alloc::{string::String, vec::Vec};
+
+#[cfg(feature = "alloc")]
+pub fn encode(ver: u8, payload: &[u8]) -> String {
+    let mut d = Vec::with_capacity(1 + payload.len() + 2);
     d.push(ver);
     d.extend_from_slice(payload);
     d.extend_from_slice(&checksum(&d));

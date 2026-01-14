@@ -7,9 +7,10 @@ test:
 	cargo test --no-default-features
 	cargo test --features serde
 	cargo test --features serde-decoded
-	cargo +nightly fuzz run fuzz_roundtrip                       -- -runs=0
-	cargo +nightly fuzz run fuzz_roundtrip --no-default-features -- -runs=0
-	cargo +nightly fuzz run fuzz_roundtrip --features serde      -- -runs=0
+	cargo +nightly fuzz run fuzz_roundtrip                          -- -runs=0
+	cargo +nightly fuzz run fuzz_roundtrip --no-default-features    -- -runs=0
+	cargo +nightly fuzz run fuzz_roundtrip --features serde         -- -runs=0
+	cargo +nightly fuzz run fuzz_roundtrip --features serde-decoded -- -runs=0
 
 fuzz:
 	cargo +nightly fuzz run fuzz_roundtrip -j 4

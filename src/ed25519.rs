@@ -382,7 +382,6 @@ impl SignedPayload {
         encode(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len])
     }
 
-    #[cfg(feature = "alloc")]
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
         // min or 64-byte for the max payload
@@ -443,77 +442,12 @@ impl SignedPayload {
             return Err(DecodeError::Invalid);
         }
 
-        Ok(Self {
-            ed25519,
-            payload: inner_payload.to_vec(),
-        })
-    }
+        #[cfg(feature = "alloc")]
+        let payload = inner_payload.to_vec();
+        #[cfg(not(feature = "alloc"))]
+        let payload = heapless::Vec::from_slice(inner_payload).map_err(|_| DecodeError::Invalid)?;
 
-    #[cfg(not(feature = "alloc"))]
-    pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
-        // min or 64-byte for the max payload
-        const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
-        const MIN_LENGTH: usize = 32 + 4 + 4;
-        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);
-        let payload_len = payload.len();
-        if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
-            return Err(DecodeError::Invalid);
-        }
-
-        // Decode ed25519 public key. 32 bytes.
-        let mut offset = 0;
-        let ed25519: [u8; 32] = payload
-            .get(offset..offset + 32)
-            .ok_or(DecodeError::Invalid)?
-            .try_into()
-            .map_err(|_| DecodeError::Invalid)?;
-        offset += 32;
-
-        // Decode inner payload length. 4 bytes.
-        let inner_payload_len = u32::from_be_bytes(
-            payload
-                .get(offset..offset + 4)
-                .ok_or(DecodeError::Invalid)?
-                .try_into()
-                .map_err(|_| DecodeError::Invalid)?,
-        );
-        offset += 4;
-
-        // Check inner payload length is inside accepted range.
-        if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
-            return Err(DecodeError::Invalid);
-        }
-
-        // Decode inner payload.
-        let inner_payload = payload
-            .get(offset..offset + inner_payload_len as usize)
-            .ok_or(DecodeError::Invalid)?;
-        offset += inner_payload_len as usize;
-
-        // Calculate padding at end of inner payload. 0-3 bytes.
-        let padding_len = (4 - inner_payload_len % 4) % 4;
-
-        // Decode padding.
-        let padding = payload
-            .get(offset..offset + padding_len as usize)
-            .ok_or(DecodeError::Invalid)?;
-        offset += padding_len as usize;
-
-        // Check padding is all zeros.
-        if padding.iter().any(|b| *b != 0) {
-            return Err(DecodeError::Invalid);
-        }
-
-        // Check that entire payload consumed.
-        if offset != payload_len {
-            return Err(DecodeError::Invalid);
-        }
-
-        Ok(Self {
-            ed25519,
-            payload: heapless::Vec::from_slice(inner_payload).map_err(|_| DecodeError::Invalid)?,
-        })
+        Ok(Self { ed25519, payload })
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {

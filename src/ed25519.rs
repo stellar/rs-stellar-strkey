@@ -304,26 +304,36 @@ impl Debug for SignedPayload {
 }
 
 impl SignedPayload {
-    /// Returns the strkey string for the signed payload signer.
+    // Max payload: 32 (ed25519) + 4 (len) + 64 (max inner payload) = 100 bytes
+    const MAX_PAYLOAD_LEN: usize = 100;
+
+    /// Constructs the payload buffer and returns (buffer, valid_length).
     ///
     /// ### Panics
     ///
     /// When the payload is larger than 64 bytes.
-    pub fn to_string(&self) -> String {
-        // Max payload: 32 (ed25519) + 4 (len) + 64 (max inner payload) = 100 bytes
-        const MAX_PAYLOAD_LEN: usize = 100;
-
+    fn payload_buffer(&self) -> ([u8; Self::MAX_PAYLOAD_LEN], usize) {
         let inner_payload_len = self.payload.len();
         assert!(inner_payload_len <= 64, "payload length larger than 64");
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
         let inner_payload_len_u32: u32 = inner_payload_len as u32;
 
-        let mut payload = [0u8; MAX_PAYLOAD_LEN];
+        let mut payload = [0u8; Self::MAX_PAYLOAD_LEN];
         payload[..32].copy_from_slice(&self.ed25519);
         payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
+        (payload, payload_len)
+    }
+
+    /// Returns the strkey string for the signed payload signer.
+    ///
+    /// ### Panics
+    ///
+    /// When the payload is larger than u32::MAX.
+    pub fn to_string(&self) -> String {
+        let (payload, payload_len) = self.payload_buffer();
         encode(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len])
     }
 
@@ -409,21 +419,7 @@ impl SignedPayload {
 
 impl Display for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        // Max payload: 32 (ed25519) + 4 (len) + 64 (max inner payload) = 100 bytes
-        const MAX_PAYLOAD_LEN: usize = 100;
-
-        let inner_payload_len = self.payload.len();
-        let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
-
-        let inner_payload_len_u32: u32 = inner_payload_len
-            .try_into()
-            .expect("payload length larger than u32::MAX");
-
-        let mut payload = [0u8; MAX_PAYLOAD_LEN];
-        payload[..32].copy_from_slice(&self.ed25519);
-        payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
-        payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
-
+        let (payload, payload_len) = self.payload_buffer();
         encode_to_fmt(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len], f)
     }
 }

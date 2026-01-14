@@ -304,7 +304,7 @@ mod muxed_account_decoded_serde_impl {
 
 /// Stores a signed payload ed25519 signer.
 ///
-/// The payload must not have a size larger than u32::MAX.
+/// The payload must not have a size larger than 64 bytes.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -347,14 +347,13 @@ impl SignedPayload {
     ///
     /// ### Panics
     ///
-    /// When the payload is larger than u32::MAX.
+    /// When the payload is larger than 64 bytes.
     pub fn to_string(&self) -> String {
         let inner_payload_len = self.payload.len();
+        assert!(inner_payload_len <= 64, "payload length larger than 64");
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
-        let inner_payload_len_u32: u32 = inner_payload_len
-            .try_into()
-            .expect("payload length larger than u32::MAX");
+        let inner_payload_len_u32: u32 = inner_payload_len as u32;
 
         let mut payload = vec![0; payload_len];
         payload[..32].copy_from_slice(&self.ed25519);
@@ -364,6 +363,11 @@ impl SignedPayload {
         encode(version::SIGNED_PAYLOAD_ED25519, &payload)
     }
 
+    /// Decodes a signed payload from raw bytes.
+    ///
+    /// ### Errors
+    ///
+    /// If the payload is larger than 64 bytes.
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
         // min or 64-byte for the max payload

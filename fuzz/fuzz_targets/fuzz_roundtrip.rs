@@ -23,17 +23,20 @@ fuzz_target!(|s: &str| -> Corpus {
 
     // Check that the first character matches the expected prefix for the type.
     let first_char = s.chars().next().unwrap();
-    assert_eq!(first_char, match r {
-        Strkey::PublicKeyEd25519(_) => 'G',
-        Strkey::PrivateKeyEd25519(_) => 'S',
-        Strkey::MuxedAccountEd25519(_) => 'M',
-        Strkey::PreAuthTx(_) => 'T',
-        Strkey::HashX(_) => 'X',
-        Strkey::SignedPayloadEd25519(_) => 'P',
-        Strkey::Contract(_) => 'C',
-        Strkey::LiquidityPool(_) => 'L',
-        Strkey::ClaimableBalance(_) => 'B',
-    });
+    assert_eq!(
+        first_char,
+        match r {
+            Strkey::PublicKeyEd25519(_) => 'G',
+            Strkey::PrivateKeyEd25519(_) => 'S',
+            Strkey::MuxedAccountEd25519(_) => 'M',
+            Strkey::PreAuthTx(_) => 'T',
+            Strkey::HashX(_) => 'X',
+            Strkey::SignedPayloadEd25519(_) => 'P',
+            Strkey::Contract(_) => 'C',
+            Strkey::LiquidityPool(_) => 'L',
+            Strkey::ClaimableBalance(_) => 'B',
+        }
+    );
 
     // Check that the length of the of the strkey is what would be expected.
     let len = s.len();

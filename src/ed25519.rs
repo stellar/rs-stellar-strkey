@@ -36,7 +36,12 @@ impl Debug for PrivateKey {
 
 impl PrivateKey {
     pub fn to_string(&self) -> String {
-        encode::<35, 56>(version::PRIVATE_KEY_ED25519, &self.0)
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(ENCODED_LEN == 56) };
+        encode::<BINARY_LEN, ENCODED_LEN>(version::PRIVATE_KEY_ED25519, &self.0)
             .as_str()
             .into()
     }
@@ -49,7 +54,11 @@ impl PrivateKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<35, 32>(s)?;
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(PAYLOAD_LEN == 32) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -129,7 +138,12 @@ impl Debug for PublicKey {
 
 impl PublicKey {
     pub fn to_string(&self) -> String {
-        encode::<35, 56>(version::PUBLIC_KEY_ED25519, &self.0)
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(ENCODED_LEN == 56) };
+        encode::<BINARY_LEN, ENCODED_LEN>(version::PUBLIC_KEY_ED25519, &self.0)
             .as_str()
             .into()
     }
@@ -142,7 +156,11 @@ impl PublicKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<35, 32>(s)?;
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(PAYLOAD_LEN == 32) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -227,11 +245,16 @@ impl Debug for MuxedAccount {
 
 impl MuxedAccount {
     pub fn to_string(&self) -> String {
-        let mut payload: [u8; 40] = [0; 40];
+        const PAYLOAD_LEN: usize = 32 + 8; // ed25519 + id
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 43) };
+        const { assert!(ENCODED_LEN == 69) };
+        let mut payload: [u8; PAYLOAD_LEN] = [0; PAYLOAD_LEN];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
         id.copy_from_slice(&self.id.to_be_bytes());
-        encode::<43, 69>(version::MUXED_ACCOUNT_ED25519, &payload)
+        encode::<BINARY_LEN, ENCODED_LEN>(version::MUXED_ACCOUNT_ED25519, &payload)
             .as_str()
             .into()
     }
@@ -248,7 +271,11 @@ impl MuxedAccount {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<43, 40>(s)?;
+        const PAYLOAD_LEN: usize = 32 + 8; // ed25519 + id
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 43) };
+        const { assert!(PAYLOAD_LEN == 40) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -355,6 +382,13 @@ impl SignedPayload {
     ///
     /// When the payload is larger than 64 bytes.
     pub fn to_string(&self) -> String {
+        // Max payload: 32 ed25519 + 4 len + 64 inner payload = 100
+        const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
+        const BINARY_LEN: usize = 1 + MAX_PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 103) };
+        const { assert!(ENCODED_LEN == 165) };
+
         let inner_payload_len = self.payload.len();
         assert!(inner_payload_len <= 64, "payload length larger than 64");
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
@@ -366,7 +400,7 @@ impl SignedPayload {
         payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
-        encode::<103, 165>(version::SIGNED_PAYLOAD_ED25519, &payload)
+        encode::<BINARY_LEN, ENCODED_LEN>(version::SIGNED_PAYLOAD_ED25519, &payload)
             .as_str()
             .into()
     }
@@ -443,7 +477,12 @@ impl SignedPayload {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<103, 100>(s)?;
+        // Max payload: 32 ed25519 + 4 len + 64 inner payload = 100
+        const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
+        const BINARY_LEN: usize = 1 + MAX_PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 103) };
+        const { assert!(MAX_PAYLOAD_LEN == 100) };
+        let (ver, payload) = decode::<BINARY_LEN, MAX_PAYLOAD_LEN>(s)?;
         match ver {
             version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),

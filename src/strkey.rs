@@ -44,7 +44,12 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<103, 100>(s)?;
+        // Max payload for any strkey: SignedPayload = 32 ed25519 + 4 len + 64 inner = 100
+        const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
+        const BINARY_LEN: usize = 1 + MAX_PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 103) };
+        const { assert!(MAX_PAYLOAD_LEN == 100) };
+        let (ver, payload) = decode::<BINARY_LEN, MAX_PAYLOAD_LEN>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
@@ -238,7 +243,12 @@ impl Debug for PreAuthTx {
 
 impl PreAuthTx {
     pub fn to_string(&self) -> String {
-        encode::<35, 56>(version::PRE_AUTH_TX, &self.0)
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(ENCODED_LEN == 56) };
+        encode::<BINARY_LEN, ENCODED_LEN>(version::PRE_AUTH_TX, &self.0)
             .as_str()
             .into()
     }
@@ -248,7 +258,11 @@ impl PreAuthTx {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<35, 32>(s)?;
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(PAYLOAD_LEN == 32) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -328,7 +342,14 @@ impl Debug for HashX {
 
 impl HashX {
     pub fn to_string(&self) -> String {
-        encode::<35, 56>(version::HASH_X, &self.0).as_str().into()
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(ENCODED_LEN == 56) };
+        encode::<BINARY_LEN, ENCODED_LEN>(version::HASH_X, &self.0)
+            .as_str()
+            .into()
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -336,7 +357,11 @@ impl HashX {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<35, 32>(s)?;
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(PAYLOAD_LEN == 32) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -416,7 +441,14 @@ impl Debug for Contract {
 
 impl Contract {
     pub fn to_string(&self) -> String {
-        encode::<35, 56>(version::CONTRACT, &self.0).as_str().into()
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(ENCODED_LEN == 56) };
+        encode::<BINARY_LEN, ENCODED_LEN>(version::CONTRACT, &self.0)
+            .as_str()
+            .into()
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -424,7 +456,11 @@ impl Contract {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<35, 32>(s)?;
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(PAYLOAD_LEN == 32) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -504,7 +540,12 @@ impl Debug for LiquidityPool {
 
 impl LiquidityPool {
     pub fn to_string(&self) -> String {
-        encode::<35, 56>(version::LIQUIDITY_POOL, &self.0)
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(ENCODED_LEN == 56) };
+        encode::<BINARY_LEN, ENCODED_LEN>(version::LIQUIDITY_POOL, &self.0)
             .as_str()
             .into()
     }
@@ -514,7 +555,11 @@ impl LiquidityPool {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<35, 32>(s)?;
+        const PAYLOAD_LEN: usize = 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 35) };
+        const { assert!(PAYLOAD_LEN == 32) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::LIQUIDITY_POOL => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -596,12 +641,18 @@ impl Debug for ClaimableBalance {
 
 impl ClaimableBalance {
     pub fn to_string(&self) -> String {
+        // Payload: 1 version byte + 32 hash bytes = 33
+        const PAYLOAD_LEN: usize = 1 + 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const ENCODED_LEN: usize = (BINARY_LEN * 8 + 4) / 5;
+        const { assert!(BINARY_LEN == 36) };
+        const { assert!(ENCODED_LEN == 58) };
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0
-                let mut payload = [0; 33];
+                let mut payload = [0; PAYLOAD_LEN];
                 payload[1..].copy_from_slice(v0);
-                encode::<36, 58>(version::CLAIMABLE_BALANCE, &payload)
+                encode::<BINARY_LEN, ENCODED_LEN>(version::CLAIMABLE_BALANCE, &payload)
                     .as_str()
                     .into()
             }
@@ -617,7 +668,12 @@ impl ClaimableBalance {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<36, 33>(s)?;
+        // Payload: 1 version byte + 32 hash bytes = 33
+        const PAYLOAD_LEN: usize = 1 + 32;
+        const BINARY_LEN: usize = 1 + PAYLOAD_LEN + 2;
+        const { assert!(BINARY_LEN == 36) };
+        const { assert!(PAYLOAD_LEN == 33) };
+        let (ver, payload) = decode::<BINARY_LEN, PAYLOAD_LEN>(s)?;
         match ver {
             version::CLAIMABLE_BALANCE => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),

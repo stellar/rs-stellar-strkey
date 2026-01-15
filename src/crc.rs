@@ -86,8 +86,9 @@ pub fn checksum(data: &[u8]) -> [u8; 2] {
 mod tests {
     use super::checksum;
     extern crate proptest;
-    use alloc::vec::Vec;
     use proptest::prelude::*;
+    extern crate std;
+    use std::vec::Vec;
 
     #[test]
     fn test_checksum() {

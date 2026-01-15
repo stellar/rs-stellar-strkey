@@ -282,9 +282,6 @@ mod muxed_account_decoded_serde_impl {
 /// Stores a signed payload ed25519 signer.
 ///
 /// The payload must not have a size larger than 64 bytes.
-pub const MAX_INNER_PAYLOAD_LEN: usize = 64;
-pub type InnerPayloadBuf = heapless::Vec<u8, MAX_INNER_PAYLOAD_LEN>;
-
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -294,6 +291,9 @@ pub struct SignedPayload {
     pub ed25519: [u8; 32],
     pub payload: InnerPayloadBuf,
 }
+
+pub const MAX_INNER_PAYLOAD_LEN: usize = 64;
+pub type InnerPayloadBuf = heapless::Vec<u8, MAX_INNER_PAYLOAD_LEN>;
 
 impl Debug for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {

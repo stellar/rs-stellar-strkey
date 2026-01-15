@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "cli"), no_std)]
 
-#[cfg(feature = "alloc")]
+#[cfg(feature = "serde-decoded")]
 extern crate alloc;
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]

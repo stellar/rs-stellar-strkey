@@ -12,10 +12,9 @@ rust-version = "1.81.0"
 
 [features]
 default = []
-alloc = []
 cli = ["serde-decoded", "dep:clap", "dep:serde_json", "dep:thiserror"]
 serde = ["dep:serde", "dep:serde_with"]
-serde-decoded = ["alloc", "serde"]
+serde-decoded = ["serde"]
 
 [[bin]]
 name = "stellar-strkey"

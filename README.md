@@ -16,8 +16,38 @@ To use the library, include in your toml:
 stellar-strkey = "..."
 ```
 
-This crate does not depend on the `std` crate and can be used in `no_std` environments.
-However, please note that it relies on the [`alloc`](https://docs.rust-embedded.org/book/collections/#using-alloc) crate for certain types such as `Vec`.
+##### `no_std` Support
+
+This crate is `no_std` compatible and does not utilise `std` or `alloc` in its default feature set.
+
+Some features utilize the `alloc` crate.
+
+##### Features
+
+| Feature | Alloc | Dependencies | Description |
+|---------|-------|--------------|-------------|
+| `default` | | | By default there are no features enabled |
+| `serde` | | | Enables serde serialization/deserialization as strkey strings |
+| `serde-decoded` | ✓ | `serde` | Enables serde serialization/deserialization via `Decoded<T>` as JSON objects, with byte fields hex-encoded |
+| `cli` | ✓ | `serde`, `serde-decoded` | For use when installing the `stellar-strkey` cli |
+
+To use in a `no_std` environment without an allocator:
+
+```toml
+stellar-strkey = { version = "..." }
+```
+
+To enable serde support:
+
+```toml
+stellar-strkey = { version = "...", default-features = false, features = ["serde"] }
+```
+
+To enable the `Decoded` JSON format (requires an allocator):
+
+```toml
+stellar-strkey = { version = "...", features = ["serde-decoded"] }
+```
 
 #### CLI
 
@@ -32,13 +62,17 @@ cargo install --locked stellar-strkey --version ... --features cli
 Decode a `G` account/public-key strkey:
 ```console
 $ stellar-strkey decode GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF
-PublicKeyEd25519(PublicKey(0000000000000000000000000000000000000000000000000000000000000000))
+{
+  "public_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
+}
 ```
 
 Decode a `C` contract strkey:
 ```console
 $ stellar-strkey decode CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
-Contract(Contract(0000000000000000000000000000000000000000000000000000000000000000))
+{
+  "contract": "0000000000000000000000000000000000000000000000000000000000000000"
+}
 ```
 
 License: Apache-2.0

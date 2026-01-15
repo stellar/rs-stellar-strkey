@@ -5,6 +5,20 @@ use heapless::{String, Vec};
 
 use crate::{crc::checksum, error::DecodeError};
 
+/// Calculates the binary length for a given payload length.
+///
+/// The formula is `1 (version) + payload_len + 2 (checksum)`.
+pub const fn binary_len(payload_len: usize) -> usize {
+    1 + payload_len + 2
+}
+
+/// Calculates the base32 (no padding) encoded length for a given binary length.
+///
+/// The formula is `ceil(binary_len * 8 / 5)`.
+pub const fn encode_len(binary_len: usize) -> usize {
+    (binary_len * 8 + 4) / 5
+}
+
 // Buffer sizes expected per strkey version:
 // +------------------------+-------------+------------+------------+
 // | Version                | Payload Len | Binary Len | Base32 Len |

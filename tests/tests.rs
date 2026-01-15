@@ -396,8 +396,6 @@ fn test_signed_payload_ed25519_payload_sizes() {
     }
 }
 
-
-
 #[test]
 fn test_valid_contract() {
     assert_convert_roundtrip(

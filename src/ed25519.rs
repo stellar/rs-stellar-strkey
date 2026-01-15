@@ -4,7 +4,7 @@ use crate::{
     version,
 };
 
-use alloc::{format, string::String, vec, vec::Vec};
+use alloc::{vec, vec::Vec};
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
@@ -21,17 +21,10 @@ pub struct PrivateKey(pub [u8; 32]);
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PrivateKey(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
@@ -120,17 +113,10 @@ pub struct PublicKey(pub [u8; 32]);
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PublicKey(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
@@ -222,19 +208,11 @@ pub struct MuxedAccount {
 impl Debug for MuxedAccount {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "MuxedAccount(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .ed25519
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ", ")?;
-        write!(f, "{}", self.id)?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.ed25519 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ", {}", self.id)?;
+        write!(f, ")")
     }
 }
 
@@ -346,27 +324,14 @@ pub struct SignedPayload {
 impl Debug for SignedPayload {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "SignedPayload(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .ed25519
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
+        for b in &self.ed25519 {
+            write!(f, "{b:02x}")?;
+        }
         write!(f, ", ")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .payload
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.payload {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 

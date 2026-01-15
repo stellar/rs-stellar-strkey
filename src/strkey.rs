@@ -1,4 +1,3 @@
-use alloc::{format, string::String};
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
@@ -265,17 +264,10 @@ pub struct PreAuthTx(pub [u8; 32]);
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PreAuthTx(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
@@ -361,17 +353,10 @@ pub struct HashX(pub [u8; 32]);
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "HashX(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
@@ -457,17 +442,10 @@ pub struct Contract(pub [u8; 32]);
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Contract(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
@@ -553,17 +531,10 @@ pub struct LiquidityPool(pub [u8; 32]);
 impl Debug for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "LiquidityPool(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
@@ -653,15 +624,14 @@ impl Debug for ClaimableBalance {
         write!(f, "ClaimableBalance(")?;
         match self {
             Self::V0(v0) => {
-                write!(
-                    f,
-                    "V0({})",
-                    &v0.iter().map(|b| format!("{b:02x}")).collect::<String>()
-                )?;
+                write!(f, "V0(")?;
+                for b in v0 {
+                    write!(f, "{b:02x}")?;
+                }
+                write!(f, ")")?;
             }
         }
-        write!(f, ")")?;
-        Ok(())
+        write!(f, ")")
     }
 }
 

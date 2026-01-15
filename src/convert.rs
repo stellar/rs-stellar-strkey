@@ -35,6 +35,18 @@ use crate::{crc::checksum, error::DecodeError};
 /// Panics if the binary data exceeds `B` bytes or encoded output exceeds `E`
 /// bytes.
 pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String<E> {
+    const {
+        assert!(
+            B >= 3,
+            "B must be at least 3 (1 version + 0 payload + 2 checksum)"
+        );
+        // E >= ceil(B * 8 / 5) is equivalent to E * 5 >= B * 8
+        assert!(
+            E * 5 >= B * 8,
+            "E must be at least ceil(B * 8 / 5) for base32 encoding"
+        );
+    }
+
     // Build binary.
     let mut d: Vec<u8, B> = Vec::new();
     d.push(ver).unwrap();
@@ -71,6 +83,14 @@ pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String
 ///
 /// Panics if the binary data exceeds `B` bytes or decoded payload exceeds `P` bytes.
 pub fn decode<const B: usize, const P: usize>(s: &str) -> Result<(u8, Vec<u8, P>), DecodeError> {
+    const {
+        assert!(
+            B >= 3,
+            "B must be at least 3 (1 version + 0 payload + 2 checksum)"
+        );
+        assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+    }
+
     // Prepare buffer for decoding base32.
     let mut data: Vec<u8, B> = Vec::new();
     let data_len = data_encoding::BASE32_NOPAD

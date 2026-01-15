@@ -4,12 +4,11 @@ use crate::{
     version,
 };
 
-use alloc::{vec, vec::Vec};
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
 };
-use heapless::String as HeaplessString;
+use heapless::{String, Vec};
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
@@ -37,7 +36,7 @@ impl PrivateKey {
         assert!(Self::ENCODED_LEN == 56);
     };
 
-    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRIVATE_KEY_ED25519, &self.0)
     }
 
@@ -129,7 +128,7 @@ impl PublicKey {
         assert!(Self::ENCODED_LEN == 56);
     };
 
-    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PUBLIC_KEY_ED25519, &self.0)
     }
 
@@ -225,7 +224,7 @@ impl MuxedAccount {
         assert!(Self::ENCODED_LEN == 69);
     };
 
-    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
         let mut payload: [u8; Self::PAYLOAD_LEN] = [0; Self::PAYLOAD_LEN];
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
@@ -318,7 +317,7 @@ mod muxed_account_decoded_serde_impl {
 )]
 pub struct SignedPayload {
     pub ed25519: [u8; 32],
-    pub payload: Vec<u8>,
+    pub payload: Vec<u8, 64>,
 }
 
 impl Debug for SignedPayload {
@@ -347,25 +346,21 @@ impl SignedPayload {
     };
 
     /// Returns the strkey string for the signed payload signer.
-    ///
-    /// ### Panics
-    ///
-    /// When the payload is larger than 64 bytes.
-    pub fn to_string(&self) -> HeaplessString<{ Self::MAX_ENCODED_LEN }> {
+    pub fn to_string(&self) -> String<{ Self::MAX_ENCODED_LEN }> {
         let inner_payload_len = self.payload.len();
-        assert!(inner_payload_len <= 64, "payload length larger than 64");
         let payload_len = 32 + 4 + inner_payload_len + (4 - inner_payload_len % 4) % 4;
 
         let inner_payload_len_u32: u32 = inner_payload_len as u32;
 
-        let mut payload = vec![0; payload_len];
+        // Max payload_len is 100 (32 + 4 + 64), use fixed array
+        let mut payload = [0u8; Self::MAX_PAYLOAD_LEN];
         payload[..32].copy_from_slice(&self.ed25519);
         payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
         encode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_ENCODED_LEN }>(
             version::SIGNED_PAYLOAD_ED25519,
-            &payload,
+            &payload[..payload_len],
         )
     }
 
@@ -434,10 +429,11 @@ impl SignedPayload {
             return Err(DecodeError::Invalid);
         }
 
-        Ok(Self {
-            ed25519,
-            payload: inner_payload.to_vec(),
-        })
+        let mut payload = Vec::new();
+        payload
+            .extend_from_slice(inner_payload)
+            .map_err(|_| DecodeError::Invalid)?;
+        Ok(Self { ed25519, payload })
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -465,9 +461,9 @@ impl FromStr for SignedPayload {
 
 #[cfg(feature = "serde-decoded")]
 mod signed_payload_decoded_serde_impl {
-    use super::*;
+    use super::{SignedPayload, Vec};
     use crate::decoded_json_format::Decoded;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
     #[serde_as]
@@ -485,7 +481,7 @@ mod signed_payload_decoded_serde_impl {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: [u8; 32],
         #[serde_as(as = "serde_with::hex::Hex")]
-        payload: Vec<u8>,
+        payload: alloc::vec::Vec<u8>,
     }
 
     impl Serialize for Decoded<&SignedPayload> {
@@ -498,7 +494,14 @@ mod signed_payload_decoded_serde_impl {
     impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(SignedPayload { ed25519, payload }))
+            let mut new_payload = Vec::new();
+            new_payload
+                .extend_from_slice(&payload)
+                .map_err(|_| de::Error::custom("payload too large"))?;
+            Ok(Decoded(SignedPayload {
+                ed25519,
+                payload: new_payload,
+            }))
         }
     }
 }

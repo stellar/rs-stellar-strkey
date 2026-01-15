@@ -27,8 +27,13 @@ fn test_valid_public_keys() {
 
 #[test]
 fn test_invalid_public_keys() {
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV75ERQ".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
     // Invalid length (Ed25519 should be 32 bytes, not 5).
-    let mut r: Result<Strkey, _> = "GAAAAAAAACGC6".parse();
+    r = "GAAAAAAAACGC6".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (congruent to 1 mod 8).
@@ -62,6 +67,13 @@ fn test_valid_private_keys() {
 }
 
 #[test]
+fn test_invalid_private_keys() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV764SE".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+}
+
+#[test]
 fn test_valid_pre_auth_tx() {
     assert_convert_roundtrip(
         "TBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHXL7",
@@ -74,6 +86,13 @@ fn test_valid_pre_auth_tx() {
 }
 
 #[test]
+fn test_invalid_pre_auth_tx() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "TA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV73QGA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+}
+
+#[test]
 fn test_valid_hash_x() {
     assert_convert_roundtrip(
         "XBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG",
@@ -83,6 +102,13 @@ fn test_valid_hash_x() {
             0x18, 0x55, 0xf3, 0x63,
         ])),
     );
+}
+
+#[test]
+fn test_invalid_hash_x() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "XA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV74CSY".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 }
 
 #[test]
@@ -129,7 +155,10 @@ fn test_valid_muxed_ed25519() {
 
 #[test]
 fn test_invalid_muxed_ed25519() {
-    let mut r: Result<Strkey, _>;
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUERUKZ4JVTO6777RIDA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 
     // The unused trailing bit must be zero in the encoding of the last three
     // bytes (24 bits) as five base-32 symbols (25 bits)
@@ -260,8 +289,12 @@ fn test_valid_signed_payload_ed25519() {
 
 #[test]
 fn test_invalid_signed_payload_ed25519() {
-    // Length prefix specifies length that is shorter than payload in signed payload
+    // Too long strkey input.
     let mut r: Result<Strkey, DecodeError>;
+    r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7ZIHA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Length prefix specifies length that is shorter than payload in signed payload
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IAAAAAAAAPM".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
@@ -429,6 +462,13 @@ fn test_valid_contract() {
 }
 
 #[test]
+fn test_invalid_contract() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV72WFI".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+}
+
+#[test]
 fn test_signed_payload_from_string_doesnt_panic_with_unbounded_size() {
     let payload: Vec<u8> = vec![
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -462,8 +502,13 @@ fn test_valid_liquidity_pool() {
 
 #[test]
 fn test_invalid_liquidity_pool() {
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV7Z72Y".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
     // Invalid length (Liquidity pool should be 32 bytes, not 5).
-    let mut r: Result<Strkey, _> = "LAAAAAAAADLH2".parse();
+    r = "LAAAAAAAADLH2".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (congruent to 1 mod 8).
@@ -534,8 +579,13 @@ fn test_valid_claimable_balance() {
 
 #[test]
 fn test_invalid_claimable_balances() {
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "LAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGX7FIWQ".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
     // Invalid length (Claimable balance should be 1+32 bytes, not 6).
-    let mut r: Result<Strkey, _> = "BAAAAAAAAAAK3EY".parse();
+    r = "BAAAAAAAAAAK3EY".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length inputs below cannot be decoded into valid claimable

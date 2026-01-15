@@ -64,7 +64,7 @@ pub fn decode<const B: usize, const P: usize>(s: &str) -> Result<(u8, Vec<u8, P>
     if data_len < 3 {
         return Err(DecodeError::Invalid);
     }
-    data.resize_default(data_len).unwrap();
+    data.resize_default(data_len).map_err(|_| DecodeError::Invalid)?;
 
     // Decode base32.
     data_encoding::BASE32_NOPAD

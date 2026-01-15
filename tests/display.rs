@@ -1,8 +1,5 @@
 use stellar_strkey::*;
 
-#[cfg(feature = "cli")]
-use stellar_strkey::cli;
-
 #[test]
 fn test_public_key_display() {
     let key = ed25519::PublicKey([

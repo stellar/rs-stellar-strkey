@@ -1,6 +1,5 @@
 use stellar_strkey::*;
 
-extern crate proptest;
 
 #[test]
 fn test_strkey_public_key_ed25519_debug() {

@@ -393,9 +393,9 @@ fn test_signed_payload_ed25519_payload_sizes() {
 }
 
 #[test]
-#[should_panic(expected = "payload length larger than u32::MAX")]
-fn test_signed_payload_ed25519_payload_length_larger_than_u32_max_panic() {
-    let payload = vec![0; u32::MAX as usize + 1];
+#[should_panic(expected = "payload length larger than 64")]
+fn test_signed_payload_ed25519_payload_length_larger_than_64_panic() {
+    let payload = vec![0; 65];
     let signed_payload = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
         ed25519: [
             0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5,

@@ -87,6 +87,10 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
         let (ver, payload) = decode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_PAYLOAD_LEN }>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
@@ -290,6 +294,10 @@ impl PreAuthTx {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
@@ -379,6 +387,10 @@ impl HashX {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
@@ -468,6 +480,10 @@ impl Contract {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),
@@ -557,6 +573,10 @@ impl LiquidityPool {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
         match ver {
             version::LIQUIDITY_POOL => Self::from_payload(&payload),
@@ -670,6 +690,10 @@ impl ClaimableBalance {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
         match ver {
             version::CLAIMABLE_BALANCE => Self::from_payload(&payload),

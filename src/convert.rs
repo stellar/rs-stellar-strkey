@@ -96,7 +96,7 @@ pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String
 /// # Panics
 ///
 /// Panics if the binary data exceeds `B` bytes or decoded payload exceeds `P` bytes.
-pub fn decode<const B: usize, const P: usize>(s: &str) -> Result<(u8, Vec<u8, P>), DecodeError> {
+pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P>), DecodeError> {
     const {
         assert!(
             B >= 3,
@@ -118,7 +118,7 @@ pub fn decode<const B: usize, const P: usize>(s: &str) -> Result<(u8, Vec<u8, P>
 
     // Decode base32.
     data_encoding::BASE32_NOPAD
-        .decode_mut(s.as_bytes(), &mut data)
+        .decode_mut(s, &mut data)
         .map_err(|_| DecodeError::Invalid)?;
 
     // Unpack version.

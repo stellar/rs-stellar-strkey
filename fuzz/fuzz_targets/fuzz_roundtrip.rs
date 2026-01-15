@@ -53,7 +53,7 @@ fuzz_target!(|s: &str| -> Corpus {
                 + 4                         // payload length
                 + payload_len               // payload
                 + (4 - payload_len % 4) % 4 // payload padding
-                + 2;                        // crc
+                + 2; // crc
             let str_len = (binary_len * 8 + 4) / 5; // base32: 5 bits per char, ceil(bits / 5)
             assert_eq!(len, str_len);
         }

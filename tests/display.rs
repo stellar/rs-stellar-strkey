@@ -181,7 +181,6 @@ fn test_ed25519_signed_payload_display() {
     );
 }
 
-
 #[test]
 fn test_pre_auth_tx_display() {
     let key = PreAuthTx([

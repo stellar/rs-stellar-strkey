@@ -1,6 +1,7 @@
 // TODO: Could encode and decode, and the functions upstream that call them, be
 // const fn's?
 
+use base32ct::{Base32UpperUnpadded, Encoding};
 use heapless::{String, Vec};
 
 use crate::{crc::checksum, error::DecodeError};
@@ -17,6 +18,13 @@ pub const fn binary_len(payload_len: usize) -> usize {
 /// The formula is `ceil(binary_len * 8 / 5)`.
 pub const fn encode_len(binary_len: usize) -> usize {
     (binary_len * 8 + 4) / 5
+}
+
+/// Calculates the binary length from a base32 (no padding) encoded length.
+///
+/// The formula is `floor(encoded_len * 5 / 8)`.
+pub const fn decode_len(encoded_len: usize) -> usize {
+    (encoded_len * 5) / 8
 }
 
 // Buffer sizes expected per strkey version:
@@ -69,9 +77,10 @@ pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String
 
     // Encode as base32.
     let mut encoded: Vec<u8, E> = Vec::new();
-    let encoded_len = data_encoding::BASE32_NOPAD.encode_len(d.len());
-    encoded.resize_default(encoded_len).unwrap();
-    data_encoding::BASE32_NOPAD.encode_mut(&d, &mut encoded);
+    encoded.resize_default(E).unwrap();
+    let encoded_str = Base32UpperUnpadded::encode(&d, &mut encoded).unwrap();
+    let encoded_len = encoded_str.len();
+    encoded.truncate(encoded_len);
 
     // SAFETY: base32 encoding produces valid ASCII which is valid UTF-8
     unsafe { String::from_utf8_unchecked(encoded) }
@@ -105,21 +114,55 @@ pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
         assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
     }
 
-    // Prepare buffer for decoding base32.
-    let mut data: Vec<u8, B> = Vec::new();
-    let data_len = data_encoding::BASE32_NOPAD
-        .decode_len(s.len())
-        .map_err(|_| DecodeError::Invalid)?;
+    // Reject invalid base32 lengths. In unpadded base32, valid lengths produce
+    // whole bytes when decoded. Invalid lengths are congruent to 1, 3, or 6
+    // mod 8 (these would require partial bytes).
+    let len_mod8 = s.len() % 8;
+    if len_mod8 == 1 || len_mod8 == 3 || len_mod8 == 6 {
+        return Err(DecodeError::Invalid);
+    }
+
+    // Calculate decoded length.
+    let data_len = decode_len(s.len());
     if data_len < 3 {
         return Err(DecodeError::Invalid);
     }
-    data.resize_default(data_len)
-        .map_err(|_| DecodeError::Invalid)?;
+    if data_len > B {
+        return Err(DecodeError::Invalid);
+    }
+
+    // Prepare buffer for decoding base32.
+    let mut data: Vec<u8, B> = Vec::new();
+    data.resize_default(B).unwrap();
 
     // Decode base32.
-    data_encoding::BASE32_NOPAD
-        .decode_mut(s, &mut data)
-        .map_err(|_| DecodeError::Invalid)?;
+    let decoded = Base32UpperUnpadded::decode(s, &mut data).map_err(|_| DecodeError::Invalid)?;
+    let decoded_len = decoded.len();
+    data.truncate(decoded_len);
+
+    // Validate that unused trailing bits are zero.
+    // In base32, each character encodes 5 bits, but the last character may
+    // have unused bits. For example, if we decode 7 characters (35 bits) into
+    // 4 bytes (32 bits), there are 3 unused bits in the last character.
+    // These unused bits must be zero for the encoding to be canonical.
+    let total_bits = s.len() * 5;
+    let used_bits = decoded_len * 8;
+    let unused_bits = total_bits - used_bits;
+    if unused_bits > 0 && !s.is_empty() {
+        // Get the last character and check its unused bits
+        let last_char = s[s.len() - 1];
+        // Decode the last character to get its 5-bit value
+        let last_value = match last_char {
+            b'A'..=b'Z' => last_char - b'A',
+            b'2'..=b'7' => last_char - b'2' + 26,
+            _ => return Err(DecodeError::Invalid),
+        };
+        // The unused bits are the low bits of last_value
+        let mask = (1u8 << unused_bits) - 1;
+        if (last_value & mask) != 0 {
+            return Err(DecodeError::Invalid);
+        }
+    }
 
     // Unpack version.
     let ver = data[0];

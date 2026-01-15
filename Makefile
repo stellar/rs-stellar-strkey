@@ -5,6 +5,7 @@ export RUSTFLAGS=-Dwarnings
 test:
 	cargo test
 	cargo test --features serde
+	cargo test --features serde-decoded
 	cargo +nightly fuzz run fuzz_roundtrip -- -runs=0
 
 fuzz:

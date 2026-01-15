@@ -461,7 +461,7 @@ impl FromStr for SignedPayload {
 
 #[cfg(feature = "serde-decoded")]
 mod signed_payload_decoded_serde_impl {
-    use super::{SignedPayload, Vec};
+    use super::SignedPayload;
     use crate::decoded_json_format::Decoded;
     use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
@@ -494,13 +494,12 @@ mod signed_payload_decoded_serde_impl {
     impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
-            let mut new_payload = Vec::new();
-            new_payload
-                .extend_from_slice(&payload)
-                .map_err(|_| de::Error::custom("payload too large"))?;
             Ok(Decoded(SignedPayload {
                 ed25519,
-                payload: new_payload,
+                payload: payload
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| de::Error::custom("payload too large"))?,
             }))
         }
     }

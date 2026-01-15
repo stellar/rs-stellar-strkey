@@ -38,7 +38,7 @@ fuzz_target!(|s: &str| -> Corpus {
         }
     );
 
-    // Check that the length of the of the strkey is what would be expected.
+    // Check that the length of the strkey is what would be expected.
     let len = s.len();
     match &r {
         Strkey::PublicKeyEd25519(_) => assert_eq!(len, 56),

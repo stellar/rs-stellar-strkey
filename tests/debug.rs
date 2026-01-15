@@ -145,7 +145,7 @@ fn test_strkey_claimable_balance_debug() {
 // Inner type debug tests
 
 #[test]
-fn test_public_key_debug() {
+fn test_ed25519_public_key_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -160,7 +160,7 @@ fn test_public_key_debug() {
 }
 
 #[test]
-fn test_private_key_debug() {
+fn test_ed25519_private_key_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -205,7 +205,7 @@ fn test_hash_x_debug() {
 }
 
 #[test]
-fn test_muxed_account_debug() {
+fn test_ed25519_muxed_account_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -223,7 +223,7 @@ fn test_muxed_account_debug() {
 }
 
 #[test]
-fn test_signed_payload_debug() {
+fn test_ed25519_signed_payload_debug() {
     assert_eq!(
         format!(
             "{:?}",

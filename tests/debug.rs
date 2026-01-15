@@ -1,7 +1,7 @@
 use stellar_strkey::*;
 
 #[test]
-fn test_strkey_public_key_ed25519_debug() {
+fn test_strkey_ed25519_public_key_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -16,7 +16,7 @@ fn test_strkey_public_key_ed25519_debug() {
 }
 
 #[test]
-fn test_strkey_private_key_ed25519_debug() {
+fn test_strkey_ed25519_private_key_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -76,7 +76,7 @@ fn test_strkey_pre_auth_tx_debug() {
 }
 
 #[test]
-fn test_strkey_muxed_account_ed25519_debug() {
+fn test_strkey_ed25519_muxed_account_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -94,7 +94,7 @@ fn test_strkey_muxed_account_ed25519_debug() {
 }
 
 #[test]
-fn test_strkey_signed_payload_ed25519_debug() {
+fn test_strkey_ed25519_signed_payload_debug() {
     assert_eq!(
         format!(
             "{:?}",

@@ -36,7 +36,9 @@ impl Debug for PrivateKey {
 
 impl PrivateKey {
     pub fn to_string(&self) -> String {
-        encode(version::PRIVATE_KEY_ED25519, &self.0)
+        encode::<35, 56>(version::PRIVATE_KEY_ED25519, &self.0)
+            .as_str()
+            .into()
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -47,7 +49,7 @@ impl PrivateKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<35, 32>(s)?;
         match ver {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -127,7 +129,9 @@ impl Debug for PublicKey {
 
 impl PublicKey {
     pub fn to_string(&self) -> String {
-        encode(version::PUBLIC_KEY_ED25519, &self.0)
+        encode::<35, 56>(version::PUBLIC_KEY_ED25519, &self.0)
+            .as_str()
+            .into()
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -138,7 +142,7 @@ impl PublicKey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<35, 32>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -227,7 +231,9 @@ impl MuxedAccount {
         let (ed25519, id) = payload.split_at_mut(32);
         ed25519.copy_from_slice(&self.ed25519);
         id.copy_from_slice(&self.id.to_be_bytes());
-        encode(version::MUXED_ACCOUNT_ED25519, &payload)
+        encode::<43, 69>(version::MUXED_ACCOUNT_ED25519, &payload)
+            .as_str()
+            .into()
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -242,7 +248,7 @@ impl MuxedAccount {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<43, 40>(s)?;
         match ver {
             version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -360,7 +366,9 @@ impl SignedPayload {
         payload[32..32 + 4].copy_from_slice(&(inner_payload_len_u32).to_be_bytes());
         payload[32 + 4..32 + 4 + inner_payload_len].copy_from_slice(&self.payload);
 
-        encode(version::SIGNED_PAYLOAD_ED25519, &payload)
+        encode::<103, 165>(version::SIGNED_PAYLOAD_ED25519, &payload)
+            .as_str()
+            .into()
     }
 
     /// Decodes a signed payload from raw bytes.
@@ -435,7 +443,7 @@ impl SignedPayload {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<103, 100>(s)?;
         match ver {
             version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),

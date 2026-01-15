@@ -5,6 +5,21 @@ use heapless::{String, Vec};
 
 use crate::{crc::checksum, error::DecodeError};
 
+// Buffer sizes expected per strkey version:
+// +------------------------+-------------+------------+------------+
+// | Version                | Payload Len | Binary Len | Base32 Len |
+// +------------------------+-------------+------------+------------+
+// | PublicKeyEd25519       |          32 |         35 |         56 |
+// | PrivateKeyEd25519      |          32 |         35 |         56 |
+// | PreAuthTx              |          32 |         35 |         56 |
+// | HashX                  |          32 |         35 |         56 |
+// | Contract               |          32 |         35 |         56 |
+// | LiquidityPool          |          32 |         35 |         56 |
+// | ClaimableBalance       |          33 |         36 |         58 |
+// | MuxedAccountEd25519    |          40 |         43 |         69 |
+// | SignedPayloadEd25519   |     40..100 |    43..103 |    69..165 |
+// +------------------------+-------------+------------+------------+
+
 /// Encodes a version byte and payload into a base32 strkey string.
 ///
 /// The binary format is: `version (1 byte) || payload || checksum (2 bytes)`.

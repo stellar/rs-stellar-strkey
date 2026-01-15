@@ -44,7 +44,7 @@ impl Strkey {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<103, 100>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
@@ -238,7 +238,9 @@ impl Debug for PreAuthTx {
 
 impl PreAuthTx {
     pub fn to_string(&self) -> String {
-        encode(version::PRE_AUTH_TX, &self.0)
+        encode::<35, 56>(version::PRE_AUTH_TX, &self.0)
+            .as_str()
+            .into()
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -246,7 +248,7 @@ impl PreAuthTx {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<35, 32>(s)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -326,7 +328,7 @@ impl Debug for HashX {
 
 impl HashX {
     pub fn to_string(&self) -> String {
-        encode(version::HASH_X, &self.0)
+        encode::<35, 56>(version::HASH_X, &self.0).as_str().into()
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -334,7 +336,7 @@ impl HashX {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<35, 32>(s)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -414,7 +416,7 @@ impl Debug for Contract {
 
 impl Contract {
     pub fn to_string(&self) -> String {
-        encode(version::CONTRACT, &self.0)
+        encode::<35, 56>(version::CONTRACT, &self.0).as_str().into()
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -422,7 +424,7 @@ impl Contract {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<35, 32>(s)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -502,7 +504,9 @@ impl Debug for LiquidityPool {
 
 impl LiquidityPool {
     pub fn to_string(&self) -> String {
-        encode(version::LIQUIDITY_POOL, &self.0)
+        encode::<35, 56>(version::LIQUIDITY_POOL, &self.0)
+            .as_str()
+            .into()
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -510,7 +514,7 @@ impl LiquidityPool {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<35, 32>(s)?;
         match ver {
             version::LIQUIDITY_POOL => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -597,7 +601,9 @@ impl ClaimableBalance {
                 // First byte is zero for v0
                 let mut payload = [0; 33];
                 payload[1..].copy_from_slice(v0);
-                encode(version::CLAIMABLE_BALANCE, &payload)
+                encode::<36, 58>(version::CLAIMABLE_BALANCE, &payload)
+                    .as_str()
+                    .into()
             }
         }
     }
@@ -611,7 +617,7 @@ impl ClaimableBalance {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        let (ver, payload) = decode::<36, 33>(s)?;
         match ver {
             version::CLAIMABLE_BALANCE => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),

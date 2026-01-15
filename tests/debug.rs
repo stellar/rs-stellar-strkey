@@ -1,9 +1,7 @@
 use stellar_strkey::*;
 
-extern crate proptest;
-
 #[test]
-fn test_ed25519_public_key() {
+fn test_strkey_ed25519_public_key_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -18,7 +16,7 @@ fn test_ed25519_public_key() {
 }
 
 #[test]
-fn test_ed25519_private_key() {
+fn test_strkey_ed25519_private_key_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -33,7 +31,7 @@ fn test_ed25519_private_key() {
 }
 
 #[test]
-fn test_contract() {
+fn test_strkey_contract_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -48,7 +46,7 @@ fn test_contract() {
 }
 
 #[test]
-fn test_hash_x() {
+fn test_strkey_hash_x_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -63,7 +61,7 @@ fn test_hash_x() {
 }
 
 #[test]
-fn test_pre_auth_tx() {
+fn test_strkey_pre_auth_tx_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -78,7 +76,7 @@ fn test_pre_auth_tx() {
 }
 
 #[test]
-fn test_ed25519_muxed_account() {
+fn test_strkey_ed25519_muxed_account_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -96,7 +94,7 @@ fn test_ed25519_muxed_account() {
 }
 
 #[test]
-fn test_ed25519_signed_payload() {
+fn test_strkey_ed25519_signed_payload_debug() {
     assert_eq!(
         format!(
             "{:?}",
@@ -110,5 +108,178 @@ fn test_ed25519_signed_payload() {
             })
         ),
         "SignedPayloadEd25519(SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304))",
+    );
+}
+
+#[test]
+fn test_strkey_liquidity_pool_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            Strkey::LiquidityPool(LiquidityPool([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ]))
+        ),
+        "LiquidityPool(LiquidityPool(0000000000000000000000000000000000000000000000000000000000000000))",
+    );
+}
+
+#[test]
+fn test_strkey_claimable_balance_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            Strkey::ClaimableBalance(ClaimableBalance::V0([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ]))
+        ),
+        "ClaimableBalance(ClaimableBalance(V0(0000000000000000000000000000000000000000000000000000000000000000)))",
+    );
+}
+
+// Inner type debug tests
+
+#[test]
+fn test_ed25519_public_key_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            ed25519::PublicKey([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        ),
+        "PublicKey(0000000000000000000000000000000000000000000000000000000000000000)",
+    );
+}
+
+#[test]
+fn test_ed25519_private_key_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            ed25519::PrivateKey([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        ),
+        "PrivateKey(0000000000000000000000000000000000000000000000000000000000000000)",
+    );
+}
+
+#[test]
+fn test_pre_auth_tx_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            PreAuthTx([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        ),
+        "PreAuthTx(0000000000000000000000000000000000000000000000000000000000000000)",
+    );
+}
+
+#[test]
+fn test_hash_x_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            HashX([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        ),
+        "HashX(0000000000000000000000000000000000000000000000000000000000000000)",
+    );
+}
+
+#[test]
+fn test_ed25519_muxed_account_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            ed25519::MuxedAccount {
+                ed25519: [
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                ],
+                id: 0,
+            }
+        ),
+        "MuxedAccount(0000000000000000000000000000000000000000000000000000000000000000, 0)",
+    );
+}
+
+#[test]
+fn test_ed25519_signed_payload_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            ed25519::SignedPayload {
+                ed25519: [
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                ],
+                payload: [1, 2, 3, 4].into(),
+            }
+        ),
+        "SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304)",
+    );
+}
+
+#[test]
+fn test_contract_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            Contract([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        ),
+        "Contract(0000000000000000000000000000000000000000000000000000000000000000)",
+    );
+}
+
+#[test]
+fn test_liquidity_pool_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            LiquidityPool([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        ),
+        "LiquidityPool(0000000000000000000000000000000000000000000000000000000000000000)",
+    );
+}
+
+#[test]
+fn test_claimable_balance_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            ClaimableBalance::V0([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        ),
+        "ClaimableBalance(V0(0000000000000000000000000000000000000000000000000000000000000000))",
     );
 }

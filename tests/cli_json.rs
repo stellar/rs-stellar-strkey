@@ -110,7 +110,7 @@ fn test_ed25519_signed_payload() {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1, 2, 3, 4].into(),
+                payload: heapless::Vec::from_slice(&[1, 2, 3, 4]).unwrap(),
             }
         )))
         .unwrap(),
@@ -138,7 +138,7 @@ fn test_roundtrip_muxed_account() {
 fn test_roundtrip_signed_payload() {
     let original = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
         ed25519: [0x00; 32],
-        payload: vec![1, 2, 3, 4],
+        payload: heapless::Vec::from_slice(&[1, 2, 3, 4]).unwrap(),
     });
     let json = serde_json::to_string(&Decoded(&original)).unwrap();
     let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();

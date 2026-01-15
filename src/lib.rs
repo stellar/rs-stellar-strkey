@@ -1,5 +1,4 @@
 #![cfg_attr(not(feature = "cli"), no_std)]
-extern crate alloc;
 
 #[derive(Clone, Debug, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub struct Version<'a> {
@@ -20,6 +19,7 @@ mod strkey;
 mod typ;
 mod version;
 
+pub use convert::{DataBuf, StringBuf};
 pub use error::*;
 pub use strkey::*;
 

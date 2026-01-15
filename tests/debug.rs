@@ -106,7 +106,7 @@ fn test_ed25519_signed_payload() {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1, 2, 3, 4].into(),
+                payload: heapless::Vec::from_slice(&[1, 2, 3, 4]).unwrap(),
             })
         ),
         "SignedPayloadEd25519(SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304))",

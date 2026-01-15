@@ -10,7 +10,7 @@ pub enum Error {
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            Error::Json(e) => core::fmt::Display::fmt(e, f),
+            Error::Json(e) => f.write_fmt(format_args!("{e}")),
         }
     }
 }

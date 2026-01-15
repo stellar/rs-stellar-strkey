@@ -49,7 +49,7 @@ impl Cmd {
             StrkeyType::SignedPayloadEd25519 => {
                 Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
                     ed25519: [0; 32],
-                    payload: [].into(),
+                    payload: ed25519::InnerPayloadBuf::new(),
                 })
             }
             StrkeyType::Contract => Strkey::Contract(Contract([0; 32])),

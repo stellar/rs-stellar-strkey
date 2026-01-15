@@ -1,11 +1,10 @@
 use crate::{
-    convert::{decode, encode, encode_to_fmt},
+    convert::{decode, encode, encode_to_fmt, StringBuf},
     error::DecodeError,
     hex::write_hex,
     version,
 };
 
-use alloc::{string::String, vec::Vec};
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
@@ -27,7 +26,7 @@ impl Debug for PrivateKey {
 }
 
 impl PrivateKey {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         encode(version::PRIVATE_KEY_ED25519, &self.0)
     }
 
@@ -109,7 +108,7 @@ impl Debug for PublicKey {
 }
 
 impl PublicKey {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         encode(version::PUBLIC_KEY_ED25519, &self.0)
     }
 
@@ -204,7 +203,7 @@ impl MuxedAccount {
         payload
     }
 
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         encode(version::MUXED_ACCOUNT_ED25519, &self.payload())
     }
 
@@ -283,6 +282,9 @@ mod muxed_account_decoded_serde_impl {
 /// Stores a signed payload ed25519 signer.
 ///
 /// The payload must not have a size larger than 64 bytes.
+pub const MAX_INNER_PAYLOAD_LEN: usize = 64;
+pub type InnerPayloadBuf = heapless::Vec<u8, MAX_INNER_PAYLOAD_LEN>;
+
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -290,7 +292,7 @@ mod muxed_account_decoded_serde_impl {
 )]
 pub struct SignedPayload {
     pub ed25519: [u8; 32],
-    pub payload: Vec<u8>,
+    pub payload: InnerPayloadBuf,
 }
 
 impl Debug for SignedPayload {
@@ -308,10 +310,6 @@ impl SignedPayload {
     const MAX_PAYLOAD_LEN: usize = 100;
 
     /// Constructs the payload buffer and returns (buffer, valid_length).
-    ///
-    /// ### Panics
-    ///
-    /// When the payload is larger than 64 bytes.
     fn payload_buffer(&self) -> ([u8; Self::MAX_PAYLOAD_LEN], usize) {
         let inner_payload_len = self.payload.len();
         assert!(inner_payload_len <= 64, "payload length larger than 64");
@@ -328,11 +326,7 @@ impl SignedPayload {
     }
 
     /// Returns the strkey string for the signed payload signer.
-    ///
-    /// ### Panics
-    ///
-    /// When the payload is larger than u32::MAX.
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         let (payload, payload_len) = self.payload_buffer();
         encode(version::SIGNED_PAYLOAD_ED25519, &payload[..payload_len])
     }
@@ -402,9 +396,13 @@ impl SignedPayload {
             return Err(DecodeError::Invalid);
         }
 
+        let mut inner_payload_buf = InnerPayloadBuf::new();
+        // SAFETY: inner_payload_len <= MAX_INNER_PAYLOAD_LENGTH by check above
+        inner_payload_buf.extend_from_slice(inner_payload).unwrap();
+
         Ok(Self {
             ed25519,
-            payload: inner_payload.to_vec(),
+            payload: inner_payload_buf,
         })
     }
 
@@ -436,7 +434,7 @@ impl FromStr for SignedPayload {
 mod signed_payload_decoded_serde_impl {
     use super::*;
     use crate::decoded_json_format::Decoded;
-    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
     #[serde_as]
@@ -454,7 +452,7 @@ mod signed_payload_decoded_serde_impl {
         #[serde_as(as = "serde_with::hex::Hex")]
         ed25519: [u8; 32],
         #[serde_as(as = "serde_with::hex::Hex")]
-        payload: Vec<u8>,
+        payload: std::vec::Vec<u8>,
     }
 
     impl Serialize for Decoded<&SignedPayload> {
@@ -467,6 +465,8 @@ mod signed_payload_decoded_serde_impl {
     impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
+            let payload = InnerPayloadBuf::from_slice(&payload)
+                .map_err(|_| de::Error::custom("payload too large (max 64 bytes)"))?;
             Ok(Decoded(SignedPayload { ed25519, payload }))
         }
     }

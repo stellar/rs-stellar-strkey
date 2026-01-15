@@ -1,11 +1,10 @@
-use alloc::string::String;
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
 };
 
 use crate::{
-    convert::{decode, encode, encode_to_fmt},
+    convert::{decode, encode, encode_to_fmt, StringBuf},
     ed25519,
     error::DecodeError,
     hex::write_hex,
@@ -30,7 +29,7 @@ pub enum Strkey {
 }
 
 impl Strkey {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         match self {
             Self::PublicKeyEd25519(x) => x.to_string(),
             Self::PrivateKeyEd25519(x) => x.to_string(),
@@ -239,7 +238,7 @@ impl Debug for PreAuthTx {
 }
 
 impl PreAuthTx {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         encode(version::PRE_AUTH_TX, &self.0)
     }
 
@@ -318,7 +317,7 @@ impl Debug for HashX {
 }
 
 impl HashX {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         encode(version::HASH_X, &self.0)
     }
 
@@ -397,7 +396,7 @@ impl Debug for Contract {
 }
 
 impl Contract {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         encode(version::CONTRACT, &self.0)
     }
 
@@ -476,7 +475,7 @@ impl Debug for LiquidityPool {
 }
 
 impl LiquidityPool {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         encode(version::LIQUIDITY_POOL, &self.0)
     }
 
@@ -563,7 +562,7 @@ impl Debug for ClaimableBalance {
 }
 
 impl ClaimableBalance {
-    pub fn to_string(&self) -> String {
+    pub fn to_string(&self) -> StringBuf {
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0

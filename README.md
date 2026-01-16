@@ -40,7 +40,7 @@ stellar-strkey = { version = "..." }
 To enable serde support:
 
 ```toml
-stellar-strkey = { version = "...", default-features = false, features = ["serde"] }
+stellar-strkey = { version = "...", features = ["serde"] }
 ```
 
 To enable the `Decoded` JSON format (requires an allocator):

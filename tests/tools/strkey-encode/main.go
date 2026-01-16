@@ -189,7 +189,6 @@ func main() {
 				0xff, // one byte too long
 			}),
 		},
-		// TODO: M, P, B
 	}
 	csvw := csv.NewWriter(os.Stdout)
 	err := csvw.WriteAll(recs)

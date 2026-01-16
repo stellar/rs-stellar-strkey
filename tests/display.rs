@@ -76,7 +76,7 @@ fn test_strkey_ed25519_signed_payload_display() {
             0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f,
             0xe8, 0x9a,
         ],
-        payload: vec![0; 4],
+        payload: [0u8; 4].as_slice().try_into().unwrap(),
     });
     assert_eq!(
         format!("{}", strkey),
@@ -173,7 +173,7 @@ fn test_ed25519_signed_payload_display() {
             0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f,
             0xe8, 0x9a,
         ],
-        payload: vec![0; 4],
+        payload: [0u8; 4].as_slice().try_into().unwrap(),
     };
     assert_eq!(
         format!("{}", key),

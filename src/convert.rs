@@ -95,7 +95,10 @@ pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String
 ///
 /// # Panics
 ///
-/// Panics if the binary data exceeds `B` bytes or decoded payload exceeds `P` bytes.
+/// Panics if the binary data exceeds `B` bytes.
+///
+/// Note: The decoded payload cannot exceed `P` bytes due to the compile-time
+/// assertion `P >= B - 3`, which guarantees sufficient capacity.
 pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P>), DecodeError> {
     const {
         assert!(
@@ -133,8 +136,9 @@ pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
     }
 
     // Unpack payload.
+    // Safety: unwrap cannot fail because const assertion `P >= B - 3` ensures
+    // P can hold any valid payload (payload_data.len() <= B - 3 <= P).
     let payload_data = &data_without_crc[1..];
-    let mut payload: Vec<u8, P> = Vec::new();
-    payload.extend_from_slice(payload_data).unwrap();
+    let payload: Vec<u8, P> = Vec::from_slice(payload_data).unwrap();
     Ok((ver, payload))
 }

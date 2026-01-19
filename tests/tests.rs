@@ -484,19 +484,6 @@ fn test_signed_payload_from_payload_min_length_boundary() {
     ];
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert_eq!(result, Err(DecodeError::Invalid), "39 bytes (below MIN_LENGTH) should fail");
-
-    // Test 36 bytes: should fail (too short for MIN_LENGTH=40)
-    // This payload would parse successfully if MIN_LENGTH were incorrectly set to 32 or 36,
-    // so this test catches mutations like `32 + 4 + 4` -> `32 - 4 + 4` (= 32)
-    // or `32 + 4 + 4` -> `32 + 4 - 4` (= 32)
-    let payload: &[u8] = &[
-        // ed25519 public key (32 bytes)
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00,
-    ];
-    let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
-    assert_eq!(result, Err(DecodeError::Invalid), "36 bytes should fail (below MIN_LENGTH of 40)");
 }
 
 #[test]

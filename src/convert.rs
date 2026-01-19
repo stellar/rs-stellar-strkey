@@ -142,3 +142,24 @@ pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
     let payload: Vec<u8, P> = Vec::from_slice(payload_data).unwrap();
     Ok((ver, payload))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{binary_len, encode_len};
+
+    /// Verifies that `encode_len` matches `data_encoding::BASE32_NOPAD.encode_len`
+    /// for all valid strkey payload lengths (32..=100).
+    #[test]
+    fn test_encode_len_matches_data_encoding() {
+        for payload_len in 32..=100 {
+            let bin_len = binary_len(payload_len);
+            let expected = data_encoding::BASE32_NOPAD.encode_len(bin_len);
+            let actual = encode_len(bin_len);
+            assert_eq!(
+                actual, expected,
+                "encode_len mismatch for payload_len={}, binary_len={}: expected {}, got {}",
+                payload_len, bin_len, expected, actual
+            );
+        }
+    }
+}

@@ -15,24 +15,25 @@ fuzz:
 fuzz-compare-v13:
 	cargo +nightly fuzz run fuzz_compare_v13 -j 4
 
-# Generate a lcov.info file for tools like VSCode's Coverage Gutters extension,
-# and output basic coverage information on the command line.
-RUST_LLVM_COV=$(shell find $(shell rustc --print sysroot) -name llvm-cov)
-RUST_TARGET_TRIPLE=$(shell rustc -vV | sed -n 's|host: ||p')
+# Generate coverage report as text summary and HTML with source highlighting.
 fuzz-coverage:
 	rustup component add --toolchain nightly llvm-tools-preview
-	cargo +nightly fuzz coverage fuzz_roundtrip
-	@$(RUST_LLVM_COV) export \
-		-instr-profile=fuzz/coverage/fuzz_roundtrip/coverage.profdata \
-		-object target/$(RUST_TARGET_TRIPLE)/coverage/$(RUST_TARGET_TRIPLE)/release/fuzz_roundtrip \
-		--ignore-filename-regex "rustc" \
-		-format=lcov \
-		> lcov.info
-	@$(RUST_LLVM_COV) report \
-		-instr-profile=fuzz/coverage/fuzz_roundtrip/coverage.profdata \
-		-object target/$(RUST_TARGET_TRIPLE)/coverage/$(RUST_TARGET_TRIPLE)/release/fuzz_roundtrip \
-		--ignore-filename-regex ".cargo/registry"
-	@echo "View the coverage in lcov.info in VSCode using the Coverage Gutters extension."
+	@RUST_LLVM_COV=$$(find $$(rustc +nightly --print sysroot) -name llvm-cov) && \
+	RUST_TARGET_TRIPLE=$$(rustc +nightly -vV | sed -n 's|host: ||p') && \
+	for TARGET in $$(cargo +nightly fuzz list); do \
+		echo "=== Coverage for $$TARGET ===" && \
+		cargo +nightly fuzz coverage $$TARGET && \
+		$$RUST_LLVM_COV report \
+			-instr-profile=fuzz/coverage/$$TARGET/coverage.profdata \
+			-object target/$$RUST_TARGET_TRIPLE/coverage/$$RUST_TARGET_TRIPLE/release/$$TARGET \
+			--ignore-filename-regex ".cargo/registry" && \
+		$$RUST_LLVM_COV show \
+			-instr-profile=fuzz/coverage/$$TARGET/coverage.profdata \
+			-object target/$$RUST_TARGET_TRIPLE/coverage/$$RUST_TARGET_TRIPLE/release/$$TARGET \
+			--ignore-filename-regex ".cargo/registry" \
+			--format=html \
+			> coverage-$$TARGET.html; \
+	done
 
 build:
 	cargo build

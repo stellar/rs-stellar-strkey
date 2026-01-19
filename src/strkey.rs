@@ -286,7 +286,10 @@ impl PreAuthTx {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRE_AUTH_TX, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::PRE_AUTH_TX,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -379,7 +382,10 @@ impl HashX {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::HASH_X, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::HASH_X,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -472,7 +478,10 @@ impl Contract {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::CONTRACT, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::CONTRACT,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -565,7 +574,10 @@ impl LiquidityPool {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::LIQUIDITY_POOL, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::LIQUIDITY_POOL,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {

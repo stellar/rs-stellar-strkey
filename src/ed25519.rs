@@ -37,7 +37,10 @@ impl PrivateKey {
     };
 
     pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRIVATE_KEY_ED25519, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::PRIVATE_KEY_ED25519,
+            &self.0,
+        )
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -133,7 +136,10 @@ impl PublicKey {
     };
 
     pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PUBLIC_KEY_ED25519, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::PUBLIC_KEY_ED25519,
+            &self.0,
+        )
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {

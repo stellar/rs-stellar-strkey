@@ -49,7 +49,10 @@ pub const fn encode_len(binary_len: usize) -> usize {
 ///
 /// Panics if the binary data exceeds `B` bytes or encoded output exceeds `E`
 /// bytes.
-pub fn encode<const P: usize, const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String<E> {
+pub fn encode<const P: usize, const B: usize, const E: usize>(
+    ver: u8,
+    payload: &[u8],
+) -> String<E> {
     const {
         assert!(B == binary_len(P), "B must be exactly binary_len(P)");
         assert!(E == encode_len(B), "E must be exactly encode_len(B)");
@@ -172,7 +175,8 @@ mod tests {
         // Too short base32 (decodes to < 3 bytes) should fail
         assert_eq!(decode::<0, 3>(b"AA"), Err(DecodeError::Invalid)); // 1 byte
         assert_eq!(decode::<0, 3>(b"AAAA"), Err(DecodeError::Invalid)); // 2 bytes
-                                                                        // Valid 3-byte input (version + empty payload + checksum) should succeed
+
+        // Valid 3-byte input (version + empty payload + checksum) should succeed
         // "AAAAA" is encode::<0, 3, 5>(0x00, &[]) - version 0x00, empty payload, checksum 0x0000
         let result = decode::<0, 3>(b"AAAAA");
         assert!(

@@ -41,24 +41,18 @@ pub const fn encode_len(binary_len: usize) -> usize {
 ///
 /// # Generic Parameters
 ///
-/// - `B` - Binary buffer capacity (must be ≥ 1 + payload.len() + 2)
-/// - `E` - Encoded output capacity (must be ≥ ceil(B * 8 / 5))
+/// - `P` - Payload buffer capacity
+/// - `B` - Binary buffer capacity (must be exactly binary_len(P))
+/// - `E` - Encoded output capacity (must be exactly encode_len(B))
 ///
 /// # Panics
 ///
 /// Panics if the binary data exceeds `B` bytes or encoded output exceeds `E`
 /// bytes.
-pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String<E> {
+pub fn encode<const P: usize, const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String<E> {
     const {
-        assert!(
-            B >= 3,
-            "B must be at least 3 (1 version + 0 payload + 2 checksum)"
-        );
-        // E >= ceil(B * 8 / 5) is equivalent to E * 5 >= B * 8
-        assert!(
-            E * 5 >= B * 8,
-            "E must be at least ceil(B * 8 / 5) for base32 encoding"
-        );
+        assert!(B == binary_len(P), "B must be exactly binary_len(P)");
+        assert!(E == encode_len(B), "E must be exactly encode_len(B)");
     }
 
     // Build binary.
@@ -83,8 +77,8 @@ pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String
 ///
 /// # Generic Parameters
 ///
-/// - `B` - Binary buffer capacity (must be ≥ decoded binary length)
-/// - `P` - Payload buffer capacity (must be ≥ B - 3)
+/// - `P` - Payload buffer capacity
+/// - `B` - Binary buffer capacity (must be exactly binary_len(P))
 ///
 /// # Errors
 ///
@@ -96,16 +90,9 @@ pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String
 /// # Panics
 ///
 /// Panics if the binary data exceeds `B` bytes.
-///
-/// Note: The decoded payload cannot exceed `P` bytes due to the compile-time
-/// assertion `P >= B - 3`, which guarantees sufficient capacity.
-pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P>), DecodeError> {
+pub fn decode<const P: usize, const B: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P>), DecodeError> {
     const {
-        assert!(
-            B >= 3,
-            "B must be at least 3 (1 version + 0 payload + 2 checksum)"
-        );
-        assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+        assert!(B == binary_len(P), "B must be exactly binary_len(P)");
     }
 
     // Prepare buffer for decoding base32.
@@ -171,7 +158,7 @@ mod tests {
 
             // Verify actual encoded output matches predicted length
             let payload = [0u8; 100];
-            let encoded = encode::<103, 165>(0x00, &payload[..payload_len]);
+            let encoded = encode::<100, 103, 165>(0x00, &payload[..payload_len]);
             assert_eq!(encoded.len(), expected);
         }
     }
@@ -181,13 +168,13 @@ mod tests {
     #[test]
     fn test_decode_minimum_length() {
         // Empty input should fail
-        assert_eq!(decode::<3, 0>(b""), Err(DecodeError::Invalid));
+        assert_eq!(decode::<0, 3>(b""), Err(DecodeError::Invalid));
         // Too short base32 (decodes to < 3 bytes) should fail
-        assert_eq!(decode::<3, 0>(b"AA"), Err(DecodeError::Invalid)); // 1 byte
-        assert_eq!(decode::<3, 0>(b"AAAA"), Err(DecodeError::Invalid)); // 2 bytes
+        assert_eq!(decode::<0, 3>(b"AA"), Err(DecodeError::Invalid)); // 1 byte
+        assert_eq!(decode::<0, 3>(b"AAAA"), Err(DecodeError::Invalid)); // 2 bytes
                                                                         // Valid 3-byte input (version + empty payload + checksum) should succeed
-                                                                        // "AAAAA" is encode::<3, 5>(0x00, &[]) - version 0x00, empty payload, checksum 0x0000
-        let result = decode::<3, 0>(b"AAAAA");
+        // "AAAAA" is encode::<0, 3, 5>(0x00, &[]) - version 0x00, empty payload, checksum 0x0000
+        let result = decode::<0, 3>(b"AAAAA");
         assert!(
             result.is_ok(),
             "decode should accept 3 binary bytes (empty payload)"

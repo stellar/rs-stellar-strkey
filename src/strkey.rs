@@ -91,7 +91,7 @@ impl Strkey {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_PAYLOAD_LEN }>(s)?;
+        let (ver, payload) = decode::<{ Self::MAX_PAYLOAD_LEN }, { Self::MAX_BINARY_LEN }>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
@@ -286,7 +286,7 @@ impl PreAuthTx {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRE_AUTH_TX, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRE_AUTH_TX, &self.0)
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -298,7 +298,7 @@ impl PreAuthTx {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -379,7 +379,7 @@ impl HashX {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::HASH_X, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::HASH_X, &self.0)
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -391,7 +391,7 @@ impl HashX {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -472,7 +472,7 @@ impl Contract {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::CONTRACT, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::CONTRACT, &self.0)
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -484,7 +484,7 @@ impl Contract {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -565,7 +565,7 @@ impl LiquidityPool {
     };
 
     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::LIQUIDITY_POOL, &self.0)
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::LIQUIDITY_POOL, &self.0)
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -577,7 +577,7 @@ impl LiquidityPool {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::LIQUIDITY_POOL => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -673,7 +673,7 @@ impl ClaimableBalance {
                 // First byte is zero for v0
                 let mut payload = [0; Self::PAYLOAD_LEN];
                 payload[1..].copy_from_slice(v0);
-                encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+                encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
                     version::CLAIMABLE_BALANCE,
                     &payload,
                 )
@@ -694,7 +694,7 @@ impl ClaimableBalance {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::CLAIMABLE_BALANCE => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),

@@ -175,6 +175,16 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 
 [[package]]
 name = "stellar-strkey"
+version = "0.0.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee1832fb50c651ad10f734aaf5d31ca5acdfb197a6ecda64d93fcdb8885af913"
+dependencies = [
+ "crate-git-revision",
+ "data-encoding",
+]
+
+[[package]]
+name = "stellar-strkey"
 version = "0.0.15"
 dependencies = [
  "crate-git-revision",
@@ -187,7 +197,8 @@ name = "stellar-strkey-fuzz"
 version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
- "stellar-strkey",
+ "stellar-strkey 0.0.13",
+ "stellar-strkey 0.0.15",
 ]
 
 [[package]]

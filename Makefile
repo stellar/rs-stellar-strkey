@@ -7,9 +7,13 @@ test:
 	cargo test --features serde
 	cargo test --features serde-decoded
 	cargo +nightly fuzz run fuzz_roundtrip -- -runs=0
+	cargo +nightly fuzz run fuzz_compare_v13 -- -runs=0
 
 fuzz:
 	cargo +nightly fuzz run fuzz_roundtrip -j 4
+
+fuzz-compare:
+	cargo +nightly fuzz run fuzz_compare_v13 -j 4
 
 # Generate a lcov.info file for tools like VSCode's Coverage Gutters extension,
 # and output basic coverage information on the command line.
@@ -49,4 +53,4 @@ fmt:
 clean:
 	cargo clean
 
-.PHONY: all test fuzz build check install fmt clean
+.PHONY: all test fuzz fuzz-compare build check install fmt clean

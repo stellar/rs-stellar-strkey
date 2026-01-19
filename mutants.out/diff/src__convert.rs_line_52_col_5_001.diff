@@ -1,0 +1,46 @@
+--- src/convert.rs
++++ replace encode -> String<E> with String::from_iter([Default::default()])
+@@ -44,42 +44,17 @@
+ /// - `B` - Binary buffer capacity (must be ≥ 1 + payload.len() + 2)
+ /// - `E` - Encoded output capacity (must be ≥ ceil(B * 8 / 5))
+ ///
+ /// # Panics
+ ///
+ /// Panics if the binary data exceeds `B` bytes or encoded output exceeds `E`
+ /// bytes.
+ pub fn encode<const B: usize, const E: usize>(ver: u8, payload: &[u8]) -> String<E> {
+-    const {
+-        assert!(
+-            B >= 3,
+-            "B must be at least 3 (1 version + 0 payload + 2 checksum)"
+-        );
+-        // E >= ceil(B * 8 / 5) is equivalent to E * 5 >= B * 8
+-        assert!(
+-            E * 5 >= B * 8,
+-            "E must be at least ceil(B * 8 / 5) for base32 encoding"
+-        );
+-    }
+-
+-    // Build binary.
+-    let mut d: Vec<u8, B> = Vec::new();
+-    d.push(ver).unwrap();
+-    d.extend_from_slice(payload).unwrap();
+-    d.extend_from_slice(&checksum(&d)).unwrap();
+-
+-    // Encode as base32.
+-    let mut encoded: Vec<u8, E> = Vec::new();
+-    let encoded_len = data_encoding::BASE32_NOPAD.encode_len(d.len());
+-    encoded.resize_default(encoded_len).unwrap();
+-    data_encoding::BASE32_NOPAD.encode_mut(&d, &mut encoded);
+-
+-    // SAFETY: base32 encoding produces valid ASCII which is valid UTF-8
+-    unsafe { String::from_utf8_unchecked(encoded) }
++    String::from_iter([Default::default()]) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ /// Decodes a base32 strkey string into a version byte and payload.
+ ///
+ /// The binary format is: `version (1 byte) || payload || checksum (2 bytes)`.
+ ///
+ /// # Generic Parameters
+ ///

@@ -145,21 +145,52 @@ pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
 
 #[cfg(test)]
 mod tests {
-    use super::{binary_len, encode_len};
+    use super::{binary_len, decode, encode, encode_len, DecodeError};
+
+    /// Verifies that `binary_len` matches the expected formula
+    /// for all valid strkey payload lengths (0..=100).
+    #[test]
+    fn test_binary_len() {
+        for payload_len in 0..=100 {
+            // version (1 byte) + payload len + crc (2 bytes)
+            let expected = 1 + payload_len + 2;
+            let actual = binary_len(payload_len);
+            assert_eq!(actual, expected);
+        }
+    }
 
     /// Verifies that `encode_len` matches `data_encoding::BASE32_NOPAD.encode_len`
-    /// for all valid strkey payload lengths (32..=100).
+    /// for all valid strkey payload lengths (3..=100).
     #[test]
-    fn test_encode_len_matches_data_encoding() {
-        for payload_len in 32..=100 {
+    fn test_encode_len() {
+        for payload_len in 0..=100 {
             let bin_len = binary_len(payload_len);
             let expected = data_encoding::BASE32_NOPAD.encode_len(bin_len);
             let actual = encode_len(bin_len);
-            assert_eq!(
-                actual, expected,
-                "encode_len mismatch for payload_len={}, binary_len={}: expected {}, got {}",
-                payload_len, bin_len, expected, actual
-            );
+            assert_eq!(actual, expected);
+
+            // Verify actual encoded output matches predicted length
+            let payload = [0u8; 100];
+            let encoded = encode::<103, 165>(0x00, &payload[..payload_len]);
+            assert_eq!(encoded.len(), expected);
         }
+    }
+
+    /// Tests that decode accepts minimum valid input (3 binary bytes: version + empty payload + checksum).
+    /// This catches the mutation `data_len < 3` -> `data_len <= 3`.
+    #[test]
+    fn test_decode_minimum_length() {
+        // Empty input should fail
+        assert_eq!(decode::<3, 0>(b""), Err(DecodeError::Invalid));
+        // Too short base32 (decodes to < 3 bytes) should fail
+        assert_eq!(decode::<3, 0>(b"AA"), Err(DecodeError::Invalid)); // 1 byte
+        assert_eq!(decode::<3, 0>(b"AAAA"), Err(DecodeError::Invalid)); // 2 bytes
+        // Valid 3-byte input (version + empty payload + checksum) should succeed
+        // "AAAAA" is encode::<3, 5>(0x00, &[]) - version 0x00, empty payload, checksum 0x0000
+        let result = decode::<3, 0>(b"AAAAA");
+        assert!(result.is_ok(), "decode should accept 3 binary bytes (empty payload)");
+        let (ver, payload) = result.unwrap();
+        assert_eq!(ver, 0x00);
+        assert!(payload.is_empty());
     }
 }

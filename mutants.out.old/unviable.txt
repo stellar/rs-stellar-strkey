@@ -1,0 +1,18 @@
+src/convert.rs:12:5: replace binary_len -> usize with 0
+src/convert.rs:12:5: replace binary_len -> usize with 1
+src/convert.rs:12:21: replace + with * in binary_len
+src/convert.rs:12:7: replace + with - in binary_len
+src/convert.rs:19:5: replace encode_len -> usize with 0
+src/convert.rs:19:5: replace encode_len -> usize with 1
+src/convert.rs:19:26: replace / with % in encode_len
+src/convert.rs:19:21: replace + with - in encode_len
+src/convert.rs:19:17: replace * with + in encode_len
+src/convert.rs:19:17: replace * with / in encode_len
+src/convert.rs:52:5: replace encode -> String<E> with String::from_iter([Default::default()])
+src/convert.rs:52:5: replace encode -> String<E> with String::new(Default::default())
+src/convert.rs:103:5: replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((0, vec![]))
+src/convert.rs:103:5: replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((0, vec![0]))
+src/convert.rs:103:5: replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((0, vec![1]))
+src/convert.rs:103:5: replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((1, vec![]))
+src/convert.rs:103:5: replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((1, vec![0]))
+src/convert.rs:103:5: replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((1, vec![1]))

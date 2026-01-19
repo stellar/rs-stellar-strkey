@@ -1,0 +1,135 @@
+
+*** src/convert.rs:103:5: replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((0, vec![0]))
+
+*** mutation diff:
+--- src/convert.rs
++++ replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((0, vec![0]))
+@@ -95,57 +95,17 @@
+ ///
+ /// # Panics
+ ///
+ /// Panics if the binary data exceeds `B` bytes.
+ ///
+ /// Note: The decoded payload cannot exceed `P` bytes due to the compile-time
+ /// assertion `P >= B - 3`, which guarantees sufficient capacity.
+ pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P>), DecodeError> {
+-    const {
+-        assert!(
+-            B >= 3,
+-            "B must be at least 3 (1 version + 0 payload + 2 checksum)"
+-        );
+-        assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+-    }
+-
+-    // Prepare buffer for decoding base32.
+-    let mut data: Vec<u8, B> = Vec::new();
+-    let data_len = data_encoding::BASE32_NOPAD
+-        .decode_len(s.len())
+-        .map_err(|_| DecodeError::Invalid)?;
+-    if data_len < 3 {
+-        return Err(DecodeError::Invalid);
+-    }
+-    data.resize_default(data_len)
+-        .map_err(|_| DecodeError::Invalid)?;
+-
+-    // Decode base32.
+-    data_encoding::BASE32_NOPAD
+-        .decode_mut(s, &mut data)
+-        .map_err(|_| DecodeError::Invalid)?;
+-
+-    // Unpack version.
+-    let ver = data[0];
+-
+-    // Unpack and check checksum.
+-    let data_len = data.len();
+-    let (data_without_crc, crc_actual) = data.split_at(data_len - 2);
+-    let crc_expect = checksum(data_without_crc);
+-    if crc_actual != crc_expect {
+-        return Err(DecodeError::Invalid);
+-    }
+-
+-    // Unpack payload.
+-    // Safety: unwrap cannot fail because const assertion `P >= B - 3` ensures
+-    // P can hold any valid payload (payload_data.len() <= B - 3 <= P).
+-    let payload_data = &data_without_crc[1..];
+-    let payload: Vec<u8, P> = Vec::from_slice(payload_data).unwrap();
+-    Ok((ver, payload))
++    Ok((0, vec![0])) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ #[cfg(test)]
+ mod tests {
+     use super::{binary_len, decode, encode, encode_len};
+ 
+     /// Verifies that `encode_len` matches `data_encoding::BASE32_NOPAD.encode_len`
+     /// for all valid strkey payload lengths (32..=100).
+
+
+*** /Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/cargo test --no-run --verbose --package=stellar-strkey@0.0.15
+       Fresh libc v0.2.178
+       Fresh cfg-if v1.0.4
+       Fresh unicode-ident v1.0.22
+       Fresh memchr v2.7.6
+       Fresh itoa v1.0.15
+       Fresh ryu v1.0.20
+       Fresh linux-raw-sys v0.11.0
+       Fresh serde_core v1.0.228
+       Fresh getrandom v0.3.4
+       Fresh proc-macro2 v1.0.103
+       Fresh autocfg v1.5.0
+       Fresh bitflags v2.10.0
+       Fresh zerocopy v0.8.31
+       Fresh once_cell v1.21.3
+       Fresh fastrand v2.3.0
+       Fresh byteorder v1.5.0
+       Fresh wait-timeout v0.2.1
+       Fresh quote v1.0.42
+       Fresh serde v1.0.228
+       Fresh rand_core v0.9.3
+       Fresh serde_json v1.0.145
+       Fresh rustix v1.1.2
+       Fresh ppv-lite86 v0.2.21
+       Fresh hash32 v0.3.1
+       Fresh stable_deref_trait v1.2.1
+       Fresh quick-error v1.2.3
+       Fresh syn v2.0.111
+       Fresh tempfile v3.23.0
+       Fresh bit-vec v0.8.0
+       Fresh fnv v1.0.7
+       Fresh rand_chacha v0.9.0
+       Fresh rand_xorshift v0.4.0
+       Fresh heapless v0.8.0
+       Fresh rand v0.9.2
+       Fresh lazy_static v1.5.0
+       Fresh data-encoding v2.9.0
+       Fresh serde_derive v1.0.228
+       Fresh bit-set v0.8.0
+       Fresh num-traits v0.2.19
+       Fresh rusty-fork v0.3.1
+       Fresh unarray v0.1.4
+       Fresh regex-syntax v0.8.8
+       Fresh serde_test v1.0.177
+       Fresh crate-git-revision v0.0.6
+       Fresh proptest v1.8.0
+       Dirty stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp): the file `/index` is missing
+   Compiling stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp)
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/build/stellar-strkey-7eeb440ac350857c/build-script-build`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1fdb956222ce4886 -C extra-filename=-b28c69b8deb9cca3 --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib`
+error: cannot find macro `vec` in this scope
+   --> src/convert.rs:103:12
+    |
+103 |     Ok((0, vec![0])) /* ~ changed by cargo-mutants ~ */
+    |            ^^^
+
+error: could not compile `stellar-strkey` (lib) due to 1 previous error
+
+Caused by:
+  process didn't exit successfully: `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta` (exit status: 1)
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `stellar-strkey` (lib test) due to 1 previous error
+
+Caused by:
+  process didn't exit successfully: `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1fdb956222ce4886 -C extra-filename=-b28c69b8deb9cca3 --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-71vrKT.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib` (exit status: 1)
+
+*** result: Failure(101)

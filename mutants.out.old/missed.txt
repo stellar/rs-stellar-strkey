@@ -1,0 +1,1 @@
+src/convert.rs:116:17: replace < with <= in decode

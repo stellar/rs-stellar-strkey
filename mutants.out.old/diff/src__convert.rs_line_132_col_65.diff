@@ -1,0 +1,21 @@
+--- src/convert.rs
++++ replace - with + in decode
+@@ -124,17 +124,17 @@
+         .decode_mut(s, &mut data)
+         .map_err(|_| DecodeError::Invalid)?;
+ 
+     // Unpack version.
+     let ver = data[0];
+ 
+     // Unpack and check checksum.
+     let data_len = data.len();
+-    let (data_without_crc, crc_actual) = data.split_at(data_len - 2);
++    let (data_without_crc, crc_actual) = data.split_at(data_len + /* ~ changed by cargo-mutants ~ */ 2);
+     let crc_expect = checksum(data_without_crc);
+     if crc_actual != crc_expect {
+         return Err(DecodeError::Invalid);
+     }
+ 
+     // Unpack payload.
+     // Safety: unwrap cannot fail because const assertion `P >= B - 3` ensures
+     // P can hold any valid payload (payload_data.len() <= B - 3 <= P).

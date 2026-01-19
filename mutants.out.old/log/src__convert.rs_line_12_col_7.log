@@ -1,0 +1,840 @@
+
+*** src/convert.rs:12:7: replace + with - in binary_len
+
+*** mutation diff:
+--- src/convert.rs
++++ replace + with - in binary_len
+@@ -4,17 +4,17 @@
+ use heapless::{String, Vec};
+ 
+ use crate::{crc::checksum, error::DecodeError};
+ 
+ /// Calculates the binary length for a given payload length.
+ ///
+ /// The formula is `1 (version) + payload_len + 2 (checksum)`.
+ pub const fn binary_len(payload_len: usize) -> usize {
+-    1 + payload_len + 2
++    1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+ }
+ 
+ /// Calculates the base32 (no padding) encoded length for a given binary length.
+ ///
+ /// The formula is `ceil(binary_len * 8 / 5)`.
+ pub const fn encode_len(binary_len: usize) -> usize {
+     (binary_len * 8 + 4) / 5
+ }
+
+
+*** /Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/cargo test --no-run --verbose --package=stellar-strkey@0.0.15
+       Fresh libc v0.2.178
+       Fresh unicode-ident v1.0.22
+       Fresh cfg-if v1.0.4
+       Fresh memchr v2.7.6
+       Fresh itoa v1.0.15
+       Fresh ryu v1.0.20
+       Fresh bitflags v2.10.0
+       Fresh linux-raw-sys v0.11.0
+       Fresh proc-macro2 v1.0.103
+       Fresh getrandom v0.3.4
+       Fresh serde_core v1.0.228
+       Fresh autocfg v1.5.0
+       Fresh rustix v1.1.2
+       Fresh byteorder v1.5.0
+       Fresh fastrand v2.3.0
+       Fresh once_cell v1.21.3
+       Fresh wait-timeout v0.2.1
+       Fresh quote v1.0.42
+       Fresh serde v1.0.228
+       Fresh serde_json v1.0.145
+       Fresh rand_core v0.9.3
+       Fresh zerocopy v0.8.31
+       Fresh tempfile v3.23.0
+       Fresh hash32 v0.3.1
+       Fresh bit-vec v0.8.0
+       Fresh quick-error v1.2.3
+       Fresh syn v2.0.111
+       Fresh ppv-lite86 v0.2.21
+       Fresh stable_deref_trait v1.2.1
+       Fresh fnv v1.0.7
+       Fresh rand_xorshift v0.4.0
+       Fresh bit-set v0.8.0
+       Fresh rand v0.9.2
+       Fresh data-encoding v2.9.0
+       Fresh lazy_static v1.5.0
+       Fresh regex-syntax v0.8.8
+       Fresh serde_derive v1.0.228
+       Fresh rusty-fork v0.3.1
+       Fresh num-traits v0.2.19
+       Fresh heapless v0.8.0
+       Fresh rand_chacha v0.9.0
+       Fresh unarray v0.1.4
+       Fresh serde_test v1.0.177
+       Fresh crate-git-revision v0.0.6
+       Fresh proptest v1.8.0
+       Dirty stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp): the file `/index` is missing
+   Compiling stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp)
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/build/stellar-strkey-7eeb440ac350857c/build-script-build`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1fdb956222ce4886 -C extra-filename=-b28c69b8deb9cca3 --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib`
+error[E0080]: attempt to compute `1_usize - 32_usize`, which would overflow
+  --> src/ed25519.rs:32:42
+   |
+32 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `ed25519::PrivateKey::BINARY_LEN` failed inside this call
+   |
+note: inside `binary_len`
+  --> src/convert.rs:12:5
+   |
+12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+  --> src/ed25519.rs:33:54
+   |
+33 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+   |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/ed25519.rs:39:41
+   |
+39 |     pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
+   |                                         ^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 32_usize`, which would overflow
+   --> src/ed25519.rs:128:42
+    |
+128 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `ed25519::PublicKey::BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:129:54
+    |
+129 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:135:41
+    |
+135 |     pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
+    |                                         ^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 40_usize`, which would overflow
+   --> src/ed25519.rs:228:42
+    |
+228 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `ed25519::MuxedAccount::BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:229:54
+    |
+229 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:235:41
+    |
+235 |     pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
+    |                                         ^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 100_usize`, which would overflow
+   --> src/ed25519.rs:352:46
+    |
+352 |     pub(crate) const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
+    |                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `ed25519::SignedPayload::MAX_BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:353:58
+    |
+353 |     pub(crate) const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    |                                                          ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:361:41
+    |
+361 |     pub fn to_string(&self) -> String<{ Self::MAX_ENCODED_LEN }> {
+    |                                         ^^^^^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 100_usize`, which would overflow
+  --> src/strkey.rs:35:35
+   |
+35 |     const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
+   |                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `strkey::Strkey::MAX_BINARY_LEN` failed inside this call
+   |
+note: inside `binary_len`
+  --> src/convert.rs:12:5
+   |
+12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+  --> src/strkey.rs:36:47
+   |
+36 |     const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+   |                                               ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:73:49
+   |
+73 |     pub fn to_string(&self) -> HeaplessString<{ Self::MAX_ENCODED_LEN }> {
+   |                                                 ^^^^^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 32_usize`, which would overflow
+   --> src/strkey.rs:281:42
+    |
+281 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `strkey::PreAuthTx::BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/strkey.rs:282:54
+    |
+282 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:288:49
+    |
+288 |     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    |                                                 ^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 32_usize`, which would overflow
+   --> src/strkey.rs:374:42
+    |
+374 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `strkey::HashX::BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/strkey.rs:375:54
+    |
+375 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:381:49
+    |
+381 |     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    |                                                 ^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 32_usize`, which would overflow
+   --> src/strkey.rs:467:42
+    |
+467 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `strkey::Contract::BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/strkey.rs:468:54
+    |
+468 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:474:49
+    |
+474 |     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    |                                                 ^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 32_usize`, which would overflow
+   --> src/strkey.rs:560:42
+    |
+560 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `strkey::LiquidityPool::BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/strkey.rs:561:54
+    |
+561 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:567:49
+    |
+567 |     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    |                                                 ^^^^^^^^^^^^^^^^^
+
+error[E0080]: attempt to compute `1_usize - 33_usize`, which would overflow
+   --> src/strkey.rs:662:42
+    |
+662 |     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `strkey::ClaimableBalance::BINARY_LEN` failed inside this call
+    |
+note: inside `binary_len`
+   --> src/convert.rs:12:5
+    |
+ 12 |     1 - /* ~ changed by cargo-mutants ~ */ payload_len + 2
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the failure occurred here
+
+note: erroneous constant encountered
+   --> src/strkey.rs:663:54
+    |
+663 |     pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    |                                                      ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:670:49
+    |
+670 |     pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+    |                                                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/ed25519.rs:40:20
+   |
+40 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRIVATE_KEY_ED25519, &self.0)
+   |                    ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/ed25519.rs:40:42
+   |
+40 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRIVATE_KEY_ED25519, &self.0)
+   |                                          ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/ed25519.rs:55:41
+   |
+55 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+   |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:136:20
+    |
+136 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PUBLIC_KEY_ED25519, &self.0)
+    |                    ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:136:42
+    |
+136 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PUBLIC_KEY_ED25519, &self.0)
+    |                                          ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:151:41
+    |
+151 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:240:20
+    |
+240 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+    |                    ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:240:42
+    |
+240 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+    |                                          ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:262:41
+    |
+262 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:373:20
+    |
+373 |         encode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_ENCODED_LEN }>(
+    |                    ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:373:46
+    |
+373 |         encode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_ENCODED_LEN }>(
+    |                                              ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:456:41
+    |
+456 |         let (ver, payload) = decode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:74:37
+   |
+74 |         let mut s: HeaplessString<{ Self::MAX_ENCODED_LEN }> = HeaplessString::new();
+   |                                     ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:94:41
+   |
+94 |         let (ver, payload) = decode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_PAYLOAD_LEN }>(s)?;
+   |                                         ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:289:20
+    |
+289 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRE_AUTH_TX, &self.0)
+    |                    ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:289:42
+    |
+289 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::PRE_AUTH_TX, &self.0)
+    |                                          ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:301:41
+    |
+301 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:382:20
+    |
+382 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::HASH_X, &self.0)
+    |                    ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:382:42
+    |
+382 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::HASH_X, &self.0)
+    |                                          ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:394:41
+    |
+394 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:475:20
+    |
+475 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::CONTRACT, &self.0)
+    |                    ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:475:42
+    |
+475 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::CONTRACT, &self.0)
+    |                                          ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:487:41
+    |
+487 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:568:20
+    |
+568 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::LIQUIDITY_POOL, &self.0)
+    |                    ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:568:42
+    |
+568 |         encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(version::LIQUIDITY_POOL, &self.0)
+    |                                          ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:580:41
+    |
+580 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:676:28
+    |
+676 |                 encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+    |                            ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:676:50
+    |
+676 |                 encode::<{ Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+    |                                                  ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:697:41
+    |
+697 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                                         ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/ed25519.rs:35:17
+   |
+35 |         assert!(Self::BINARY_LEN == 35);
+   |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/ed25519.rs:36:17
+   |
+36 |         assert!(Self::ENCODED_LEN == 56);
+   |                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:131:17
+    |
+131 |         assert!(Self::BINARY_LEN == 35);
+    |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:132:17
+    |
+132 |         assert!(Self::ENCODED_LEN == 56);
+    |                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:231:17
+    |
+231 |         assert!(Self::BINARY_LEN == 43);
+    |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:232:17
+    |
+232 |         assert!(Self::ENCODED_LEN == 69);
+    |                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:356:17
+    |
+356 |         assert!(Self::MAX_BINARY_LEN == 103);
+    |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/ed25519.rs:357:17
+    |
+357 |         assert!(Self::MAX_ENCODED_LEN == 165);
+    |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:39:17
+   |
+39 |         assert!(Self::MAX_BINARY_LEN == 103);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:40:17
+   |
+40 |         assert!(Self::MAX_ENCODED_LEN == 165);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:52:17
+   |
+52 |         assert!(Self::MAX_BINARY_LEN >= ed25519::PrivateKey::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:52:41
+   |
+52 |         assert!(Self::MAX_BINARY_LEN >= ed25519::PrivateKey::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:53:17
+   |
+53 |         assert!(Self::MAX_BINARY_LEN >= ed25519::PublicKey::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:53:41
+   |
+53 |         assert!(Self::MAX_BINARY_LEN >= ed25519::PublicKey::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:54:17
+   |
+54 |         assert!(Self::MAX_BINARY_LEN >= ed25519::MuxedAccount::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:54:41
+   |
+54 |         assert!(Self::MAX_BINARY_LEN >= ed25519::MuxedAccount::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:55:17
+   |
+55 |         assert!(Self::MAX_BINARY_LEN >= ed25519::SignedPayload::MAX_BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:55:41
+   |
+55 |         assert!(Self::MAX_BINARY_LEN >= ed25519::SignedPayload::MAX_BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:56:17
+   |
+56 |         assert!(Self::MAX_BINARY_LEN >= PreAuthTx::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:56:41
+   |
+56 |         assert!(Self::MAX_BINARY_LEN >= PreAuthTx::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:57:17
+   |
+57 |         assert!(Self::MAX_BINARY_LEN >= HashX::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:57:41
+   |
+57 |         assert!(Self::MAX_BINARY_LEN >= HashX::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:58:17
+   |
+58 |         assert!(Self::MAX_BINARY_LEN >= Contract::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:58:41
+   |
+58 |         assert!(Self::MAX_BINARY_LEN >= Contract::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:59:17
+   |
+59 |         assert!(Self::MAX_BINARY_LEN >= LiquidityPool::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:59:41
+   |
+59 |         assert!(Self::MAX_BINARY_LEN >= LiquidityPool::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:60:17
+   |
+60 |         assert!(Self::MAX_BINARY_LEN >= ClaimableBalance::BINARY_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:60:41
+   |
+60 |         assert!(Self::MAX_BINARY_LEN >= ClaimableBalance::BINARY_LEN);
+   |                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:62:17
+   |
+62 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::PrivateKey::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:62:42
+   |
+62 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::PrivateKey::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:63:17
+   |
+63 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::PublicKey::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:63:42
+   |
+63 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::PublicKey::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:64:17
+   |
+64 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::MuxedAccount::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:64:42
+   |
+64 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::MuxedAccount::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:65:17
+   |
+65 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::SignedPayload::MAX_ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:65:42
+   |
+65 |         assert!(Self::MAX_ENCODED_LEN >= ed25519::SignedPayload::MAX_ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:66:17
+   |
+66 |         assert!(Self::MAX_ENCODED_LEN >= PreAuthTx::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:66:42
+   |
+66 |         assert!(Self::MAX_ENCODED_LEN >= PreAuthTx::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:67:17
+   |
+67 |         assert!(Self::MAX_ENCODED_LEN >= HashX::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:67:42
+   |
+67 |         assert!(Self::MAX_ENCODED_LEN >= HashX::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:68:17
+   |
+68 |         assert!(Self::MAX_ENCODED_LEN >= Contract::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:68:42
+   |
+68 |         assert!(Self::MAX_ENCODED_LEN >= Contract::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:69:17
+   |
+69 |         assert!(Self::MAX_ENCODED_LEN >= LiquidityPool::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:69:42
+   |
+69 |         assert!(Self::MAX_ENCODED_LEN >= LiquidityPool::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:70:17
+   |
+70 |         assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
+   |                 ^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+  --> src/strkey.rs:70:42
+   |
+70 |         assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
+   |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:284:17
+    |
+284 |         assert!(Self::BINARY_LEN == 35);
+    |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:285:17
+    |
+285 |         assert!(Self::ENCODED_LEN == 56);
+    |                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:377:17
+    |
+377 |         assert!(Self::BINARY_LEN == 35);
+    |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:378:17
+    |
+378 |         assert!(Self::ENCODED_LEN == 56);
+    |                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:470:17
+    |
+470 |         assert!(Self::BINARY_LEN == 35);
+    |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:471:17
+    |
+471 |         assert!(Self::ENCODED_LEN == 56);
+    |                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:563:17
+    |
+563 |         assert!(Self::BINARY_LEN == 35);
+    |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:564:17
+    |
+564 |         assert!(Self::ENCODED_LEN == 56);
+    |                 ^^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:666:17
+    |
+666 |         assert!(Self::BINARY_LEN == 36);
+    |                 ^^^^^^^^^^^^^^^^
+
+note: erroneous constant encountered
+   --> src/strkey.rs:667:17
+    |
+667 |         assert!(Self::ENCODED_LEN == 58);
+    |                 ^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0080`.
+error: could not compile `stellar-strkey` (lib) due to 10 previous errors
+
+Caused by:
+  process didn't exit successfully: `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta` (exit status: 1)
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `stellar-strkey` (lib test) due to 10 previous errors
+
+Caused by:
+  process didn't exit successfully: `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1fdb956222ce4886 -C extra-filename=-b28c69b8deb9cca3 --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib` (exit status: 1)
+
+*** result: Failure(101)

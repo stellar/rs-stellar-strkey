@@ -1,0 +1,61 @@
+--- src/convert.rs
++++ replace decode -> Result<(u8, Vec<u8, P>), DecodeError> with Ok((0, vec![]))
+@@ -95,57 +95,17 @@
+ ///
+ /// # Panics
+ ///
+ /// Panics if the binary data exceeds `B` bytes.
+ ///
+ /// Note: The decoded payload cannot exceed `P` bytes due to the compile-time
+ /// assertion `P >= B - 3`, which guarantees sufficient capacity.
+ pub fn decode<const B: usize, const P: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P>), DecodeError> {
+-    const {
+-        assert!(
+-            B >= 3,
+-            "B must be at least 3 (1 version + 0 payload + 2 checksum)"
+-        );
+-        assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+-    }
+-
+-    // Prepare buffer for decoding base32.
+-    let mut data: Vec<u8, B> = Vec::new();
+-    let data_len = data_encoding::BASE32_NOPAD
+-        .decode_len(s.len())
+-        .map_err(|_| DecodeError::Invalid)?;
+-    if data_len < 3 {
+-        return Err(DecodeError::Invalid);
+-    }
+-    data.resize_default(data_len)
+-        .map_err(|_| DecodeError::Invalid)?;
+-
+-    // Decode base32.
+-    data_encoding::BASE32_NOPAD
+-        .decode_mut(s, &mut data)
+-        .map_err(|_| DecodeError::Invalid)?;
+-
+-    // Unpack version.
+-    let ver = data[0];
+-
+-    // Unpack and check checksum.
+-    let data_len = data.len();
+-    let (data_without_crc, crc_actual) = data.split_at(data_len - 2);
+-    let crc_expect = checksum(data_without_crc);
+-    if crc_actual != crc_expect {
+-        return Err(DecodeError::Invalid);
+-    }
+-
+-    // Unpack payload.
+-    // Safety: unwrap cannot fail because const assertion `P >= B - 3` ensures
+-    // P can hold any valid payload (payload_data.len() <= B - 3 <= P).
+-    let payload_data = &data_without_crc[1..];
+-    let payload: Vec<u8, P> = Vec::from_slice(payload_data).unwrap();
+-    Ok((ver, payload))
++    Ok((0, vec![])) /* ~ changed by cargo-mutants ~ */
+ }
+ 
+ #[cfg(test)]
+ mod tests {
+     use super::{binary_len, decode, encode, encode_len};
+ 
+     /// Verifies that `encode_len` matches `data_encoding::BASE32_NOPAD.encode_len`
+     /// for all valid strkey payload lengths (32..=100).

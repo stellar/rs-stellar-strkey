@@ -1,0 +1,146 @@
+
+*** src/convert.rs:12:21: replace + with * in binary_len
+
+*** mutation diff:
+--- src/convert.rs
++++ replace + with * in binary_len
+@@ -4,17 +4,17 @@
+ use heapless::{String, Vec};
+ 
+ use crate::{crc::checksum, error::DecodeError};
+ 
+ /// Calculates the binary length for a given payload length.
+ ///
+ /// The formula is `1 (version) + payload_len + 2 (checksum)`.
+ pub const fn binary_len(payload_len: usize) -> usize {
+-    1 + payload_len + 2
++    1 + payload_len * /* ~ changed by cargo-mutants ~ */ 2
+ }
+ 
+ /// Calculates the base32 (no padding) encoded length for a given binary length.
+ ///
+ /// The formula is `ceil(binary_len * 8 / 5)`.
+ pub const fn encode_len(binary_len: usize) -> usize {
+     (binary_len * 8 + 4) / 5
+ }
+
+
+*** /Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/cargo test --no-run --verbose --package=stellar-strkey@0.0.15
+       Fresh libc v0.2.178
+       Fresh unicode-ident v1.0.22
+       Fresh cfg-if v1.0.4
+       Fresh ryu v1.0.20
+       Fresh memchr v2.7.6
+       Fresh itoa v1.0.15
+       Fresh linux-raw-sys v0.11.0
+       Fresh bitflags v2.10.0
+       Fresh getrandom v0.3.4
+       Fresh serde_core v1.0.228
+       Fresh proc-macro2 v1.0.103
+       Fresh autocfg v1.5.0
+       Fresh zerocopy v0.8.31
+       Fresh byteorder v1.5.0
+       Fresh fastrand v2.3.0
+       Fresh once_cell v1.21.3
+       Fresh wait-timeout v0.2.1
+       Fresh quote v1.0.42
+       Fresh serde v1.0.228
+       Fresh serde_json v1.0.145
+       Fresh rand_core v0.9.3
+       Fresh rustix v1.1.2
+       Fresh ppv-lite86 v0.2.21
+       Fresh hash32 v0.3.1
+       Fresh quick-error v1.2.3
+       Fresh stable_deref_trait v1.2.1
+       Fresh syn v2.0.111
+       Fresh tempfile v3.23.0
+       Fresh bit-vec v0.8.0
+       Fresh fnv v1.0.7
+       Fresh rand_chacha v0.9.0
+       Fresh heapless v0.8.0
+       Fresh rand_xorshift v0.4.0
+       Fresh rand v0.9.2
+       Fresh unarray v0.1.4
+       Fresh regex-syntax v0.8.8
+       Fresh serde_derive v1.0.228
+       Fresh rusty-fork v0.3.1
+       Fresh bit-set v0.8.0
+       Fresh num-traits v0.2.19
+       Fresh data-encoding v2.9.0
+       Fresh lazy_static v1.5.0
+       Fresh serde_test v1.0.177
+       Fresh crate-git-revision v0.0.6
+       Fresh proptest v1.8.0
+       Dirty stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp): the file `/index` is missing
+   Compiling stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp)
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/build/stellar-strkey-7eeb440ac350857c/build-script-build`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1fdb956222ce4886 -C extra-filename=-b28c69b8deb9cca3 --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta`
+error[E0080]: evaluation panicked: P must be at least B - 3 to hold the payload
+   --> src/convert.rs:108:9
+    |
+108 |         assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `convert::decode::<65, 32>::{constant#0}` failed here
+
+note: erroneous constant encountered
+   --> src/convert.rs:103:5
+    |
+103 | /     const {
+104 | |         assert!(
+105 | |             B >= 3,
+106 | |             "B must be at least 3 (1 version + 0 payload + 2 checksum)"
+107 | |         );
+108 | |         assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+109 | |     }
+    | |_____^
+
+note: the above error was encountered while instantiating `fn convert::decode::<65, 32>`
+  --> src/ed25519.rs:55:30
+   |
+55 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0080]: evaluation panicked: P must be at least B - 3 to hold the payload
+   --> src/convert.rs:108:9
+    |
+108 |         assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `convert::decode::<81, 40>::{constant#0}` failed here
+
+note: the above error was encountered while instantiating `fn convert::decode::<81, 40>`
+   --> src/ed25519.rs:262:30
+    |
+262 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0080]: evaluation panicked: P must be at least B - 3 to hold the payload
+   --> src/convert.rs:108:9
+    |
+108 |         assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `convert::decode::<201, 100>::{constant#0}` failed here
+
+note: the above error was encountered while instantiating `fn convert::decode::<201, 100>`
+   --> src/ed25519.rs:456:30
+    |
+456 |         let (ver, payload) = decode::<{ Self::MAX_BINARY_LEN }, { Self::MAX_PAYLOAD_LEN }>(s)?;
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0080]: evaluation panicked: P must be at least B - 3 to hold the payload
+   --> src/convert.rs:108:9
+    |
+108 |         assert!(P >= B - 3, "P must be at least B - 3 to hold the payload");
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ evaluation of `convert::decode::<67, 33>::{constant#0}` failed here
+
+note: the above error was encountered while instantiating `fn convert::decode::<67, 33>`
+   --> src/strkey.rs:697:30
+    |
+697 |         let (ver, payload) = decode::<{ Self::BINARY_LEN }, { Self::PAYLOAD_LEN }>(s)?;
+    |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0080`.
+error: could not compile `stellar-strkey` (lib) due to 4 previous errors
+
+Caused by:
+  process didn't exit successfully: `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta` (exit status: 1)
+warning: build failed, waiting for other jobs to finish...
+
+*** result: Failure(101)

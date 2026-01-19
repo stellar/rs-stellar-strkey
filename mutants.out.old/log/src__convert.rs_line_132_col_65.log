@@ -1,0 +1,361 @@
+
+*** src/convert.rs:132:65: replace - with + in decode
+
+*** mutation diff:
+--- src/convert.rs
++++ replace - with + in decode
+@@ -124,17 +124,17 @@
+         .decode_mut(s, &mut data)
+         .map_err(|_| DecodeError::Invalid)?;
+ 
+     // Unpack version.
+     let ver = data[0];
+ 
+     // Unpack and check checksum.
+     let data_len = data.len();
+-    let (data_without_crc, crc_actual) = data.split_at(data_len - 2);
++    let (data_without_crc, crc_actual) = data.split_at(data_len + /* ~ changed by cargo-mutants ~ */ 2);
+     let crc_expect = checksum(data_without_crc);
+     if crc_actual != crc_expect {
+         return Err(DecodeError::Invalid);
+     }
+ 
+     // Unpack payload.
+     // Safety: unwrap cannot fail because const assertion `P >= B - 3` ensures
+     // P can hold any valid payload (payload_data.len() <= B - 3 <= P).
+
+
+*** /Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/cargo test --no-run --verbose --package=stellar-strkey@0.0.15
+       Fresh libc v0.2.178
+       Fresh unicode-ident v1.0.22
+       Fresh cfg-if v1.0.4
+       Fresh itoa v1.0.15
+       Fresh ryu v1.0.20
+       Fresh memchr v2.7.6
+       Fresh autocfg v1.5.0
+       Fresh proc-macro2 v1.0.103
+       Fresh getrandom v0.3.4
+       Fresh serde_core v1.0.228
+       Fresh linux-raw-sys v0.11.0
+       Fresh bitflags v2.10.0
+       Fresh zerocopy v0.8.31
+       Fresh fastrand v2.3.0
+       Fresh byteorder v1.5.0
+       Fresh once_cell v1.21.3
+       Fresh quote v1.0.42
+       Fresh serde v1.0.228
+       Fresh rand_core v0.9.3
+       Fresh serde_json v1.0.145
+       Fresh rustix v1.1.2
+       Fresh hash32 v0.3.1
+       Fresh ppv-lite86 v0.2.21
+       Fresh wait-timeout v0.2.1
+       Fresh stable_deref_trait v1.2.1
+       Fresh syn v2.0.111
+       Fresh tempfile v3.23.0
+       Fresh fnv v1.0.7
+       Fresh quick-error v1.2.3
+       Fresh bit-vec v0.8.0
+       Fresh heapless v0.8.0
+       Fresh rand v0.9.2
+       Fresh rand_chacha v0.9.0
+       Fresh rand_xorshift v0.4.0
+       Fresh num-traits v0.2.19
+       Fresh unarray v0.1.4
+       Fresh serde_derive v1.0.228
+       Fresh rusty-fork v0.3.1
+       Fresh bit-set v0.8.0
+       Fresh regex-syntax v0.8.8
+       Fresh lazy_static v1.5.0
+       Fresh data-encoding v2.9.0
+       Fresh serde_test v1.0.177
+       Fresh crate-git-revision v0.0.6
+       Fresh proptest v1.8.0
+       Dirty stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp): the file `/index` is missing
+   Compiling stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp)
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/build/stellar-strkey-7eeb440ac350857c/build-script-build`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1fdb956222ce4886 -C extra-filename=-b28c69b8deb9cca3 --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name tests --edition=2021 tests/tests.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=985f3b009d7c3399 -C extra-filename=-630df354cea464da --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name cli_json --edition=2021 tests/cli_json.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=9cc2c5261dadff46 -C extra-filename=-0fd2ad2d2050ac1a --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name debug --edition=2021 tests/debug.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1d7d730a14bcddf9 -C extra-filename=-d8a68d117ac862bc --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name display --edition=2021 tests/display.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=4c49b9d172785660 -C extra-filename=-739c4bc9d6c7a85b --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.59s
+  Executable `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/stellar_strkey-b28c69b8deb9cca3`
+  Executable `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/cli_json-0fd2ad2d2050ac1a`
+  Executable `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/debug-d8a68d117ac862bc`
+  Executable `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/display-739c4bc9d6c7a85b`
+  Executable `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/tests-630df354cea464da`
+
+*** result: Success
+
+*** /Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/cargo test --verbose --package=stellar-strkey@0.0.15
+       Fresh libc v0.2.178
+       Fresh unicode-ident v1.0.22
+       Fresh cfg-if v1.0.4
+       Fresh ryu v1.0.20
+       Fresh memchr v2.7.6
+       Fresh itoa v1.0.15
+       Fresh linux-raw-sys v0.11.0
+       Fresh getrandom v0.3.4
+       Fresh proc-macro2 v1.0.103
+       Fresh serde_core v1.0.228
+       Fresh bitflags v2.10.0
+       Fresh autocfg v1.5.0
+       Fresh zerocopy v0.8.31
+       Fresh fastrand v2.3.0
+       Fresh byteorder v1.5.0
+       Fresh once_cell v1.21.3
+       Fresh wait-timeout v0.2.1
+       Fresh quote v1.0.42
+       Fresh serde v1.0.228
+       Fresh rand_core v0.9.3
+       Fresh serde_json v1.0.145
+       Fresh rustix v1.1.2
+       Fresh hash32 v0.3.1
+       Fresh ppv-lite86 v0.2.21
+       Fresh fnv v1.0.7
+       Fresh quick-error v1.2.3
+       Fresh syn v2.0.111
+       Fresh tempfile v3.23.0
+       Fresh stable_deref_trait v1.2.1
+       Fresh bit-vec v0.8.0
+       Fresh rand_chacha v0.9.0
+       Fresh rand v0.9.2
+       Fresh rand_xorshift v0.4.0
+       Fresh regex-syntax v0.8.8
+       Fresh unarray v0.1.4
+       Fresh data-encoding v2.9.0
+       Fresh serde_derive v1.0.228
+       Fresh bit-set v0.8.0
+       Fresh num-traits v0.2.19
+       Fresh rusty-fork v0.3.1
+       Fresh heapless v0.8.0
+       Fresh lazy_static v1.5.0
+       Fresh serde_test v1.0.177
+       Fresh crate-git-revision v0.0.6
+       Fresh proptest v1.8.0
+       Dirty stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp): the file `/index` is missing
+   Compiling stellar-strkey v0.0.15 (/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp)
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/build/stellar-strkey-7eeb440ac350857c/build-script-build`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1fdb956222ce4886 -C extra-filename=-b28c69b8deb9cca3 --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name stellar_strkey --edition=2021 src/lib.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --crate-type lib --emit=dep-info,metadata,link -C embed-bitcode=no -C debuginfo=2 --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=5118e42c0f57517e -C extra-filename=-61edfdb3288b3b5e --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rmeta --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rmeta`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name cli_json --edition=2021 tests/cli_json.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=9cc2c5261dadff46 -C extra-filename=-0fd2ad2d2050ac1a --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name display --edition=2021 tests/display.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=4c49b9d172785660 -C extra-filename=-739c4bc9d6c7a85b --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name tests --edition=2021 tests/tests.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=985f3b009d7c3399 -C extra-filename=-630df354cea464da --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+     Running `/Users/leighmcculloch/.rustup/toolchains/stable-aarch64-unknown-linux-gnu/bin/rustc --crate-name debug --edition=2021 tests/debug.rs --error-format=json --json=diagnostic-rendered-ansi,artifacts,future-incompat --emit=dep-info,link -C embed-bitcode=no -C debuginfo=2 --test --cfg 'feature="default"' --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values("cli", "default", "serde", "serde-decoded"))' -C metadata=1d7d730a14bcddf9 -C extra-filename=-d8a68d117ac862bc --out-dir /tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps -C incremental=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/incremental -L dependency=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps --extern data_encoding=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libdata_encoding-2105313bbaf8090b.rlib --extern heapless=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libheapless-ace7dc37e88ebbbe.rlib --extern proptest=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libproptest-029c739a67ce9a84.rlib --extern serde_test=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libserde_test-1ab2fbb900abbf64.rlib --extern stellar_strkey=/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/libstellar_strkey-61edfdb3288b3b5e.rlib`
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.55s
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/stellar_strkey-b28c69b8deb9cca3`
+
+running 3 tests
+test convert::tests::test_encode_len_matches_data_encoding ... ok
+test crc::tests::test_checksum ... ok
+test crc::tests::test_doesnt_panic ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/cli_json-0fd2ad2d2050ac1a`
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/debug-d8a68d117ac862bc`
+
+running 18 tests
+test test_claimable_balance_debug ... ok
+test test_contract_debug ... ok
+test test_ed25519_signed_payload_debug ... ok
+test test_ed25519_private_key_debug ... ok
+test test_liquidity_pool_debug ... ok
+test test_ed25519_public_key_debug ... ok
+test test_hash_x_debug ... ok
+test test_ed25519_muxed_account_debug ... ok
+test test_pre_auth_tx_debug ... ok
+test test_strkey_claimable_balance_debug ... ok
+test test_strkey_contract_debug ... ok
+test test_strkey_ed25519_muxed_account_debug ... ok
+test test_strkey_ed25519_private_key_debug ... ok
+test test_strkey_ed25519_public_key_debug ... ok
+test test_strkey_ed25519_signed_payload_debug ... ok
+test test_strkey_hash_x_debug ... ok
+test test_strkey_liquidity_pool_debug ... ok
+test test_strkey_pre_auth_tx_debug ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/display-739c4bc9d6c7a85b`
+
+running 18 tests
+test test_ed25519_muxed_account_display ... ok
+test test_contract_display ... ok
+test test_ed25519_public_key_display ... ok
+test test_ed25519_signed_payload_display ... ok
+test test_ed25519_private_key_display ... ok
+test test_claimable_balance_display ... ok
+test test_liquidity_pool_display ... ok
+test test_pre_auth_tx_display ... ok
+test test_strkey_claimable_balance_display ... ok
+test test_hash_x_display ... ok
+test test_strkey_ed25519_muxed_account_display ... ok
+test test_strkey_ed25519_private_key_display ... ok
+test test_strkey_ed25519_public_key_display ... ok
+test test_strkey_contract_display ... ok
+test test_strkey_ed25519_signed_payload_display ... ok
+test test_strkey_hash_x_display ... ok
+test test_strkey_liquidity_pool_display ... ok
+test test_strkey_pre_auth_tx_display ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running `/tmp/cargo-mutants-rs-stellar-strkey-noalloc-InVdqJ.tmp/target/debug/deps/tests-630df354cea464da`
+
+running 22 tests
+test test_invalid_liquidity_pool ... FAILED
+test test_invalid_pre_auth_tx ... FAILED
+test test_invalid_hash_x ... FAILED
+test test_invalid_contract ... FAILED
+test test_invalid_muxed_ed25519 ... FAILED
+test test_invalid_signed_payload_ed25519 ... FAILED
+test test_invalid_claimable_balances ... FAILED
+test test_invalid_private_keys ... FAILED
+test test_invalid_public_keys ... FAILED
+test test_signed_payload_from_string_doesnt_panic_with_unbounded_size ... ok
+test test_valid_claimable_balance ... FAILED
+test test_valid_contract ... FAILED
+test test_signed_payload_ed25519_payload_sizes ... FAILED
+test test_valid_hash_x ... FAILED
+test test_valid_liquidity_pool ... FAILED
+test test_valid_muxed_ed25519 ... FAILED
+test test_valid_pre_auth_tx ... FAILED
+test test_valid_private_keys ... FAILED
+test test_valid_public_keys ... FAILED
+test test_valid_signed_payload_ed25519 ... FAILED
+test test_public_key_ed25519_to_string_doesnt_panic ... ok
+test test_public_key_ed25519_from_string_doesnt_panic ... ok
+
+failures:
+
+---- test_invalid_liquidity_pool stdout ----
+
+thread 'test_invalid_liquidity_pool' (388747) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_invalid_pre_auth_tx stdout ----
+
+thread 'test_invalid_pre_auth_tx' (388749) panicked at src/convert.rs:132:47:
+mid > len
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- test_invalid_hash_x stdout ----
+
+thread 'test_invalid_hash_x' (388746) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_invalid_contract stdout ----
+
+thread 'test_invalid_contract' (388745) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_invalid_muxed_ed25519 stdout ----
+
+thread 'test_invalid_muxed_ed25519' (388748) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_invalid_signed_payload_ed25519 stdout ----
+
+thread 'test_invalid_signed_payload_ed25519' (388752) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_invalid_claimable_balances stdout ----
+
+thread 'test_invalid_claimable_balances' (388744) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_invalid_private_keys stdout ----
+
+thread 'test_invalid_private_keys' (388750) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_invalid_public_keys stdout ----
+
+thread 'test_invalid_public_keys' (388751) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_claimable_balance stdout ----
+
+thread 'test_valid_claimable_balance' (388757) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_contract stdout ----
+
+thread 'test_valid_contract' (388758) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_signed_payload_ed25519_payload_sizes stdout ----
+
+thread 'test_signed_payload_ed25519_payload_sizes' (388755) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_hash_x stdout ----
+
+thread 'test_valid_hash_x' (388759) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_liquidity_pool stdout ----
+
+thread 'test_valid_liquidity_pool' (388760) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_muxed_ed25519 stdout ----
+
+thread 'test_valid_muxed_ed25519' (388761) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_pre_auth_tx stdout ----
+
+thread 'test_valid_pre_auth_tx' (388762) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_private_keys stdout ----
+
+thread 'test_valid_private_keys' (388763) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_public_keys stdout ----
+
+thread 'test_valid_public_keys' (388764) panicked at src/convert.rs:132:47:
+mid > len
+
+---- test_valid_signed_payload_ed25519 stdout ----
+
+thread 'test_valid_signed_payload_ed25519' (388765) panicked at src/convert.rs:132:47:
+mid > len
+
+
+failures:
+    test_invalid_claimable_balances
+    test_invalid_contract
+    test_invalid_hash_x
+    test_invalid_liquidity_pool
+    test_invalid_muxed_ed25519
+    test_invalid_pre_auth_tx
+    test_invalid_private_keys
+    test_invalid_public_keys
+    test_invalid_signed_payload_ed25519
+    test_signed_payload_ed25519_payload_sizes
+    test_valid_claimable_balance
+    test_valid_contract
+    test_valid_hash_x
+    test_valid_liquidity_pool
+    test_valid_muxed_ed25519
+    test_valid_pre_auth_tx
+    test_valid_private_keys
+    test_valid_public_keys
+    test_valid_signed_payload_ed25519
+
+test result: FAILED. 3 passed; 19 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+error: test failed, to rerun pass `-p stellar-strkey --test tests`
+
+*** result: Failure(101)

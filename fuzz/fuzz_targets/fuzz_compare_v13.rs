@@ -87,20 +87,16 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         (StrkeyNew::LiquidityPool(n), StrkeyOld::LiquidityPool(o)) => {
             assert_eq!(n.0, o.0, "LiquidityPool data mismatch");
         }
-        (StrkeyNew::ClaimableBalance(n), StrkeyOld::ClaimableBalance(o)) => {
-            match (n, o) {
-                (
-                    stellar_strkey::ClaimableBalance::V0(n_bytes),
-                    stellar_strkey_v13::ClaimableBalance::V0(o_bytes),
-                ) => {
-                    assert_eq!(n_bytes, o_bytes, "ClaimableBalance V0 data mismatch");
-                }
+        (StrkeyNew::ClaimableBalance(n), StrkeyOld::ClaimableBalance(o)) => match (n, o) {
+            (
+                stellar_strkey::ClaimableBalance::V0(n_bytes),
+                stellar_strkey_v13::ClaimableBalance::V0(o_bytes),
+            ) => {
+                assert_eq!(n_bytes, o_bytes, "ClaimableBalance V0 data mismatch");
             }
-        }
+        },
         _ => {
-            panic!(
-                "Strkey variant mismatch\nNew: {new:?}\nOld: {old:?}"
-            );
+            panic!("Strkey variant mismatch\nNew: {new:?}\nOld: {old:?}");
         }
     }
 }

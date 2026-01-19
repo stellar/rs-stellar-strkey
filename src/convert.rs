@@ -185,10 +185,13 @@ mod tests {
         // Too short base32 (decodes to < 3 bytes) should fail
         assert_eq!(decode::<3, 0>(b"AA"), Err(DecodeError::Invalid)); // 1 byte
         assert_eq!(decode::<3, 0>(b"AAAA"), Err(DecodeError::Invalid)); // 2 bytes
-        // Valid 3-byte input (version + empty payload + checksum) should succeed
-        // "AAAAA" is encode::<3, 5>(0x00, &[]) - version 0x00, empty payload, checksum 0x0000
+                                                                        // Valid 3-byte input (version + empty payload + checksum) should succeed
+                                                                        // "AAAAA" is encode::<3, 5>(0x00, &[]) - version 0x00, empty payload, checksum 0x0000
         let result = decode::<3, 0>(b"AAAAA");
-        assert!(result.is_ok(), "decode should accept 3 binary bytes (empty payload)");
+        assert!(
+            result.is_ok(),
+            "decode should accept 3 binary bytes (empty payload)"
+        );
         let (ver, payload) = result.unwrap();
         assert_eq!(ver, 0x00);
         assert!(payload.is_empty());

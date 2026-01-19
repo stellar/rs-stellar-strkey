@@ -12,7 +12,7 @@ test:
 fuzz:
 	cargo +nightly fuzz run fuzz_roundtrip -j 4
 
-fuzz-compare:
+fuzz-compare-v13:
 	cargo +nightly fuzz run fuzz_compare_v13 -j 4
 
 # Generate a lcov.info file for tools like VSCode's Coverage Gutters extension,

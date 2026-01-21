@@ -185,7 +185,7 @@ dependencies = [
 
 [[package]]
 name = "stellar-strkey"
-version = "0.0.15"
+version = "0.0.16"
 dependencies = [
  "crate-git-revision",
  "data-encoding",
@@ -198,7 +198,7 @@ version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
  "stellar-strkey 0.0.13",
- "stellar-strkey 0.0.15",
+ "stellar-strkey 0.0.16",
 ]
 
 [[package]]

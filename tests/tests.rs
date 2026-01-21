@@ -27,8 +27,13 @@ fn test_valid_public_keys() {
 
 #[test]
 fn test_invalid_public_keys() {
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV75ERQ".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
     // Invalid length (Ed25519 should be 32 bytes, not 5).
-    let mut r: Result<Strkey, _> = "GAAAAAAAACGC6".parse();
+    r = "GAAAAAAAACGC6".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (congruent to 1 mod 8).
@@ -62,6 +67,13 @@ fn test_valid_private_keys() {
 }
 
 #[test]
+fn test_invalid_private_keys() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV764SE".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+}
+
+#[test]
 fn test_valid_pre_auth_tx() {
     assert_convert_roundtrip(
         "TBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHXL7",
@@ -74,6 +86,13 @@ fn test_valid_pre_auth_tx() {
 }
 
 #[test]
+fn test_invalid_pre_auth_tx() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "TA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV73QGA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+}
+
+#[test]
 fn test_valid_hash_x() {
     assert_convert_roundtrip(
         "XBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG",
@@ -83,6 +102,13 @@ fn test_valid_hash_x() {
             0x18, 0x55, 0xf3, 0x63,
         ])),
     );
+}
+
+#[test]
+fn test_invalid_hash_x() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "XA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV74CSY".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 }
 
 #[test]
@@ -129,7 +155,10 @@ fn test_valid_muxed_ed25519() {
 
 #[test]
 fn test_invalid_muxed_ed25519() {
-    let mut r: Result<Strkey, _>;
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUERUKZ4JVTO6777RIDA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
 
     // The unused trailing bit must be zero in the encoding of the last three
     // bytes (24 bits) as five base-32 symbols (25 bits)
@@ -169,9 +198,9 @@ fn test_valid_signed_payload_ed25519() {
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IBZGM",
         &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519: [0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f, 0xe8, 0x9a, ],
-            payload: vec![
+            payload: [
                 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20,
-            ],
+            ].as_slice().try_into().unwrap(),
         }),
     );
 
@@ -179,9 +208,9 @@ fn test_valid_signed_payload_ed25519() {
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUAAAAFGBU",
         &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519: [0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f, 0xe8, 0x9a, ],
-            payload: vec![
+            payload: [
                 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
-            ],
+            ].as_slice().try_into().unwrap(),
         }),
     );
 
@@ -221,7 +250,7 @@ fn test_valid_signed_payload_ed25519() {
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAKB5",
         &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519,
-            payload: [0; 16].into(),
+            payload: [0; 16].as_slice().try_into().unwrap(),
         }),
     );
     // - 1 unused bits:
@@ -229,7 +258,7 @@ fn test_valid_signed_payload_ed25519() {
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAACAAAAAABNWS",
         &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519,
-            payload: [0; 4].into(),
+            payload: [0; 4].as_slice().try_into().unwrap(),
         }),
     );
     // - 2 unused bits:
@@ -237,7 +266,7 @@ fn test_valid_signed_payload_ed25519() {
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAGAAAAAAAAAAAAAAAAAAACTPY",
         &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519,
-            payload: [0; 12].into(),
+            payload: [0; 12].as_slice().try_into().unwrap(),
         }),
     );
     // - 3 unused bits:
@@ -245,7 +274,7 @@ fn test_valid_signed_payload_ed25519() {
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXI",
         &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519,
-            payload: [0; 20].into(),
+            payload: [0; 20].as_slice().try_into().unwrap(),
         }),
     );
     // - 4 unused bits:
@@ -253,15 +282,19 @@ fn test_valid_signed_payload_ed25519() {
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYQ",
         &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519,
-            payload: [0; 8].into(),
+            payload: [0; 8].as_slice().try_into().unwrap(),
         }),
     );
 }
 
 #[test]
 fn test_invalid_signed_payload_ed25519() {
-    // Length prefix specifies length that is shorter than payload in signed payload
+    // Too long strkey input.
     let mut r: Result<Strkey, DecodeError>;
+    r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7ZIHA".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
+    // Length prefix specifies length that is shorter than payload in signed payload
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IAAAAAAAAPM".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
@@ -372,10 +405,10 @@ fn test_invalid_signed_payload_ed25519() {
 #[test]
 fn test_signed_payload_ed25519_payload_sizes() {
     for payload_size in 1..=64 {
-        let mut payload = vec![0; payload_size];
-        (0..payload_size).for_each(|i| {
-            payload[i] = i as u8;
-        });
+        let mut payload_arr = [0u8; 64];
+        for i in 0..payload_size {
+            payload_arr[i] = i as u8;
+        }
 
         let signed_payload = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
             ed25519: [
@@ -383,7 +416,7 @@ fn test_signed_payload_ed25519_payload_sizes() {
                 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3,
                 0xfc, 0x7f, 0xe8, 0x9a,
             ],
-            payload,
+            payload: payload_arr[..payload_size].try_into().unwrap(),
         });
 
         // Verify round trips.
@@ -400,21 +433,6 @@ fn test_signed_payload_ed25519_payload_sizes() {
         let expected_encoded_len = (binary_len * 8 + 4) / 5;
         assert_eq!(encoded.len(), expected_encoded_len);
     }
-}
-
-#[test]
-#[should_panic(expected = "payload length larger than 64")]
-fn test_signed_payload_ed25519_payload_length_larger_than_64_panic() {
-    let payload = vec![0; 65];
-    let signed_payload = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
-        ed25519: [
-            0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5,
-            0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f,
-            0xe8, 0x9a,
-        ],
-        payload,
-    });
-    signed_payload.to_string();
 }
 
 #[test]
@@ -439,13 +457,20 @@ fn test_valid_contract() {
 }
 
 #[test]
+fn test_invalid_contract() {
+    // Too long strkey input.
+    let r: Result<Strkey, _> = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV72WFI".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+}
+
+#[test]
 fn test_signed_payload_from_string_doesnt_panic_with_unbounded_size() {
-    let payload: Vec<u8> = vec![
+    let payload: &[u8] = &[
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     ];
-    let r = stellar_strkey::ed25519::SignedPayload::from_payload(&payload);
+    let r = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert_eq!(r, Err(DecodeError::Invalid));
 }
 
@@ -574,8 +599,13 @@ fn test_valid_liquidity_pool() {
 
 #[test]
 fn test_invalid_liquidity_pool() {
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV7Z72Y".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
     // Invalid length (Liquidity pool should be 32 bytes, not 5).
-    let mut r: Result<Strkey, _> = "LAAAAAAAADLH2".parse();
+    r = "LAAAAAAAADLH2".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length (congruent to 1 mod 8).
@@ -646,8 +676,13 @@ fn test_valid_claimable_balance() {
 
 #[test]
 fn test_invalid_claimable_balances() {
+    // Too long strkey input.
+    let mut r: Result<Strkey, _> =
+        "LAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGX7FIWQ".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+
     // Invalid length (Claimable balance should be 1+32 bytes, not 6).
-    let mut r: Result<Strkey, _> = "BAAAAAAAAAAK3EY".parse();
+    r = "BAAAAAAAAAAK3EY".parse();
     assert_eq!(r, Err(DecodeError::Invalid));
 
     // Invalid length inputs below cannot be decoded into valid claimable

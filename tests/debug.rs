@@ -104,7 +104,7 @@ fn test_strkey_ed25519_signed_payload_debug() {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1, 2, 3, 4].into(),
+                payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
             })
         ),
         "SignedPayloadEd25519(SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304))",
@@ -232,7 +232,7 @@ fn test_ed25519_signed_payload_debug() {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1, 2, 3, 4].into(),
+                payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
             }
         ),
         "SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304)",

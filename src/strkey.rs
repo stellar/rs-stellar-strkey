@@ -1,11 +1,12 @@
-use alloc::{format, string::String};
 use core::{
     fmt::{Debug, Display},
     str::FromStr,
 };
 
+use heapless::String as HeaplessString;
+
 use crate::{
-    convert::{decode, encode},
+    convert::{binary_len, decode, encode, encode_len},
     ed25519,
     error::DecodeError,
     version,
@@ -29,22 +30,68 @@ pub enum Strkey {
 }
 
 impl Strkey {
-    pub fn to_string(&self) -> String {
+    // SignedPayload is the longest strkey type.
+    const MAX_PAYLOAD_LEN: usize = ed25519::SignedPayload::MAX_PAYLOAD_LEN;
+    const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
+    const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::MAX_PAYLOAD_LEN == 100);
+        assert!(Self::MAX_BINARY_LEN == 103);
+        assert!(Self::MAX_ENCODED_LEN == 165);
+        // Verify MAX_PAYLOAD_LEN >= all type payload lengths.
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::PrivateKey::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::PublicKey::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::MuxedAccount::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::SignedPayload::MAX_PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= PreAuthTx::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= HashX::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= Contract::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= LiquidityPool::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ClaimableBalance::PAYLOAD_LEN);
+        // Verify MAX_BINARY_LEN >= all type binary lengths.
+        assert!(Self::MAX_BINARY_LEN >= ed25519::PrivateKey::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ed25519::PublicKey::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ed25519::MuxedAccount::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ed25519::SignedPayload::MAX_BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= PreAuthTx::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= HashX::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= Contract::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= LiquidityPool::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ClaimableBalance::BINARY_LEN);
+        // Verify MAX_ENCODED_LEN >= all type encoded lengths.
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::PrivateKey::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::PublicKey::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::MuxedAccount::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::SignedPayload::MAX_ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= PreAuthTx::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= HashX::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= Contract::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= LiquidityPool::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
+    };
+
+    pub fn to_string(&self) -> HeaplessString<{ Self::MAX_ENCODED_LEN }> {
+        let mut s: HeaplessString<{ Self::MAX_ENCODED_LEN }> = HeaplessString::new();
         match self {
-            Self::PublicKeyEd25519(x) => x.to_string(),
-            Self::PrivateKeyEd25519(x) => x.to_string(),
-            Self::PreAuthTx(x) => x.to_string(),
-            Self::HashX(x) => x.to_string(),
-            Self::MuxedAccountEd25519(x) => x.to_string(),
-            Self::SignedPayloadEd25519(x) => x.to_string(),
-            Self::Contract(x) => x.to_string(),
-            Self::LiquidityPool(x) => x.to_string(),
-            Self::ClaimableBalance(x) => x.to_string(),
+            Self::PublicKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::PrivateKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::PreAuthTx(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::HashX(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::MuxedAccountEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::SignedPayloadEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::Contract(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::LiquidityPool(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::ClaimableBalance(x) => s.push_str(x.to_string().as_str()).unwrap(),
         }
+        s
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::MAX_PAYLOAD_LEN }, { Self::MAX_BINARY_LEN }>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
@@ -222,23 +269,27 @@ pub struct PreAuthTx(pub [u8; 32]);
 impl Debug for PreAuthTx {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "PreAuthTx(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl PreAuthTx {
-    pub fn to_string(&self) -> String {
-        encode(version::PRE_AUTH_TX, &self.0)
+    pub(crate) const PAYLOAD_LEN: usize = 32;
+    pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::BINARY_LEN == 35);
+        assert!(Self::ENCODED_LEN == 56);
+    };
+
+    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::PRE_AUTH_TX,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -246,7 +297,11 @@ impl PreAuthTx {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -310,23 +365,27 @@ pub struct HashX(pub [u8; 32]);
 impl Debug for HashX {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "HashX(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl HashX {
-    pub fn to_string(&self) -> String {
-        encode(version::HASH_X, &self.0)
+    pub(crate) const PAYLOAD_LEN: usize = 32;
+    pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::BINARY_LEN == 35);
+        assert!(Self::ENCODED_LEN == 56);
+    };
+
+    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::HASH_X,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -334,7 +393,11 @@ impl HashX {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -398,23 +461,27 @@ pub struct Contract(pub [u8; 32]);
 impl Debug for Contract {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "Contract(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl Contract {
-    pub fn to_string(&self) -> String {
-        encode(version::CONTRACT, &self.0)
+    pub(crate) const PAYLOAD_LEN: usize = 32;
+    pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::BINARY_LEN == 35);
+        assert!(Self::ENCODED_LEN == 56);
+    };
+
+    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::CONTRACT,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -422,7 +489,11 @@ impl Contract {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -486,23 +557,27 @@ pub struct LiquidityPool(pub [u8; 32]);
 impl Debug for LiquidityPool {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "LiquidityPool(")?;
-        write!(
-            f,
-            "{}",
-            &self
-                .0
-                .iter()
-                .map(|b| format!("{b:02x}"))
-                .collect::<String>()
-        )?;
-        write!(f, ")")?;
-        Ok(())
+        for b in &self.0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
     }
 }
 
 impl LiquidityPool {
-    pub fn to_string(&self) -> String {
-        encode(version::LIQUIDITY_POOL, &self.0)
+    pub(crate) const PAYLOAD_LEN: usize = 32;
+    pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::BINARY_LEN == 35);
+        assert!(Self::ENCODED_LEN == 56);
+    };
+
+    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::LIQUIDITY_POOL,
+            &self.0,
+        )
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -510,7 +585,11 @@ impl LiquidityPool {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::LIQUIDITY_POOL => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -578,26 +657,38 @@ impl Debug for ClaimableBalance {
         write!(f, "ClaimableBalance(")?;
         match self {
             Self::V0(v0) => {
-                write!(
-                    f,
-                    "V0({})",
-                    &v0.iter().map(|b| format!("{b:02x}")).collect::<String>()
-                )?;
+                write!(f, "V0(")?;
+                for b in v0 {
+                    write!(f, "{b:02x}")?;
+                }
+                write!(f, ")")?;
             }
         }
-        write!(f, ")")?;
-        Ok(())
+        write!(f, ")")
     }
 }
 
 impl ClaimableBalance {
-    pub fn to_string(&self) -> String {
+    // Payload: 1 version byte + 32 hash bytes = 33
+    pub(crate) const PAYLOAD_LEN: usize = 1 + 32;
+    pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::PAYLOAD_LEN == 33);
+        assert!(Self::BINARY_LEN == 36);
+        assert!(Self::ENCODED_LEN == 58);
+    };
+
+    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
         match self {
             Self::V0(v0) => {
                 // First byte is zero for v0
-                let mut payload = [0; 33];
+                let mut payload = [0; Self::PAYLOAD_LEN];
                 payload[1..].copy_from_slice(v0);
-                encode(version::CLAIMABLE_BALANCE, &payload)
+                encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+                    version::CLAIMABLE_BALANCE,
+                    &payload,
+                )
             }
         }
     }
@@ -611,7 +702,11 @@ impl ClaimableBalance {
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode(s)?;
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::CLAIMABLE_BALANCE => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),

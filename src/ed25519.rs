@@ -388,8 +388,10 @@ impl SignedPayload {
     ///
     /// If the payload is larger than 64 bytes.
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        // 32-byte for the signer, 4-byte for the payload size, then either 4-byte for the
-        // min or 64-byte for the max payload
+        // Min: 32-byte ed25519 key + 4-byte length prefix + 4 bytes (1-byte inner
+        // payload padded to 4 per XDR). Empty inner payloads are not valid per
+        // stellar-core (SetOptionsOpFrame rejects them with SET_OPTIONS_BAD_SIGNER).
+        // Max: 32-byte ed25519 key + 4-byte length prefix + 64-byte inner payload.
         const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
         const MIN_LENGTH: usize = 32 + 4 + 4;
         const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);

@@ -85,8 +85,8 @@
 //!   useful for tooling that wants to inspect the underlying bytes. Requires
 //!   `alloc` and implies `serde`.
 //! - `cli` — builds the `stellar-strkey` binary for encoding and decoding
-//!   strkeys from the command line. Requires `alloc`. Not intended for
-//!   enabling with the library.
+//!   strkeys from the command line. Requires `std` (disables `no_std` for
+//!   the crate). Not intended for enabling with the library.
 //!
 //! [Stellar strkeys]: https://developers.stellar.org/docs/learn/glossary#strkey
 //! [SEP-23]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0023.md

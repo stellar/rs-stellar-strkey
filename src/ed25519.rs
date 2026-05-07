@@ -23,29 +23,12 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// scratch buffers in [`Zeroizing`] and writes directly into a
 /// caller-provided buffer, avoiding any return-value move.
 ///
-/// The library itself still exposes the seed bytes through these paths,
-/// which do not zero what they emit:
-///
-/// - [`Debug`] — manual impl writes all 32 bytes as hex into the formatter.
-///   [`crate::Strkey`] derives `Debug` and transitively emits the bytes via
-///   the `PrivateKeyEd25519` variant.
-/// - [`Display`] — manual impl writes the base32 strkey form (a recoverable
-///   encoding of the seed) into the formatter.
-/// - [`to_string`](Self::to_string) — returns a plain `String` by design.
-///   Neither it nor the intermediate scratch buffers used to produce it are
-///   zeroed. Use [`write_string`](Self::write_string) when handling secret
-///   material.
-/// - The public field `PrivateKey(pub [u8; 32])` — direct field access via
-///   `key.0` exposes the raw seed.
-/// - Serde (under the `serde` / `serde-decoded` features):
-///   - Default `Serialize` is display-based and emits the strkey form to the
-///     serializer.
-///   - `Serialize` for [`crate::Decoded<&PrivateKey>`] emits the raw bytes as
-///     a hex string via `serde_with::hex::Hex`; the intermediate hex string
-///     is not zeroed.
-///   - `Deserialize` for [`crate::Decoded<PrivateKey>`] materializes a
-///     transient `[u8; 32]` on the stack before moving it into `PrivateKey`;
-///     the source slot is not zeroed.
+/// Other functions and trait implementations listed below do not zero the
+/// private key value:
+/// - [`Debug`]
+/// - [`Display`]
+/// - [`to_string`](Self::to_string)
+/// - `Serialize`/`Deserialize` under the `serde` and `serde-decoded` features
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(
     feature = "serde",
@@ -76,13 +59,16 @@ impl PrivateKey {
     ///
     /// # Zeroize
     ///
-    /// No zeroizing of secret values occur with this function.
-    /// Use [`write_string`](Self::write_string) for zeroizing.
+    /// The intermediate scratch buffers used during encoding are zeroed on
+    /// drop, but the returned `String` itself is plain — its bytes are not
+    /// zeroed when the value is dropped. Use
+    /// [`write_string`](Self::write_string) for zeroizing.
     pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
-            version::PRIVATE_KEY_ED25519,
-            &self.0,
-        )
+        let mut zeroizing: Zeroizing<String<{ Self::ENCODED_LEN }>> = Zeroizing::new(String::new());
+        self.write_string(&mut zeroizing);
+        let mut out: String<{ Self::ENCODED_LEN }> = String::new();
+        out.push_str(&zeroizing).unwrap();
+        out
     }
 
     /// Encodes this private key to its strkey string form, writing the

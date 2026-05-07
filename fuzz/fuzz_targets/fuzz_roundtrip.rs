@@ -50,7 +50,7 @@ fuzz_target!(|s: &str| -> Corpus {
         Strkey::LiquidityPool(_) => assert_eq!(len, 56),
         Strkey::ClaimableBalance(_) => assert_eq!(len, 58),
         Strkey::SignedPayloadEd25519(sp) => {
-            let payload_len = sp.payload.len();
+            let payload_len = sp.payload().len();
             let binary_len = 1              // version
                 + 32                        // ed25519
                 + 4                         // payload length

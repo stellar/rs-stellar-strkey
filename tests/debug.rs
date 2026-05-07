@@ -98,14 +98,17 @@ fn test_strkey_ed25519_signed_payload_debug() {
     assert_eq!(
         format!(
             "{:?}",
-            Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
-                ed25519: [
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                ],
-                payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
-            })
+            Strkey::SignedPayloadEd25519(
+                ed25519::SignedPayload::new(
+                    [
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    ],
+                    &[1u8, 2, 3, 4],
+                )
+                .unwrap()
+            )
         ),
         "SignedPayloadEd25519(SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304))",
     );
@@ -226,14 +229,15 @@ fn test_ed25519_signed_payload_debug() {
     assert_eq!(
         format!(
             "{:?}",
-            ed25519::SignedPayload {
-                ed25519: [
+            ed25519::SignedPayload::new(
+                [
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
-            }
+                &[1u8, 2, 3, 4],
+            )
+            .unwrap()
         ),
         "SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304)",
     );

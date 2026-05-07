@@ -72,11 +72,12 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         }
         (StrkeyNew::SignedPayloadEd25519(n), StrkeyOld::SignedPayloadEd25519(o)) => {
             assert_eq!(
-                n.ed25519, o.ed25519,
+                n.ed25519(),
+                &o.ed25519,
                 "SignedPayloadEd25519 ed25519 mismatch"
             );
             assert_eq!(
-                n.payload.as_slice(),
+                n.payload(),
                 o.payload.as_slice(),
                 "SignedPayloadEd25519 payload mismatch"
             );

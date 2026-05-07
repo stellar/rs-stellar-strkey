@@ -17,6 +17,10 @@ path = ".."
 package = "stellar-strkey"
 version = "0.0.13"
 
+[dependencies.stellar-strkey-v16]
+package = "stellar-strkey"
+version = "0.0.16"
+
 [[bin]]
 name = "fuzz_roundtrip"
 path = "fuzz_targets/fuzz_roundtrip.rs"
@@ -27,6 +31,13 @@ bench = false
 [[bin]]
 name = "fuzz_compare_v13"
 path = "fuzz_targets/fuzz_compare_v13.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_compare_v16"
+path = "fuzz_targets/fuzz_compare_v16.rs"
 test = false
 doc = false
 bench = false

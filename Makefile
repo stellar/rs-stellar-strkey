@@ -18,6 +18,9 @@ fuzz-compare-v13:
 fuzz-compare-v16:
 	cargo +nightly fuzz run fuzz_compare_v16 -j 4
 
+fuzz-compare-zeroizing:
+	cargo +nightly fuzz run fuzz_compare_zeroizing -j 4
+
 # Generate coverage report as text summary and HTML with source highlighting.
 fuzz-coverage:
 	rustup component add --toolchain nightly llvm-tools-preview

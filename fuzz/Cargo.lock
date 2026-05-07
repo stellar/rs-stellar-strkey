@@ -219,10 +219,12 @@ dependencies = [
 name = "stellar-strkey-fuzz"
 version = "0.0.0"
 dependencies = [
+ "heapless 0.9.3",
  "libfuzzer-sys",
  "stellar-strkey 0.0.13",
  "stellar-strkey 0.0.16",
  "stellar-strkey 0.0.17",
+ "zeroize",
 ]
 
 [[package]]

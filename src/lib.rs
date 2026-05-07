@@ -64,7 +64,7 @@
 //!
 //! let key = PublicKey([0u8; 32]);
 //! assert_eq!(
-//!     format!("{key}"),
+//!     key.to_string().as_str(),
 //!     "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
 //! );
 //! ```

@@ -11,6 +11,41 @@ use core::{
 use heapless::{String, Vec};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
+/// An Ed25519 private key (raw 32-byte seed).
+///
+/// # Zeroize
+///
+/// `PrivateKey` derives [`Zeroize`] and [`ZeroizeOnDrop`]: the 32 seed bytes
+/// are overwritten with zeroes when a value is dropped. The methods that go
+/// to/from the strkey string form ([`to_string`](Self::to_string),
+/// [`from_string`](Self::from_string), [`from_slice`](Self::from_slice)) also
+/// zero their intermediate scratch buffers and return values wrapped in
+/// [`Zeroizing`] where ownership allows.
+///
+/// The library itself still exposes the seed bytes through these paths,
+/// which do not zero what they emit:
+///
+/// - [`Debug`] — manual impl writes all 32 bytes as hex into the formatter.
+///   [`crate::Strkey`] derives `Debug` and transitively emits the bytes via
+///   the `PrivateKeyEd25519` variant.
+/// - [`Display`] — manual impl writes the base32 strkey form (a recoverable
+///   encoding of the seed) into the formatter.
+/// - The public field `PrivateKey(pub [u8; 32])` — direct field access via
+///   `key.0` exposes the raw seed.
+/// - Serde (under the `serde` / `serde-decoded` features):
+///   - Default `Serialize` is display-based and emits the strkey form to the
+///     serializer.
+///   - `Serialize` for [`crate::Decoded<&PrivateKey>`] emits the raw bytes as
+///     a hex string via `serde_with::hex::Hex`; the intermediate hex string
+///     is not zeroed.
+///   - `Deserialize` for [`crate::Decoded<PrivateKey>`] materializes a
+///     transient `[u8; 32]` on the stack before moving it into `PrivateKey`;
+///     the source slot is not zeroed.
+/// - Stack residue inside `convert::encode_zeroizing`: the local `String<E>`
+///   between `push_str` and the wrapping `Zeroizing::new(...)` is plain;
+///   after the move the source slot retains the bytes until reused.
+///   Eliminating this requires unsafe + volatile zeroization (the `secrecy`
+///   crate's territory) and is not done here.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(
     feature = "serde",

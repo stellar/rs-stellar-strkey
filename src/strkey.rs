@@ -12,6 +12,16 @@ use crate::{
     version,
 };
 
+/// A decoded Stellar strkey of any supported type.
+///
+/// # Zeroize
+///
+/// `Strkey::from_slice` / `Strkey::from_string` do not zero their
+/// intermediate scratch buffers, even when decoding a `PrivateKeyEd25519`
+/// variant. To decode a private key strkey with the intermediate buffers
+/// zeroed, use [`ed25519::PrivateKey::from_slice`] /
+/// [`ed25519::PrivateKey::from_string`] directly. See
+/// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",

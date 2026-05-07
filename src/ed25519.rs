@@ -16,11 +16,12 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// # Zeroize
 ///
 /// `PrivateKey` derives [`Zeroize`] and [`ZeroizeOnDrop`]: the 32 seed bytes
-/// are overwritten with zeroes when a value is dropped. The methods that go
-/// to/from the strkey string form ([`to_string`](Self::to_string),
-/// [`from_string`](Self::from_string), [`from_slice`](Self::from_slice)) also
-/// zero their intermediate scratch buffers and return values wrapped in
-/// [`Zeroizing`] where ownership allows.
+/// are overwritten with zeroes when a value is dropped.
+/// [`from_string`](Self::from_string) and [`from_slice`](Self::from_slice)
+/// zero their intermediate scratch buffers when they return.
+/// [`write_string`](Self::write_string) is the encoding path that wraps its
+/// scratch buffers in [`Zeroizing`] and writes directly into a
+/// caller-provided buffer, avoiding any return-value move.
 ///
 /// The library itself still exposes the seed bytes through these paths,
 /// which do not zero what they emit:
@@ -30,6 +31,10 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 ///   the `PrivateKeyEd25519` variant.
 /// - [`Display`] — manual impl writes the base32 strkey form (a recoverable
 ///   encoding of the seed) into the formatter.
+/// - [`to_string`](Self::to_string) — returns a plain `String` by design.
+///   Neither it nor the intermediate scratch buffers used to produce it are
+///   zeroed. Use [`write_string`](Self::write_string) when handling secret
+///   material.
 /// - The public field `PrivateKey(pub [u8; 32])` — direct field access via
 ///   `key.0` exposes the raw seed.
 /// - Serde (under the `serde` / `serde-decoded` features):
@@ -41,11 +46,6 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 ///   - `Deserialize` for [`crate::Decoded<PrivateKey>`] materializes a
 ///     transient `[u8; 32]` on the stack before moving it into `PrivateKey`;
 ///     the source slot is not zeroed.
-/// - Stack residue inside `convert::encode_zeroizing`: the local `String<E>`
-///   between `push_str` and the wrapping `Zeroizing::new(...)` is plain;
-///   after the move the source slot retains the bytes until reused.
-///   Eliminating this requires unsafe + volatile zeroization (the `secrecy`
-///   crate's territory) and is not done here.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(
     feature = "serde",
@@ -72,11 +72,34 @@ impl PrivateKey {
         assert!(Self::ENCODED_LEN == 56);
     };
 
-    pub fn to_string(&self) -> Zeroizing<String<{ Self::ENCODED_LEN }>> {
-        encode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+    /// Encodes this private key to its strkey string form.
+    ///
+    /// # Zeroize
+    ///
+    /// No zeroizing of secret values occur with this function.
+    /// Use [`write_string`](Self::write_string) for zeroizing.
+    pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
             version::PRIVATE_KEY_ED25519,
             &self.0,
         )
+    }
+
+    /// Encodes this private key to its strkey string form, writing the
+    /// result into the caller-provided buffer.
+    ///
+    /// # Zeroize
+    ///
+    /// The intermediate scratch buffers used during encoding are wrapped in
+    /// [`Zeroizing`] and zeroed on drop, and the encoded bytes are written
+    /// directly into `out` rather than returned by value, so no copy is left
+    /// on this method's stack frame.
+    pub fn write_string(&self, out: &mut Zeroizing<String<{ Self::ENCODED_LEN }>>) {
+        encode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::PRIVATE_KEY_ED25519,
+            &self.0,
+            out,
+        );
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
@@ -91,7 +114,8 @@ impl PrivateKey {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
+        let mut payload: Zeroizing<Vec<u8, { Self::PAYLOAD_LEN }>> = Zeroizing::new(Vec::new());
+        let ver = decode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s, &mut payload)?;
         match ver {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -101,7 +125,7 @@ impl PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string().as_str())
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -562,5 +586,30 @@ mod signed_payload_decoded_serde_impl {
                     .map_err(|_| de::Error::custom("payload too large"))?,
             }))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::PrivateKey;
+    use heapless::String;
+    use zeroize::Zeroizing;
+
+    /// `write_string` must produce the same strkey bytes as `to_string`.
+    /// Only the buffer-zeroization story differs.
+    #[test]
+    fn test_private_key_write_string_matches_to_string() {
+        let key = PrivateKey([
+            0x69, 0xa8, 0xc4, 0xcb, 0xb9, 0xf6, 0x4e, 0x8a, 0x07, 0x98, 0xf6, 0xe1, 0xac, 0x65,
+            0xd0, 0x6c, 0x31, 0x62, 0x92, 0x90, 0x56, 0xbc, 0xf4, 0xcd, 0xb7, 0xd3, 0x73, 0x8d,
+            0x18, 0x55, 0xf3, 0x63,
+        ]);
+        let mut buf: Zeroizing<String<{ PrivateKey::ENCODED_LEN }>> = Zeroizing::new(String::new());
+        key.write_string(&mut buf);
+        assert_eq!(
+            buf.as_str(),
+            "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR"
+        );
+        assert_eq!(buf.as_str(), key.to_string().as_str());
     }
 }

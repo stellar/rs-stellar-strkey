@@ -75,13 +75,18 @@ pub fn encode<const P: usize, const B: usize, const E: usize>(
     unsafe { String::from_utf8_unchecked(encoded) }
 }
 
-/// Like [`encode`], but zeroes the intermediate raw-bytes scratch buffer on
-/// drop and returns the encoded string wrapped in [`Zeroizing`]. Use for
-/// payloads containing secret key material (e.g. `PrivateKey`).
+/// Like [`encode`], but writes into a caller-provided [`Zeroizing`] output
+/// buffer and zeroes every intermediate scratch buffer on drop. Taking the
+/// output by `&mut` instead of returning it eliminates the move that would
+/// otherwise leave the encoded form of the secret on this function's stack
+/// frame after return.
+///
+/// Use for payloads containing secret key material (e.g. `PrivateKey`).
 pub fn encode_zeroizing<const P: usize, const B: usize, const E: usize>(
     ver: u8,
     payload: &[u8],
-) -> Zeroizing<String<E>> {
+    out: &mut Zeroizing<String<E>>,
+) {
     const {
         assert!(B == binary_len(P), "B must be exactly binary_len(P)");
         assert!(E == encode_len(B), "E must be exactly encode_len(B)");
@@ -97,19 +102,18 @@ pub fn encode_zeroizing<const P: usize, const B: usize, const E: usize>(
     d.extend_from_slice(&cs).unwrap();
 
     // Encode as base32. Wrapped in Zeroizing so the base32-encoded form of
-    // the secret is also zeroed when this function returns; we copy out of it
-    // into the returned String rather than moving (which would leave the
-    // bytes behind without running Zeroizing's drop).
+    // the secret is zeroed when this function returns.
     let mut encoded: Zeroizing<Vec<u8, E>> = Zeroizing::new(Vec::new());
     let encoded_len = data_encoding::BASE32_NOPAD.encode_len(d.len());
     encoded.resize_default(encoded_len).unwrap();
     data_encoding::BASE32_NOPAD.encode_mut(&d, &mut encoded);
 
-    let mut s: String<E> = String::new();
+    // Copy the encoded bytes directly into the caller-provided output. No
+    // intermediate `String<E>` local — so no residue on this frame after
+    // return.
     // SAFETY: base32 encoding produces valid ASCII which is valid UTF-8
-    s.push_str(unsafe { core::str::from_utf8_unchecked(&encoded) })
+    out.push_str(unsafe { core::str::from_utf8_unchecked(&encoded) })
         .unwrap();
-    Zeroizing::new(s)
 }
 
 /// Decodes a base32 strkey string into a version byte and payload.
@@ -171,13 +175,17 @@ pub fn decode<const P: usize, const B: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
     Ok((ver, payload))
 }
 
-/// Like [`decode`], but zeroes the intermediate raw-bytes scratch buffer on
-/// drop and returns the payload wrapped in [`Zeroizing`]. Use for inputs that
-/// may contain secret key material (e.g. `PrivateKey`, or `Strkey` whose
-/// variant is not yet known).
+/// Like [`decode`], but writes the payload into a caller-provided
+/// [`Zeroizing`] output buffer and zeroes the intermediate scratch buffer on
+/// drop. Taking the output by `&mut` instead of returning it eliminates the
+/// move that would otherwise leave a copy of the payload bytes on this
+/// function's stack frame after return.
+///
+/// Use for inputs that may contain secret key material (e.g. `PrivateKey`).
 pub fn decode_zeroizing<const P: usize, const B: usize>(
     s: &[u8],
-) -> Result<(u8, Zeroizing<Vec<u8, P>>), DecodeError> {
+    out: &mut Zeroizing<Vec<u8, P>>,
+) -> Result<u8, DecodeError> {
     const {
         assert!(B == binary_len(P), "B must be exactly binary_len(P)");
     }
@@ -210,18 +218,24 @@ pub fn decode_zeroizing<const P: usize, const B: usize>(
         return Err(DecodeError::Invalid);
     }
 
-    // Unpack payload. Returned wrapped so the caller's binding is also zeroed
-    // when dropped.
+    // Copy the payload bytes directly into the caller-provided output. No
+    // intermediate `Vec<u8, P>` local — so no residue on this frame after
+    // return.
     // Safety: unwrap cannot fail because const assertion `P >= B - 3` ensures
     // P can hold any valid payload (payload_data.len() <= B - 3 <= P).
     let payload_data = &data_without_crc[1..];
-    let payload: Zeroizing<Vec<u8, P>> = Zeroizing::new(Vec::from_slice(payload_data).unwrap());
-    Ok((ver, payload))
+    out.extend_from_slice(payload_data).unwrap();
+
+    Ok(ver)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{binary_len, decode, encode, encode_len, DecodeError};
+    use super::{
+        binary_len, decode, decode_zeroizing, encode, encode_len, encode_zeroizing, DecodeError,
+    };
+    use heapless::{String, Vec};
+    use zeroize::Zeroizing;
 
     /// Verifies that `binary_len` matches the expected formula
     /// for all valid strkey payload lengths (0..=100).
@@ -272,5 +286,30 @@ mod tests {
         let (ver, payload) = result.unwrap();
         assert_eq!(ver, 0x00);
         assert!(payload.is_empty());
+    }
+
+    /// `encode_zeroizing` must produce the same encoded bytes as `encode`
+    /// for the same inputs; only the buffer-zeroization story differs.
+    #[test]
+    fn test_encode_zeroizing_matches_encode() {
+        let payload = [0xab_u8; 32];
+        let plain: String<56> = encode::<32, 35, 56>(0x90, &payload);
+        let mut zeroizing: Zeroizing<String<56>> = Zeroizing::new(String::new());
+        encode_zeroizing::<32, 35, 56>(0x90, &payload, &mut zeroizing);
+        assert_eq!(plain.as_str(), zeroizing.as_str());
+    }
+
+    /// `decode_zeroizing` must produce the same version byte and payload
+    /// bytes as `decode` for the same input.
+    #[test]
+    fn test_decode_zeroizing_matches_decode() {
+        let payload = [0xab_u8; 32];
+        let strkey: String<56> = encode::<32, 35, 56>(0x90, &payload);
+        let (ver_plain, payload_plain) = decode::<32, 35>(strkey.as_bytes()).unwrap();
+        let mut payload_zeroizing: Zeroizing<Vec<u8, 32>> = Zeroizing::new(Vec::new());
+        let ver_zeroizing =
+            decode_zeroizing::<32, 35>(strkey.as_bytes(), &mut payload_zeroizing).unwrap();
+        assert_eq!(ver_plain, ver_zeroizing);
+        assert_eq!(payload_plain.as_slice(), payload_zeroizing.as_slice());
     }
 }

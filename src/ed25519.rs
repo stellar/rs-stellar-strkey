@@ -1,5 +1,5 @@
 use crate::{
-    convert::{binary_len, decode, encode, encode_len},
+    convert::{binary_len, decode, decode_zeroizing, encode, encode_len, encode_zeroizing},
     error::DecodeError,
     version,
 };
@@ -9,8 +9,9 @@ use core::{
     str::FromStr,
 };
 use heapless::{String, Vec};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
@@ -36,8 +37,8 @@ impl PrivateKey {
         assert!(Self::ENCODED_LEN == 56);
     };
 
-    pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
-        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+    pub fn to_string(&self) -> Zeroizing<String<{ Self::ENCODED_LEN }>> {
+        encode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
             version::PRIVATE_KEY_ED25519,
             &self.0,
         )
@@ -55,7 +56,7 @@ impl PrivateKey {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
-        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
+        let (ver, payload) = decode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
             _ => Err(DecodeError::Invalid),
@@ -65,7 +66,7 @@ impl PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self.to_string().as_str())
     }
 }
 

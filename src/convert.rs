@@ -2,6 +2,7 @@
 // const fn's?
 
 use heapless::{String, Vec};
+use zeroize::Zeroizing;
 
 use crate::{crc::checksum, error::DecodeError};
 
@@ -74,6 +75,43 @@ pub fn encode<const P: usize, const B: usize, const E: usize>(
     unsafe { String::from_utf8_unchecked(encoded) }
 }
 
+/// Like [`encode`], but zeroes the intermediate raw-bytes scratch buffer on
+/// drop and returns the encoded string wrapped in [`Zeroizing`]. Use for
+/// payloads containing secret key material (e.g. `PrivateKey`).
+pub fn encode_zeroizing<const P: usize, const B: usize, const E: usize>(
+    ver: u8,
+    payload: &[u8],
+) -> Zeroizing<String<E>> {
+    const {
+        assert!(B == binary_len(P), "B must be exactly binary_len(P)");
+        assert!(E == encode_len(B), "E must be exactly encode_len(B)");
+    }
+
+    // Build binary. Wrapped in Zeroizing so the intermediate copy of the raw
+    // payload bytes is zeroed when this function returns.
+    let mut d: Zeroizing<Vec<u8, B>> = Zeroizing::new(Vec::new());
+    d.push(ver).unwrap();
+    d.extend_from_slice(payload).unwrap();
+    // Bind checksum first; two-phase borrow doesn't chain through DerefMut.
+    let cs = checksum(&d);
+    d.extend_from_slice(&cs).unwrap();
+
+    // Encode as base32. Wrapped in Zeroizing so the base32-encoded form of
+    // the secret is also zeroed when this function returns; we copy out of it
+    // into the returned String rather than moving (which would leave the
+    // bytes behind without running Zeroizing's drop).
+    let mut encoded: Zeroizing<Vec<u8, E>> = Zeroizing::new(Vec::new());
+    let encoded_len = data_encoding::BASE32_NOPAD.encode_len(d.len());
+    encoded.resize_default(encoded_len).unwrap();
+    data_encoding::BASE32_NOPAD.encode_mut(&d, &mut encoded);
+
+    let mut s: String<E> = String::new();
+    // SAFETY: base32 encoding produces valid ASCII which is valid UTF-8
+    s.push_str(unsafe { core::str::from_utf8_unchecked(&encoded) })
+        .unwrap();
+    Zeroizing::new(s)
+}
+
 /// Decodes a base32 strkey string into a version byte and payload.
 ///
 /// The binary format is: `version (1 byte) || payload || checksum (2 bytes)`.
@@ -130,6 +168,54 @@ pub fn decode<const P: usize, const B: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
     // P can hold any valid payload (payload_data.len() <= B - 3 <= P).
     let payload_data = &data_without_crc[1..];
     let payload: Vec<u8, P> = Vec::from_slice(payload_data).unwrap();
+    Ok((ver, payload))
+}
+
+/// Like [`decode`], but zeroes the intermediate raw-bytes scratch buffer on
+/// drop and returns the payload wrapped in [`Zeroizing`]. Use for inputs that
+/// may contain secret key material (e.g. `PrivateKey`, or `Strkey` whose
+/// variant is not yet known).
+pub fn decode_zeroizing<const P: usize, const B: usize>(
+    s: &[u8],
+) -> Result<(u8, Zeroizing<Vec<u8, P>>), DecodeError> {
+    const {
+        assert!(B == binary_len(P), "B must be exactly binary_len(P)");
+    }
+
+    // Prepare buffer for decoding base32. Wrapped in Zeroizing so the raw
+    // decoded bytes are zeroed when this function returns.
+    let mut data: Zeroizing<Vec<u8, B>> = Zeroizing::new(Vec::new());
+    let data_len = data_encoding::BASE32_NOPAD
+        .decode_len(s.len())
+        .map_err(|_| DecodeError::Invalid)?;
+    if data_len < 3 {
+        return Err(DecodeError::Invalid);
+    }
+    data.resize_default(data_len)
+        .map_err(|_| DecodeError::Invalid)?;
+
+    // Decode base32.
+    data_encoding::BASE32_NOPAD
+        .decode_mut(s, &mut data)
+        .map_err(|_| DecodeError::Invalid)?;
+
+    // Unpack version.
+    let ver = data[0];
+
+    // Unpack and check checksum.
+    let data_len = data.len();
+    let (data_without_crc, crc_actual) = data.split_at(data_len - 2);
+    let crc_expect = checksum(data_without_crc);
+    if crc_actual != crc_expect {
+        return Err(DecodeError::Invalid);
+    }
+
+    // Unpack payload. Returned wrapped so the caller's binding is also zeroed
+    // when dropped.
+    // Safety: unwrap cannot fail because const assertion `P >= B - 3` ensures
+    // P can hold any valid payload (payload_data.len() <= B - 3 <= P).
+    let payload_data = &data_without_crc[1..];
+    let payload: Zeroizing<Vec<u8, P>> = Zeroizing::new(Vec::from_slice(payload_data).unwrap());
     Ok((ver, payload))
 }
 

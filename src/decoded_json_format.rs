@@ -17,4 +17,17 @@
 /// let j = serde_json::to_string(&Decoded(&key)).unwrap();
 /// // {"public_key_ed25519":"0000000000000000000000000000000000000000000000000000000000000000"}
 /// ```
+///
+/// # Allocation
+///
+/// The `serde::Deserialize` implementation for this type allocates. Hex
+/// decoding of the byte fields is performed via `serde_with::hex::Hex`, which
+/// allocates an intermediate `String` (or equivalent) for every hex-encoded
+/// field regardless of the input format. There is no zero-allocation
+/// deserialization path; deserializing `Decoded<T>` always requires a heap
+/// allocator.
+///
+/// If the input is untrusted, or this type is used in an
+/// allocation-sensitive application, callers should validate the input
+/// length prior to deserializing to avoid unexpected or unbounded allocations.
 pub struct Decoded<T>(pub T);

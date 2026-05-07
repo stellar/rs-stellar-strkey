@@ -420,7 +420,9 @@ impl SignedPayload {
     ///
     /// ### Errors
     ///
-    /// If the payload is larger than 64 bytes.
+    /// If the inner payload is empty or larger than 64 bytes, if the overall
+    /// layout is malformed (wrong total length, truncated fields), or if the
+    /// trailing padding bytes are not all zero.
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // Min: 32-byte ed25519 key + 4-byte length prefix + 4 bytes (1-byte inner
         // payload padded to 4 per XDR). Empty inner payloads are not valid per

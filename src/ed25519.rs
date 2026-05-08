@@ -111,7 +111,9 @@ impl PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
+        let mut buf: Zeroizing<String<{ Self::ENCODED_LEN }>> = Zeroizing::new(String::new());
+        self.write_string(&mut buf);
+        f.write_str(&buf)
     }
 }
 

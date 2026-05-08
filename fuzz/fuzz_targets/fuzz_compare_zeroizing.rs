@@ -11,7 +11,7 @@ use stellar_strkey::convert::{decode, decode_zeroizing, encode, encode_zeroizing
 // input; only their buffer-zeroization story differs.
 //
 // PrivateKey-style sizes are used (P = 32, B = 35, E = 56) since that is the
-// security-relevant case zeroize_zeroizing exists for.
+// security-relevant case `encode_zeroizing` / `decode_zeroizing` exist for.
 fuzz_target!(|data: &[u8]| -> Corpus {
     // Need at least 1 version byte + 32-byte payload to exercise encode.
     if data.len() < 1 + 32 {

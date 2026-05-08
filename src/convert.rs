@@ -81,6 +81,9 @@ pub fn encode<const P: usize, const B: usize, const E: usize>(
 /// otherwise leave the encoded form of the secret on this function's stack
 /// frame after return.
 ///
+/// `out` is cleared (length reset to 0) before the encoded bytes are
+/// written, so the same buffer can be reused across calls.
+///
 /// Use for payloads containing secret key material (e.g. `PrivateKey`).
 pub fn encode_zeroizing<const P: usize, const B: usize, const E: usize>(
     ver: u8,
@@ -91,6 +94,11 @@ pub fn encode_zeroizing<const P: usize, const B: usize, const E: usize>(
         assert!(B == binary_len(P), "B must be exactly binary_len(P)");
         assert!(E == encode_len(B), "E must be exactly encode_len(B)");
     }
+
+    // Reset the output so callers may reuse the same buffer across calls;
+    // without this, `push_str` below would concatenate onto stale content
+    // and either produce an invalid strkey or panic on capacity exhaustion.
+    out.clear();
 
     // Build binary. Wrapped in Zeroizing so the intermediate copy of the raw
     // payload bytes is zeroed when this function returns.
@@ -181,6 +189,9 @@ pub fn decode<const P: usize, const B: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
 /// move that would otherwise leave a copy of the payload bytes on this
 /// function's stack frame after return.
 ///
+/// `out` is cleared (length reset to 0) before the payload bytes are
+/// written, so the same buffer can be reused across calls.
+///
 /// Use for inputs that may contain secret key material (e.g. `PrivateKey`).
 pub fn decode_zeroizing<const P: usize, const B: usize>(
     s: &[u8],
@@ -189,6 +200,12 @@ pub fn decode_zeroizing<const P: usize, const B: usize>(
     const {
         assert!(B == binary_len(P), "B must be exactly binary_len(P)");
     }
+
+    // Reset the output so callers may reuse the same buffer across calls;
+    // without this, `extend_from_slice` below would append onto stale
+    // content and either produce a wrong payload or panic on capacity
+    // exhaustion.
+    out.clear();
 
     // Prepare buffer for decoding base32. Wrapped in Zeroizing so the raw
     // decoded bytes are zeroed when this function returns.
@@ -311,5 +328,60 @@ mod tests {
             decode_zeroizing::<32, 35>(strkey.as_bytes(), &mut payload_zeroizing).unwrap();
         assert_eq!(ver_plain, ver_zeroizing);
         assert_eq!(payload_plain.as_slice(), payload_zeroizing.as_slice());
+    }
+
+    /// `encode_zeroizing` must reset its output buffer before writing, so a
+    /// caller may reuse the same `Zeroizing<String<E>>` across calls without
+    /// the second call appending to (or panicking on top of) the first.
+    #[test]
+    fn test_encode_zeroizing_resets_output_on_reuse() {
+        let payload_a = [0xab_u8; 32];
+        let payload_b = [0xcd_u8; 32];
+        let mut buf: Zeroizing<String<56>> = Zeroizing::new(String::new());
+        encode_zeroizing::<32, 35, 56>(0x90, &payload_a, &mut buf);
+        let expected_a: String<56> = encode::<32, 35, 56>(0x90, &payload_a);
+        assert_eq!(buf.as_str(), expected_a.as_str());
+
+        // Same buffer, different input — must not concatenate or panic.
+        encode_zeroizing::<32, 35, 56>(0x90, &payload_b, &mut buf);
+        let expected_b: String<56> = encode::<32, 35, 56>(0x90, &payload_b);
+        assert_eq!(buf.as_str(), expected_b.as_str());
+    }
+
+    /// `decode_zeroizing` must reset its output buffer before writing, so a
+    /// caller may reuse the same `Zeroizing<Vec<u8, P>>` across calls without
+    /// the second call appending to (or panicking on top of) the first.
+    #[test]
+    fn test_decode_zeroizing_resets_output_on_reuse() {
+        let payload_a = [0xab_u8; 32];
+        let payload_b = [0xcd_u8; 32];
+        let strkey_a: String<56> = encode::<32, 35, 56>(0x90, &payload_a);
+        let strkey_b: String<56> = encode::<32, 35, 56>(0x90, &payload_b);
+        let mut buf: Zeroizing<Vec<u8, 32>> = Zeroizing::new(Vec::new());
+        let ver_a = decode_zeroizing::<32, 35>(strkey_a.as_bytes(), &mut buf).unwrap();
+        assert_eq!(ver_a, 0x90);
+        assert_eq!(buf.as_slice(), &payload_a);
+
+        // Same buffer, different input — must not append or panic.
+        let ver_b = decode_zeroizing::<32, 35>(strkey_b.as_bytes(), &mut buf).unwrap();
+        assert_eq!(ver_b, 0x90);
+        assert_eq!(buf.as_slice(), &payload_b);
+    }
+
+    /// `decode_zeroizing` must reset its output buffer even when it returns
+    /// an error early (e.g. the input fails the length check), so the caller
+    /// is not left holding a partially-stale buffer.
+    #[test]
+    fn test_decode_zeroizing_resets_output_on_error() {
+        let payload = [0xab_u8; 32];
+        let strkey: String<56> = encode::<32, 35, 56>(0x90, &payload);
+        let mut buf: Zeroizing<Vec<u8, 32>> = Zeroizing::new(Vec::new());
+        decode_zeroizing::<32, 35>(strkey.as_bytes(), &mut buf).unwrap();
+        assert_eq!(buf.as_slice(), &payload);
+
+        // Same buffer, invalid input — must reset, not retain prior payload.
+        let err = decode_zeroizing::<32, 35>(b"", &mut buf);
+        assert_eq!(err, Err(DecodeError::Invalid));
+        assert!(buf.is_empty());
     }
 }

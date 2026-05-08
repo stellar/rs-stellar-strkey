@@ -8,7 +8,7 @@ fn test_strkey_ed25519_public_key_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "GA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5"
     );
 }
@@ -21,7 +21,7 @@ fn test_strkey_ed25519_private_key_display() {
         0xf3, 0x63,
     ]));
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR"
     );
 }
@@ -34,7 +34,7 @@ fn test_strkey_pre_auth_tx_display() {
         0xf3, 0x63,
     ]));
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "TBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHXL7"
     );
 }
@@ -47,7 +47,7 @@ fn test_strkey_hash_x_display() {
         0xf3, 0x63,
     ]));
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "XBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG"
     );
 }
@@ -63,7 +63,7 @@ fn test_strkey_ed25519_muxed_account_display() {
         id: 123456,
     });
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU"
     );
 }
@@ -79,7 +79,7 @@ fn test_strkey_ed25519_signed_payload_display() {
         payload: [0u8; 4].as_slice().try_into().unwrap(),
     });
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAACAAAAAABNWS"
     );
 }
@@ -92,7 +92,7 @@ fn test_strkey_contract_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE"
     );
 }
@@ -105,7 +105,7 @@ fn test_strkey_liquidity_pool_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "LA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGZ5J"
     );
 }
@@ -118,7 +118,7 @@ fn test_strkey_claimable_balance_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey),
+        format!("{}", strkey.as_unredacted()),
         "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDE"
     );
 }
@@ -144,7 +144,7 @@ fn test_ed25519_private_key_display() {
         0xf3, 0x63,
     ]);
     assert_eq!(
-        format!("{}", key),
+        format!("{}", key.as_unredacted()),
         "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR"
     );
 }
@@ -243,5 +243,30 @@ fn test_claimable_balance_display() {
     assert_eq!(
         format!("{}", key),
         "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDE"
+    );
+}
+
+#[test]
+fn test_ed25519_private_key_redacted() {
+    let key = ed25519::PrivateKey([0u8; 32]);
+    assert_eq!(format!("{}", key.as_redacted()), "S[REDACTED]");
+}
+
+#[test]
+fn test_strkey_ed25519_private_key_redacted() {
+    let strkey = Strkey::PrivateKeyEd25519(ed25519::PrivateKey([0u8; 32]));
+    assert_eq!(format!("{}", strkey.as_redacted()), "S[REDACTED]");
+}
+
+#[test]
+fn test_strkey_non_private_key_redacted_renders_full() {
+    let strkey = Strkey::PublicKeyEd25519(ed25519::PublicKey([
+        0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
+        0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d, 0x05, 0xc7,
+        0xb1, 0x03,
+    ]));
+    assert_eq!(
+        format!("{}", strkey.as_redacted()),
+        "GA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5",
     );
 }

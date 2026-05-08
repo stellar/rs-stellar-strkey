@@ -15,7 +15,7 @@ fuzz_target!(|s: &str| -> Corpus {
     match (&new_result, &old_result) {
         (Ok(new), Ok(old)) => {
             // Both parsed successfully - compare the string representations.
-            let new_str = new.to_string();
+            let new_str = new.as_unredacted().to_string();
             let old_str = old.to_string();
             assert_eq!(
                 new_str.as_str(),
@@ -39,7 +39,8 @@ fuzz_target!(|s: &str| -> Corpus {
         (Ok(new), Err(old_err)) => {
             // New succeeded but old failed - this could be a new feature or a bug.
             panic!(
-                "New version parsed but old version failed\nInput: {s}\nNew result: {new:?}\nOld error: {old_err:?}"
+                "New version parsed but old version failed\nInput: {s}\nNew result: {new}\nOld error: {old_err:?}",
+                new = new.as_unredacted(),
             );
         }
         (Err(new_err), Ok(old)) => {
@@ -96,7 +97,10 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
             }
         },
         _ => {
-            panic!("Strkey variant mismatch\nNew: {new:?}\nOld: {old:?}");
+            panic!(
+                "Strkey variant mismatch\nNew: {new}\nOld: {old:?}",
+                new = new.as_unredacted(),
+            );
         }
     }
 }

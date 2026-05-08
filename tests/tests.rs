@@ -420,7 +420,7 @@ fn test_signed_payload_ed25519_payload_sizes() {
         });
 
         // Verify round trips.
-        let encoded = signed_payload.to_string();
+        let encoded = signed_payload.as_unredacted().to_string();
         let decoded = Strkey::from_string(&encoded).unwrap();
         assert_eq!(signed_payload, decoded);
 
@@ -745,7 +745,9 @@ proptest! {
 proptest! {
     #[test]
     fn test_public_key_ed25519_to_string_doesnt_panic(data: [u8; 32]) {
-        Strkey::PublicKeyEd25519(ed25519::PublicKey(data)).to_string();
+        Strkey::PublicKeyEd25519(ed25519::PublicKey(data))
+            .as_unredacted()
+            .to_string();
     }
 }
 
@@ -755,10 +757,10 @@ fn assert_convert_roundtrip(s: &'static str, strkey: &Strkey) {
     assert_eq!(&strkey_result, strkey);
 
     // Check that the Strkey can be converted into the original string.
-    let str_result = format!("{strkey}");
+    let str_result = format!("{}", strkey.as_unredacted());
     assert_eq!(s, str_result);
 
     // Check that the Strkey roundtrip string conversion works via serde.
     #[cfg(feature = "serde")]
-    serde_test::assert_tokens(strkey, &[serde_test::Token::Str(s)]);
+    serde_test::assert_tokens(&strkey.to_unredacted(), &[serde_test::Token::Str(s)]);
 }

@@ -9,10 +9,21 @@ use crate::{
     convert::{binary_len, decode, encode, encode_len},
     ed25519,
     error::DecodeError,
+    redacted::{Redacted, Unredacted},
     version,
 };
 
 /// A decoded Stellar strkey of any supported type.
+///
+/// [`Debug`] is derived; for the
+/// [`PrivateKeyEd25519`](Self::PrivateKeyEd25519) variant the inner
+/// [`ed25519::PrivateKey`]'s `Debug` redacts the seed bytes
+/// (`PrivateKeyEd25519(PrivateKey([REDACTED]))`). `Strkey` does not
+/// implement [`Display`] or `Serialize`/`Deserialize` directly. Because a
+/// `Strkey` may be a `PrivateKeyEd25519` variant, callers must wrap it in
+/// [`Unredacted`] (full strkey form for every variant) or [`Redacted`]
+/// (renders only `S[REDACTED]` for the `PrivateKeyEd25519` variant; all
+/// other variants render their full strkey form) to render or serialize.
 ///
 /// # Zeroize
 ///
@@ -23,10 +34,6 @@ use crate::{
 /// [`ed25519::PrivateKey::from_string`] directly. See
 /// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
-)]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
     PrivateKeyEd25519(ed25519::PrivateKey),
@@ -43,7 +50,7 @@ impl Strkey {
     // SignedPayload is the longest strkey type.
     const MAX_PAYLOAD_LEN: usize = ed25519::SignedPayload::MAX_PAYLOAD_LEN;
     const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
-    const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    pub(crate) const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::MAX_PAYLOAD_LEN == 100);
         assert!(Self::MAX_BINARY_LEN == 103);
@@ -80,20 +87,20 @@ impl Strkey {
         assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
     };
 
-    pub fn to_string(&self) -> HeaplessString<{ Self::MAX_ENCODED_LEN }> {
-        let mut s: HeaplessString<{ Self::MAX_ENCODED_LEN }> = HeaplessString::new();
-        match self {
-            Self::PublicKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::PrivateKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::PreAuthTx(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::HashX(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::MuxedAccountEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::SignedPayloadEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::Contract(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::LiquidityPool(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::ClaimableBalance(x) => s.push_str(x.to_string().as_str()).unwrap(),
-        }
-        s
+    pub fn as_redacted(&self) -> Redacted<&Self> {
+        Redacted(self)
+    }
+
+    pub fn as_unredacted(&self) -> Unredacted<&Self> {
+        Unredacted(self)
+    }
+
+    pub fn to_redacted(&self) -> Redacted<Self> {
+        Redacted(self.clone())
+    }
+
+    pub fn to_unredacted(&self) -> Unredacted<Self> {
+        Unredacted(self.clone())
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -126,12 +133,6 @@ impl Strkey {
             )),
             _ => Err(DecodeError::Invalid),
         }
-    }
-}
-
-impl Display for Strkey {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}", self.to_string())
     }
 }
 

@@ -59,7 +59,7 @@ impl Cmd {
             }
         };
         match self.output {
-            Output::Strkey => println!("{strkey}"),
+            Output::Strkey => println!("{}", strkey.as_unredacted()),
             Output::Json => {
                 println!(
                     "{}",

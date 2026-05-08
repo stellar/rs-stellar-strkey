@@ -18,7 +18,7 @@ fuzz_target!(|s: &str| -> Corpus {
     };
 
     // Check that the strkey roundtrips back to the identical string.
-    let roundtrip_s = r.to_string();
+    let roundtrip_s = r.as_unredacted().to_string();
     assert_eq!(roundtrip_s, s);
 
     // Check that the first character matches the expected prefix for the type.

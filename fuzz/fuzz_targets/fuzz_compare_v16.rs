@@ -39,7 +39,7 @@ fuzz_target!(|s: &str| -> Corpus {
         (Ok(new), Err(old_err)) => {
             // New succeeded but old failed - this could be a new feature or a bug.
             panic!(
-                "New version parsed but old version failed\nInput: {s}\nNew result: {new}\nOld error: {old_err:?}",
+                "New version parsed but old version failed\nInput: {s}\nNew result: {new:?}\nOld error: {old_err:?}",
                 new = new.as_unredacted(),
             );
         }
@@ -98,7 +98,7 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         },
         _ => {
             panic!(
-                "Strkey variant mismatch\nNew: {new}\nOld: {old:?}",
+                "Strkey variant mismatch\nNew: {new:?}\nOld: {old:?}",
                 new = new.as_unredacted(),
             );
         }

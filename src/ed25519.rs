@@ -157,6 +157,7 @@ mod private_key_decoded_serde_impl {
     }
 }
 
+/// An ed25519 public key (`G...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -256,6 +257,7 @@ mod public_key_decoded_serde_impl {
     }
 }
 
+/// A muxed ed25519 account (`M...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",

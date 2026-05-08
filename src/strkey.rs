@@ -273,6 +273,7 @@ mod strkey_decoded_serde_impl {
     }
 }
 
+/// A pre-authorized transaction signer (`T...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -369,6 +370,7 @@ mod pre_auth_tx_decoded_serde_impl {
     }
 }
 
+/// A hash-x signer (`X...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -465,6 +467,7 @@ mod hash_x_decoded_serde_impl {
     }
 }
 
+/// A contract identifier (`C...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -561,6 +564,7 @@ mod contract_decoded_serde_impl {
     }
 }
 
+/// A liquidity pool identifier (`L...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -657,6 +661,7 @@ mod liquidity_pool_decoded_serde_impl {
     }
 }
 
+/// A claimable balance identifier (`B...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",

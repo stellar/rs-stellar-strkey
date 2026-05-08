@@ -18,12 +18,14 @@ use crate::{
 /// [`Debug`] is derived; for the
 /// [`PrivateKeyEd25519`](Self::PrivateKeyEd25519) variant the inner
 /// [`ed25519::PrivateKey`]'s `Debug` redacts the seed bytes
-/// (`PrivateKeyEd25519(PrivateKey([REDACTED]))`). `Strkey` does not
-/// implement [`Display`] or `Serialize`/`Deserialize` directly. Because a
-/// `Strkey` may be a `PrivateKeyEd25519` variant, callers must wrap it in
-/// [`Unredacted`] (full strkey form for every variant) or [`Redacted`]
-/// (renders only `S[REDACTED]` for the `PrivateKeyEd25519` variant; all
-/// other variants render their full strkey form) to render or serialize.
+/// (`PrivateKeyEd25519(PrivateKey([REDACTED]))`). [`FromStr`] and
+/// `Deserialize` parse from the strkey string form; both are input-only and
+/// do not leak. `Strkey` does not implement [`Display`] or `Serialize`
+/// directly. Because a `Strkey` may be a `PrivateKeyEd25519` variant,
+/// callers must wrap it in [`Unredacted`] (full strkey form for every
+/// variant) or [`Redacted`] (renders only `S[REDACTED]` for the
+/// `PrivateKeyEd25519` variant; all other variants render their full
+/// strkey form) to render or serialize.
 ///
 /// # Zeroize
 ///
@@ -34,6 +36,7 @@ use crate::{
 /// [`ed25519::PrivateKey::from_string`] directly. See
 /// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
     PrivateKeyEd25519(ed25519::PrivateKey),

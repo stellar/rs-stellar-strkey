@@ -22,16 +22,18 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// zero their intermediate scratch buffers when they return.
 ///
 /// [`Debug`] is implemented and emits `PrivateKey([REDACTED])`; it never
-/// exposes the seed bytes. `PrivateKey` does not implement [`Display`] or
-/// `Serialize`/`Deserialize` directly. To render or serialize a private key,
-/// wrap it in [`Unredacted`] (full strkey form, leaks the encoded bytes
-/// through the formatter) or [`Redacted`] (only `S[REDACTED]`, never the
-/// encoded bytes).
+/// exposes the seed bytes. [`FromStr`] and `Deserialize` parse from the
+/// strkey string form; both are input-only and do not leak. `PrivateKey`
+/// does not implement [`Display`] or `Serialize` directly. To render or
+/// serialize a private key, wrap it in [`Unredacted`] (full strkey form,
+/// leaks the encoded bytes through the formatter) or [`Redacted`] (only
+/// `S[REDACTED]`, never the encoded bytes).
 ///
 /// [`Unredacted::<&PrivateKey>::write_string`] is the encoding path that
 /// wraps its scratch buffers in [`Zeroizing`] and writes directly into a
 /// caller-provided buffer, avoiding any return-value move.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
+#[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]
 pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {

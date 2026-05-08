@@ -250,6 +250,10 @@ mod strkey_decoded_serde_impl {
                         }
                     };
 
+                    if map.next_key::<de::IgnoredAny>()?.is_some() {
+                        return Err(de::Error::custom("expected exactly one variant key"));
+                    }
+
                     Ok(Decoded(strkey))
                 }
             }

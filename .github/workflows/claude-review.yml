@@ -69,9 +69,9 @@ on:
     types: [opened, synchronize, ready_for_review, reopened]
 
 # Revoke all default GITHUB_TOKEN permissions at the workflow level. Each job
-# below must explicitly opt in to whatever it needs. This is defense in depth:
-# if a future job is added without its own `permissions:` block it inherits
-# nothing, rather than whatever the repo or org default happens to be.
+# below must explicitly opt in to whatever it needs, so that any future job
+# added without its own `permissions:` block inherits nothing rather than
+# whatever the repo or org default happens to be.
 permissions: {}
 
 concurrency:
@@ -114,7 +114,6 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
-          show_full_output: false
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}

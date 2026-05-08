@@ -41,6 +41,8 @@ jobs:
           # --max-turns caps how many tool-use cycles Claude can run, which
           # bounds token spend per invocation. The allowed `gh pr` commands are
           # scoped to this PR's number so a misfire can't reach into another PR.
-          claude_args: |
+          # >- folds the two lines into one space-separated string so the CLI
+          # receives two separate flags rather than a newline-embedded string.
+          claude_args: >-
             --max-turns 30
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment ${{ github.event.pull_request.number }}:*),Bash(gh pr diff ${{ github.event.pull_request.number }}:*),Bash(gh pr view ${{ github.event.pull_request.number }}:*)"

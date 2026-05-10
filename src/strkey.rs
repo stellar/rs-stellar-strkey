@@ -12,6 +12,16 @@ use crate::{
     version,
 };
 
+/// A decoded Stellar strkey of any supported type.
+///
+/// # Zeroize
+///
+/// `Strkey::from_slice` / `Strkey::from_string` do not zero their
+/// intermediate scratch buffers, even when decoding a `PrivateKeyEd25519`
+/// variant. To decode a private key strkey with the intermediate buffers
+/// zeroed, use [`ed25519::PrivateKey::from_slice`] /
+/// [`ed25519::PrivateKey::from_string`] directly. See
+/// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -250,6 +260,10 @@ mod strkey_decoded_serde_impl {
                         }
                     };
 
+                    if map.next_key::<de::IgnoredAny>()?.is_some() {
+                        return Err(de::Error::custom("expected exactly one variant key"));
+                    }
+
                     Ok(Decoded(strkey))
                 }
             }
@@ -259,6 +273,7 @@ mod strkey_decoded_serde_impl {
     }
 }
 
+/// A pre-authorized transaction signer (`T...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -355,6 +370,7 @@ mod pre_auth_tx_decoded_serde_impl {
     }
 }
 
+/// A hash-x signer (`X...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -451,6 +467,7 @@ mod hash_x_decoded_serde_impl {
     }
 }
 
+/// A contract identifier (`C...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -547,6 +564,7 @@ mod contract_decoded_serde_impl {
     }
 }
 
+/// A liquidity pool identifier (`L...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
@@ -643,6 +661,7 @@ mod liquidity_pool_decoded_serde_impl {
     }
 }
 
+/// A claimable balance identifier (`B...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",

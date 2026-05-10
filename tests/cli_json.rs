@@ -152,3 +152,19 @@ fn test_roundtrip_claimable_balance() {
     let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
     assert_eq!(original, deserialized);
 }
+
+#[test]
+fn test_extra_variant_keys_rejected() {
+    let json = r#"{
+        "public_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000",
+        "contract": "0000000000000000000000000000000000000000000000000000000000000000"
+    }"#;
+    let err = match serde_json::from_str::<Decoded<Strkey>>(json) {
+        Ok(_) => panic!("expected error for JSON with extra variant keys"),
+        Err(e) => e,
+    };
+    assert!(
+        err.to_string().contains("expected exactly one variant key"),
+        "unexpected error message: {err}",
+    );
+}

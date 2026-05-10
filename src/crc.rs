@@ -1,4 +1,4 @@
-// Mod crc implementated according to CCITT standards.
+// Mod crc implemented according to CCITT standards.
 //
 // Name                       : "XMODEM", also known as "ZMODEM", "CRC-16/ACORN"
 // Width                      : 16 bit

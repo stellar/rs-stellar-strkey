@@ -766,7 +766,7 @@ fn assert_convert_roundtrip(s: &'static str, strkey: &Strkey) {
     assert_eq!(&strkey_result, strkey);
 
     // Check that the Strkey can be converted into the original string.
-    let str_result = format!("{}", strkey);
+    let str_result = format!("{strkey}");
     assert_eq!(s, str_result);
 
     // Check that the Strkey roundtrip string conversion works via serde.

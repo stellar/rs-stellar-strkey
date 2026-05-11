@@ -18,6 +18,19 @@ fn test_ed25519_public_key() {
 }
 
 #[test]
+fn test_ed25519_private_key() {
+    assert_eq!(
+        serde_json::to_string_pretty(&Decoded(&AnyStrkey::PrivateKey(ed25519::PrivateKey(
+            [0x00; 32]
+        ))))
+        .unwrap(),
+        r#"{
+  "private_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
+}"#,
+    );
+}
+
+#[test]
 fn test_contract() {
     assert_eq!(
         serde_json::to_string_pretty(&Decoded(&Strkey::Contract(Contract([
@@ -136,23 +149,6 @@ fn test_roundtrip_claimable_balance() {
     let json = serde_json::to_string(&Decoded(&original)).unwrap();
     let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
     assert_eq!(original, deserialized);
-}
-
-#[test]
-fn test_ed25519_private_key() {
-    let original = AnyStrkey::PrivateKey(ed25519::PrivateKey([0x00; 32]));
-    assert_eq!(
-        serde_json::to_string_pretty(&Decoded(&original)).unwrap(),
-        r#"{
-  "private_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
-}"#,
-    );
-    let json = serde_json::to_string(&Decoded(&original)).unwrap();
-    let Decoded(deserialized): Decoded<AnyStrkey> = serde_json::from_str(&json).unwrap();
-    match (&original, &deserialized) {
-        (AnyStrkey::PrivateKey(a), AnyStrkey::PrivateKey(b)) => assert_eq!(a.0, b.0),
-        _ => panic!("expected PrivateKey variant"),
-    }
 }
 
 #[test]

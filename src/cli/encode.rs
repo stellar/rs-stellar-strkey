@@ -46,7 +46,7 @@ impl Cmd {
         }
         let Decoded(strkey): Decoded<AnyStrkey> =
             serde_json::from_str(&self.json).map_err(Error::Json)?;
-        println!("{}", strkey);
+        println!("{strkey}");
         Ok(())
     }
 }

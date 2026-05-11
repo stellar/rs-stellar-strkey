@@ -18,6 +18,8 @@ pub struct Cmd {
 #[value(rename_all = "snake_case")]
 pub enum StrkeyType {
     PublicKeyEd25519,
+    // PrivateKeyEd25519 is intentionally omitted to reduce the chance someone accidentally thinks
+    // the zero value private key is safe to use as a private key.
     PreAuthTx,
     HashX,
     MuxedAccountEd25519,
@@ -57,7 +59,7 @@ impl Cmd {
             }
         };
         match self.output {
-            Output::Strkey => println!("{}", strkey),
+            Output::Strkey => println!("{strkey}"),
             Output::Json => {
                 println!(
                     "{}",

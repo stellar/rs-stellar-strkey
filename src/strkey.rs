@@ -1,5 +1,5 @@
 use core::{
-    fmt::{Debug, Display, Write},
+    fmt::{Debug, Display},
     str::FromStr,
 };
 
@@ -40,7 +40,7 @@ impl Strkey {
     // SignedPayload is the longest strkey type.
     const MAX_PAYLOAD_LEN: usize = ed25519::SignedPayload::MAX_PAYLOAD_LEN;
     const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
-    pub(crate) const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::MAX_PAYLOAD_LEN == 100);
         assert!(Self::MAX_BINARY_LEN == 103);
@@ -79,9 +79,16 @@ impl Strkey {
 
     pub fn to_string(&self) -> HeaplessString<{ Self::MAX_ENCODED_LEN }> {
         let mut s: HeaplessString<{ Self::MAX_ENCODED_LEN }> = HeaplessString::new();
-        // The buffer is sized to the longest variant, so a heapless
-        // capacity error is unreachable.
-        write!(s, "{}", self).expect("MAX_ENCODED_LEN bound covers every variant");
+        match self {
+            Self::PublicKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::PreAuthTx(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::HashX(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::MuxedAccountEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::SignedPayloadEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::Contract(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::LiquidityPool(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::ClaimableBalance(x) => s.push_str(x.to_string().as_str()).unwrap(),
+        }
         s
     }
 
@@ -119,16 +126,7 @@ impl Strkey {
 
 impl Display for Strkey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::PublicKeyEd25519(k) => Display::fmt(k, f),
-            Self::PreAuthTx(k) => Display::fmt(k, f),
-            Self::HashX(k) => Display::fmt(k, f),
-            Self::MuxedAccountEd25519(k) => Display::fmt(k, f),
-            Self::SignedPayloadEd25519(k) => Display::fmt(k, f),
-            Self::Contract(k) => Display::fmt(k, f),
-            Self::LiquidityPool(k) => Display::fmt(k, f),
-            Self::ClaimableBalance(k) => Display::fmt(k, f),
-        }
+        write!(f, "{}", self.to_string())
     }
 }
 

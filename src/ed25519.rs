@@ -28,7 +28,7 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// asymmetry is intentional: `Deserialize` lets a private key be parsed
 /// from a serialized string (input is not a leak vector), while `Serialize`
 /// is gated. To render or serialize the encoded form, wrap the value in
-/// [`Unredacted`], or use `UnredactedDecoded` (under the `serde-decoded`
+/// [`Unredacted`], or use `Decoded` (under the `serde-decoded`
 /// feature) for the JSON-bytes form.
 ///
 /// [`Unredacted::<&PrivateKey>::write_string`] is the encoding path that
@@ -93,7 +93,7 @@ impl FromStr for PrivateKey {
 #[cfg(feature = "serde-decoded")]
 mod private_key_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::UnredactedDecoded;
+    use crate::{decoded_json_format::Decoded, unredacted::Unredacted};
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -107,17 +107,17 @@ mod private_key_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for UnredactedDecoded<&PrivateKey> {
+    impl Serialize for Decoded<Unredacted<&PrivateKey>> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let Self(PrivateKey(bytes)) = self;
+            let Self(Unredacted(PrivateKey(bytes))) = self;
             DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for UnredactedDecoded<PrivateKey> {
+    impl<'de> Deserialize<'de> for Decoded<Unredacted<PrivateKey>> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
-            Ok(UnredactedDecoded(PrivateKey(bytes)))
+            Ok(Decoded(Unredacted(PrivateKey(bytes))))
         }
     }
 }
@@ -193,7 +193,7 @@ impl FromStr for PublicKey {
 #[cfg(feature = "serde-decoded")]
 mod public_key_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::UnredactedDecoded;
+    use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -207,17 +207,17 @@ mod public_key_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for UnredactedDecoded<&PublicKey> {
+    impl Serialize for Decoded<&PublicKey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PublicKey(bytes)) = self;
             DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for UnredactedDecoded<PublicKey> {
+    impl<'de> Deserialize<'de> for Decoded<PublicKey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
-            Ok(UnredactedDecoded(PublicKey(bytes)))
+            Ok(Decoded(PublicKey(bytes)))
         }
     }
 }
@@ -305,7 +305,7 @@ impl FromStr for MuxedAccount {
 #[cfg(feature = "serde-decoded")]
 mod muxed_account_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::UnredactedDecoded;
+    use crate::decoded_json_format::Decoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -325,17 +325,17 @@ mod muxed_account_decoded_serde_impl {
         id: u64,
     }
 
-    impl Serialize for UnredactedDecoded<&MuxedAccount> {
+    impl Serialize for Decoded<&MuxedAccount> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(MuxedAccount { ed25519, id }) = self;
             DecodedBorrowed { ed25519, id: *id }.serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for UnredactedDecoded<MuxedAccount> {
+    impl<'de> Deserialize<'de> for Decoded<MuxedAccount> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, id } = DecodedOwned::deserialize(deserializer)?;
-            Ok(UnredactedDecoded(MuxedAccount { ed25519, id }))
+            Ok(Decoded(MuxedAccount { ed25519, id }))
         }
     }
 }
@@ -501,7 +501,7 @@ impl FromStr for SignedPayload {
 #[cfg(feature = "serde-decoded")]
 mod signed_payload_decoded_serde_impl {
     use super::SignedPayload;
-    use crate::decoded_json_format::UnredactedDecoded;
+    use crate::decoded_json_format::Decoded;
     use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -523,17 +523,17 @@ mod signed_payload_decoded_serde_impl {
         payload: alloc::vec::Vec<u8>,
     }
 
-    impl Serialize for UnredactedDecoded<&SignedPayload> {
+    impl Serialize for Decoded<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(SignedPayload { ed25519, payload }) = self;
             DecodedBorrowed { ed25519, payload }.serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for UnredactedDecoded<SignedPayload> {
+    impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
-            Ok(UnredactedDecoded(SignedPayload {
+            Ok(Decoded(SignedPayload {
                 ed25519,
                 payload: payload
                     .as_slice()

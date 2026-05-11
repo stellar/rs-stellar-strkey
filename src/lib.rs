@@ -84,7 +84,7 @@
 //!
 //! - `serde` — derives [`Serialize`]/[`Deserialize`] that round-trip strkeys
 //!   as their textual form.
-//! - `serde-decoded` — adds a `UnredactedDecoded<T>` wrapper that serializes a strkey
+//! - `serde-decoded` — adds a `Decoded<T>` wrapper that serializes a strkey
 //!   as a structured JSON object with hex-encoded byte fields, which is
 //!   useful for tooling that wants to inspect the underlying bytes. Requires
 //!   `alloc` and implies `serde`.
@@ -129,7 +129,7 @@ pub use unredacted::Unredacted;
 #[cfg(feature = "serde-decoded")]
 pub mod decoded_json_format;
 #[cfg(feature = "serde-decoded")]
-pub use decoded_json_format::UnredactedDecoded;
+pub use decoded_json_format::Decoded;
 
 #[cfg(feature = "cli")]
 pub mod cli;

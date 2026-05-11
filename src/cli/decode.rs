@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{cli::anystrkey::AnyStrkey, DecodeError, UnredactedDecoded};
+use crate::{cli::anystrkey::AnyStrkey, DecodeError, Decoded};
 use clap::Args;
 
 #[derive(Debug)]
@@ -30,7 +30,7 @@ impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
         let strkey =
             AnyStrkey::from_str(&self.strkey).map_err(|e| Error::Decode(self.strkey.clone(), e))?;
-        let json = serde_json::to_string_pretty(&UnredactedDecoded(&strkey)).unwrap();
+        let json = serde_json::to_string_pretty(&Decoded(&strkey)).unwrap();
         println!("{json}");
         Ok(())
     }

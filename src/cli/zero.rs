@@ -1,5 +1,5 @@
 use crate::{
-    ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey, UnredactedDecoded,
+    ed25519, ClaimableBalance, Contract, Decoded, HashX, LiquidityPool, PreAuthTx, Strkey,
 };
 use clap::{Args, ValueEnum};
 
@@ -61,7 +61,7 @@ impl Cmd {
             Output::Json => {
                 println!(
                     "{}",
-                    serde_json::to_string_pretty(&UnredactedDecoded(&strkey)).unwrap()
+                    serde_json::to_string_pretty(&Decoded(&strkey)).unwrap()
                 )
             }
         }

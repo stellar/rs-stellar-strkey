@@ -93,6 +93,12 @@ impl Strkey {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        // Short-circuit `S…` inputs before running the non-zeroizing
+        // `decode()` so private-key bytes never reach unzeroed scratch.
+        // Callers should use [`ed25519::PrivateKey`] to decode `S…` strkeys.
+        if s.first() == Some(&b'S') {
+            return Err(DecodeError::PrivateKey);
+        }
         let (ver, payload) = decode::<{ Self::MAX_PAYLOAD_LEN }, { Self::MAX_BINARY_LEN }>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
@@ -113,7 +119,6 @@ impl Strkey {
             version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
                 ClaimableBalance::from_payload(&payload)?,
             )),
-            version::PRIVATE_KEY_ED25519 => Err(DecodeError::PrivateKey),
             _ => Err(DecodeError::Invalid),
         }
     }

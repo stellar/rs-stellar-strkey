@@ -24,16 +24,17 @@ pub struct Cmd {
     /// Strkey to decode
     #[arg()]
     strkey: String,
+    /// Suppress stderr log and warning output
+    #[arg(long, short = 'q')]
+    quiet: bool,
 }
 
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
         let strkey =
             Strkey::from_str(&self.strkey).map_err(|e| Error::Decode(self.strkey.clone(), e))?;
-        if matches!(strkey, Strkey::PrivateKeyEd25519(_)) {
-            eprintln!(
-                "\u{26a0}\u{fe0f}  Warning: output contains a private key with secret material. Handle with care."
-            );
+        if !self.quiet {
+            super::warn_if_private(&strkey);
         }
         let json = serde_json::to_string_pretty(&Decoded(&strkey)).unwrap();
         println!("{json}");

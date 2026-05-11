@@ -34,6 +34,9 @@ pub struct Cmd {
     /// JSON for Strkey to encode
     #[arg()]
     json: String,
+    /// Suppress stderr log and warning output
+    #[arg(long, short = 'q')]
+    quiet: bool,
 }
 
 impl Cmd {
@@ -46,10 +49,8 @@ impl Cmd {
         }
         let Decoded(strkey): Decoded<Strkey> =
             serde_json::from_str(&self.json).map_err(Error::Json)?;
-        if matches!(strkey, Strkey::PrivateKeyEd25519(_)) {
-            eprintln!(
-                "\u{26a0}\u{fe0f}  Warning: output contains a private key with secret material. Handle with care."
-            );
+        if !self.quiet {
+            super::warn_if_private(&strkey);
         }
         println!("{strkey}");
         Ok(())

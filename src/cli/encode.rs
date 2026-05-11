@@ -47,18 +47,12 @@ impl Cmd {
         // Peek at the variant key: `private_key_ed25519` is handled outside
         // the Strkey enum and routed through `ed25519::PrivateKey`.
         let value: serde_json::Value = serde_json::from_str(&self.json).map_err(Error::Json)?;
-        let is_private_key = value
+        let pk_value = value
             .as_object()
-            .and_then(|m| m.keys().next().filter(|_| m.len() == 1))
-            .map(|k| k == "private_key_ed25519")
-            .unwrap_or(false);
-        if is_private_key {
-            let pk_value = value
-                .as_object()
-                .unwrap()
-                .get("private_key_ed25519")
-                .unwrap()
-                .clone();
+            .filter(|m| m.len() == 1)
+            .and_then(|m| m.get("private_key_ed25519"))
+            .cloned();
+        if let Some(pk_value) = pk_value {
             let Decoded(Unredacted(pk)): Decoded<Unredacted<ed25519::PrivateKey>> =
                 serde_json::from_value(pk_value).map_err(Error::Json)?;
             println!("{}", Unredacted(&pk));

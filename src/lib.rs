@@ -22,7 +22,10 @@
 //!   know the kind in advance.
 //! - [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr)
 //!   implementations for every kind, plus inherent `to_string` /
-//!   `from_string` / `from_slice` methods.
+//!   `from_string` / `from_slice` methods. [`ed25519::PrivateKey`] is the
+//!   exception: it does not implement `Display` or inherent `to_string`
+//!   directly — wrap it in [`Unredacted`] (`pk.as_unredacted()`) to render
+//!   the encoded strkey form.
 //!
 //! # Strkey kinds
 //!
@@ -82,7 +85,8 @@
 //! # Cargo features
 //!
 //! - `serde` — derives [`Serialize`]/[`Deserialize`] that round-trip strkeys
-//!   as their textual form.
+//!   as their textual form. [`ed25519::PrivateKey`] is `Deserialize` but
+//!   not directly `Serialize`; wrap in [`Unredacted`] to serialize.
 //! - `serde-decoded` — adds a `Decoded<T>` wrapper that serializes a strkey
 //!   as a structured JSON object with hex-encoded byte fields, which is
 //!   useful for tooling that wants to inspect the underlying bytes. Requires

@@ -2,10 +2,12 @@
 pub enum DecodeError {
     // TODO: Add meaningful errors for each problem that can occur.
     Invalid,
-    /// The strkey is a private key (`S…`), which is not accepted by
-    /// `Strkey::from_string` / `FromStr`. Use
-    /// [`ed25519::PrivateKey`](crate::ed25519::PrivateKey) directly to
-    /// decode private-key strkeys.
+    /// The input is `S`-prefixed and may be a private-key strkey. `Strkey`
+    /// does not parse `S…` inputs to keep secret bytes out of its
+    /// non-zeroizing decode path; the input is rejected on the first byte
+    /// without validating length, CRC, or contents. Route the input to
+    /// [`ed25519::PrivateKey`](crate::ed25519::PrivateKey) (which zeroizes
+    /// its decode buffers) for full validation.
     PrivateKey,
 }
 

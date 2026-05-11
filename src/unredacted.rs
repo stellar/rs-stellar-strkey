@@ -19,10 +19,8 @@
 /// `Display`, `to_string`, and `serde::Serialize` materialize the encoded
 /// bytes into a non-zeroizing intermediate (the returned `String`, the
 /// formatter, or the serializer's internal buffer). For the strongest
-/// guarantees, use
-/// [`Unredacted::<&PrivateKey>::write_string`](crate::ed25519::PrivateKey)
-/// to write directly into a caller-provided
-/// [`Zeroizing`](zeroize::Zeroizing) buffer.
+/// guarantees, use [`Unredacted::write_string`] to write directly into a
+/// caller-provided [`Zeroizing`](zeroize::Zeroizing) buffer.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Unredacted<T>(pub T);
 

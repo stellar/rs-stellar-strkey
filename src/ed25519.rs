@@ -20,9 +20,9 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// are overwritten with zeroes when a value is dropped.
 /// [`from_string`](Self::from_string) and [`from_slice`](Self::from_slice)
 /// zero their intermediate scratch buffers when they return.
-/// [`Unredacted::<&PrivateKey>::write_string`] is the encoding path that
-/// wraps its scratch buffers in [`Zeroizing`] and writes directly into a
-/// caller-provided buffer, avoiding any return-value move.
+/// [`Unredacted::write_string`] is the encoding path that wraps its scratch
+/// buffers in [`Zeroizing`] and writes directly into a caller-provided
+/// buffer, avoiding any return-value move.
 ///
 /// [`Debug`] emits `PrivateKey([REDACTED])`. To render the encoded strkey
 /// form, serialize via `serde`, or emit the raw seed bytes in any form,

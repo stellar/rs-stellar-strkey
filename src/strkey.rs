@@ -21,9 +21,11 @@ use crate::{
 /// (`PrivateKeyEd25519(PrivateKey([REDACTED]))`). [`FromStr`] and
 /// `Deserialize` parse from the strkey string form; both are input-only and
 /// do not leak. `Strkey` does not implement [`Display`] or `Serialize`
-/// directly. Because a `Strkey` may be a `PrivateKeyEd25519` variant,
-/// callers must wrap it in [`Unredacted`] (full strkey form for every
-/// variant) or [`Redacted`] (renders only `S[REDACTED]` for the
+/// directly — that asymmetry is intentional: `Deserialize` lets a strkey
+/// be parsed from a serialized string (input is not a leak vector), while
+/// `Serialize` is gated. Because a `Strkey` may be a `PrivateKeyEd25519`
+/// variant, callers must wrap it in [`Unredacted`] (full strkey form for
+/// every variant) or [`Redacted`] (renders only `S[REDACTED]` for the
 /// `PrivateKeyEd25519` variant; all other variants render their full
 /// strkey form) to render or serialize.
 ///
@@ -33,7 +35,15 @@ use crate::{
 /// intermediate scratch buffers, even when decoding a `PrivateKeyEd25519`
 /// variant. To decode a private key strkey with the intermediate buffers
 /// zeroed, use [`ed25519::PrivateKey::from_slice`] /
-/// [`ed25519::PrivateKey::from_string`] directly. See
+/// [`ed25519::PrivateKey::from_string`] directly.
+///
+/// Likewise, encoding a `PrivateKeyEd25519` variant via
+/// [`Unredacted::<&Strkey>::to_string`] or [`Display`] zeroes its internal
+/// scratch but leaves the encoded bytes in the returned `HeaplessString`
+/// (or in the caller's formatter). To encode a private key strkey with the
+/// scratch zeroed and no return-value move, render the inner
+/// [`ed25519::PrivateKey`] directly through
+/// [`Unredacted::<&PrivateKey>::write_string`]. See
 /// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]
@@ -150,55 +160,55 @@ impl FromStr for Strkey {
 #[cfg(feature = "serde-decoded")]
 mod strkey_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::Decoded;
+    use crate::decoded_json_format::UnredactedDecoded;
     use serde::{
         de::{self, MapAccess, Visitor},
         ser::SerializeMap,
         Deserialize, Deserializer, Serialize, Serializer,
     };
 
-    impl Serialize for Decoded<&Strkey> {
+    impl Serialize for UnredactedDecoded<&Strkey> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let mut map = serializer.serialize_map(Some(1))?;
             match self.0 {
                 Strkey::PublicKeyEd25519(key) => {
-                    map.serialize_entry("public_key_ed25519", &Decoded(key))?;
+                    map.serialize_entry("public_key_ed25519", &UnredactedDecoded(key))?;
                 }
                 Strkey::PrivateKeyEd25519(key) => {
-                    map.serialize_entry("private_key_ed25519", &Decoded(key))?;
+                    map.serialize_entry("private_key_ed25519", &UnredactedDecoded(key))?;
                 }
                 Strkey::PreAuthTx(key) => {
-                    map.serialize_entry("pre_auth_tx", &Decoded(key))?;
+                    map.serialize_entry("pre_auth_tx", &UnredactedDecoded(key))?;
                 }
                 Strkey::HashX(key) => {
-                    map.serialize_entry("hash_x", &Decoded(key))?;
+                    map.serialize_entry("hash_x", &UnredactedDecoded(key))?;
                 }
                 Strkey::MuxedAccountEd25519(key) => {
-                    map.serialize_entry("muxed_account_ed25519", &Decoded(key))?;
+                    map.serialize_entry("muxed_account_ed25519", &UnredactedDecoded(key))?;
                 }
                 Strkey::SignedPayloadEd25519(key) => {
-                    map.serialize_entry("signed_payload_ed25519", &Decoded(key))?;
+                    map.serialize_entry("signed_payload_ed25519", &UnredactedDecoded(key))?;
                 }
                 Strkey::Contract(key) => {
-                    map.serialize_entry("contract", &Decoded(key))?;
+                    map.serialize_entry("contract", &UnredactedDecoded(key))?;
                 }
                 Strkey::LiquidityPool(key) => {
-                    map.serialize_entry("liquidity_pool", &Decoded(key))?;
+                    map.serialize_entry("liquidity_pool", &UnredactedDecoded(key))?;
                 }
                 Strkey::ClaimableBalance(key) => {
-                    map.serialize_entry("claimable_balance", &Decoded(key))?;
+                    map.serialize_entry("claimable_balance", &UnredactedDecoded(key))?;
                 }
             }
             map.end()
         }
     }
 
-    impl<'de> Deserialize<'de> for Decoded<Strkey> {
+    impl<'de> Deserialize<'de> for UnredactedDecoded<Strkey> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             struct StrkeyVisitor;
 
             impl<'de> Visitor<'de> for StrkeyVisitor {
-                type Value = Decoded<Strkey>;
+                type Value = UnredactedDecoded<Strkey>;
 
                 fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
                     formatter.write_str("a strkey object")
@@ -211,39 +221,39 @@ mod strkey_decoded_serde_impl {
 
                     let strkey = match key {
                         "public_key_ed25519" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::PublicKeyEd25519(inner)
                         }
                         "private_key_ed25519" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::PrivateKeyEd25519(inner)
                         }
                         "pre_auth_tx" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::PreAuthTx(inner)
                         }
                         "hash_x" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::HashX(inner)
                         }
                         "muxed_account_ed25519" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::MuxedAccountEd25519(inner)
                         }
                         "signed_payload_ed25519" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::SignedPayloadEd25519(inner)
                         }
                         "contract" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::Contract(inner)
                         }
                         "liquidity_pool" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::LiquidityPool(inner)
                         }
                         "claimable_balance" => {
-                            let Decoded(inner) = map.next_value()?;
+                            let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::ClaimableBalance(inner)
                         }
                         _ => {
@@ -268,7 +278,7 @@ mod strkey_decoded_serde_impl {
                         return Err(de::Error::custom("expected exactly one variant key"));
                     }
 
-                    Ok(Decoded(strkey))
+                    Ok(UnredactedDecoded(strkey))
                 }
             }
 
@@ -345,7 +355,7 @@ impl FromStr for PreAuthTx {
 #[cfg(feature = "serde-decoded")]
 mod pre_auth_tx_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::Decoded;
+    use crate::decoded_json_format::UnredactedDecoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -359,17 +369,17 @@ mod pre_auth_tx_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for Decoded<&PreAuthTx> {
+    impl Serialize for UnredactedDecoded<&PreAuthTx> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(PreAuthTx(bytes)) = self;
             DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for Decoded<PreAuthTx> {
+    impl<'de> Deserialize<'de> for UnredactedDecoded<PreAuthTx> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(PreAuthTx(bytes)))
+            Ok(UnredactedDecoded(PreAuthTx(bytes)))
         }
     }
 }
@@ -442,7 +452,7 @@ impl FromStr for HashX {
 #[cfg(feature = "serde-decoded")]
 mod hash_x_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::Decoded;
+    use crate::decoded_json_format::UnredactedDecoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -456,17 +466,17 @@ mod hash_x_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for Decoded<&HashX> {
+    impl Serialize for UnredactedDecoded<&HashX> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(HashX(bytes)) = self;
             DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for Decoded<HashX> {
+    impl<'de> Deserialize<'de> for UnredactedDecoded<HashX> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(HashX(bytes)))
+            Ok(UnredactedDecoded(HashX(bytes)))
         }
     }
 }
@@ -539,7 +549,7 @@ impl FromStr for Contract {
 #[cfg(feature = "serde-decoded")]
 mod contract_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::Decoded;
+    use crate::decoded_json_format::UnredactedDecoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -553,17 +563,17 @@ mod contract_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for Decoded<&Contract> {
+    impl Serialize for UnredactedDecoded<&Contract> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(Contract(bytes)) = self;
             DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for Decoded<Contract> {
+    impl<'de> Deserialize<'de> for UnredactedDecoded<Contract> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(Contract(bytes)))
+            Ok(UnredactedDecoded(Contract(bytes)))
         }
     }
 }
@@ -636,7 +646,7 @@ impl FromStr for LiquidityPool {
 #[cfg(feature = "serde-decoded")]
 mod liquidity_pool_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::Decoded;
+    use crate::decoded_json_format::UnredactedDecoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -650,17 +660,17 @@ mod liquidity_pool_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for Decoded<&LiquidityPool> {
+    impl Serialize for UnredactedDecoded<&LiquidityPool> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(LiquidityPool(bytes)) = self;
             DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for Decoded<LiquidityPool> {
+    impl<'de> Deserialize<'de> for UnredactedDecoded<LiquidityPool> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(LiquidityPool(bytes)))
+            Ok(UnredactedDecoded(LiquidityPool(bytes)))
         }
     }
 }
@@ -754,7 +764,7 @@ impl FromStr for ClaimableBalance {
 #[cfg(feature = "serde-decoded")]
 mod claimable_balance_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::Decoded;
+    use crate::decoded_json_format::UnredactedDecoded;
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -772,7 +782,7 @@ mod claimable_balance_decoded_serde_impl {
         V0(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]),
     }
 
-    impl Serialize for Decoded<&ClaimableBalance> {
+    impl Serialize for UnredactedDecoded<&ClaimableBalance> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             match self.0 {
                 ClaimableBalance::V0(bytes) => DecodedBorrowed::V0(bytes).serialize(serializer),
@@ -780,10 +790,10 @@ mod claimable_balance_decoded_serde_impl {
         }
     }
 
-    impl<'de> Deserialize<'de> for Decoded<ClaimableBalance> {
+    impl<'de> Deserialize<'de> for UnredactedDecoded<ClaimableBalance> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let decoded = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(match decoded {
+            Ok(UnredactedDecoded(match decoded {
                 DecodedOwned::V0(bytes) => ClaimableBalance::V0(bytes),
             }))
         }

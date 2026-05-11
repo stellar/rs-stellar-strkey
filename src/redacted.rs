@@ -1,9 +1,14 @@
 //! Redacted and Unredacted wrappers for [`PrivateKey`] and [`Strkey`].
 //!
-//! These two types do not themselves implement [`Display`], [`Debug`], or
-//! `Serialize`/`Deserialize`. Callers wrap a value in [`Unredacted`] (full
-//! strkey form) or [`Redacted`] (redacts the private-key bytes) to render or
-//! serialize it.
+//! `PrivateKey` and `Strkey` do not implement [`Display`] or `Serialize`
+//! directly. To render the encoded strkey form or serialize via `serde`,
+//! callers wrap a value in [`Unredacted`] (full strkey form) or
+//! [`Redacted`] (redacts the private-key bytes — `Display` only; no
+//! `Serialize`, since the redacted form cannot round-trip).
+//!
+//! `Debug` is implemented on the bare types (and emits the redacted form),
+//! and `Deserialize` is implemented (input only — parsing a strkey string
+//! does not leak), so neither requires a wrapper.
 //!
 //! For `PrivateKey`, [`Redacted`] writes only `S[REDACTED]`. For `Strkey`,
 //! [`Redacted`] writes `S[REDACTED]` for the
@@ -24,19 +29,23 @@ use crate::{convert::encode_zeroizing, ed25519::PrivateKey, error::DecodeError, 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Unredacted<T>(pub T);
 
-/// Wraps a [`PrivateKey`] or [`Strkey`] so it can be rendered or serialized
-/// without exposing private-key bytes.
+/// Wraps a [`PrivateKey`] or [`Strkey`] so it can be rendered without
+/// exposing private-key bytes. Render-only — no `Serialize` (the redacted
+/// form cannot round-trip through `Deserialize`); use `Display` if you need
+/// the redacted text in a serialized output.
 ///
 /// `Redacted<&PrivateKey>` writes `S[REDACTED]`. `Redacted<&Strkey>` writes
 /// `S[REDACTED]` for the
 /// [`PrivateKeyEd25519`](Strkey::PrivateKeyEd25519) variant; all other
-/// variants render their full strkey form.
+/// variants render their full strkey form (none of those variants contain
+/// secret material — reach for [`Unredacted`] if a uniform shape across
+/// variants matters to you).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Redacted<T>(pub T);
 
 // --- PrivateKey ---
 
-impl<'a> Unredacted<&'a PrivateKey> {
+impl Unredacted<&PrivateKey> {
     /// Encodes this private key to its strkey string form.
     ///
     /// # Zeroize
@@ -72,7 +81,7 @@ impl<'a> Unredacted<&'a PrivateKey> {
     }
 }
 
-impl<'a> Display for Unredacted<&'a PrivateKey> {
+impl Display for Unredacted<&PrivateKey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut buf: Zeroizing<HeaplessString<{ PrivateKey::ENCODED_LEN }>> =
             Zeroizing::new(HeaplessString::new());
@@ -81,7 +90,7 @@ impl<'a> Display for Unredacted<&'a PrivateKey> {
     }
 }
 
-impl<'a> Debug for Unredacted<&'a PrivateKey> {
+impl Debug for Unredacted<&PrivateKey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str("PrivateKey(")?;
         for b in &self.0 .0 {
@@ -91,13 +100,13 @@ impl<'a> Debug for Unredacted<&'a PrivateKey> {
     }
 }
 
-impl<'a> Display for Redacted<&'a PrivateKey> {
+impl Display for Redacted<&PrivateKey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str("S[REDACTED]")
     }
 }
 
-impl<'a> Debug for Redacted<&'a PrivateKey> {
+impl Debug for Redacted<&PrivateKey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_str("PrivateKey([REDACTED])")
     }
@@ -105,19 +114,30 @@ impl<'a> Debug for Redacted<&'a PrivateKey> {
 
 // --- Strkey ---
 
-impl<'a> Unredacted<&'a Strkey> {
+impl Unredacted<&Strkey> {
     /// Encodes this strkey to its full strkey string form.
+    ///
+    /// # Zeroize
+    ///
+    /// For the `PrivateKeyEd25519` variant, the encoded private key bytes
+    /// pass through both an internal scratch buffer (zeroed on drop) and
+    /// the returned `HeaplessString` (which is plain — its bytes are not
+    /// zeroed). To encode a private key strkey with the intermediate buffer
+    /// zeroed, render the inner [`PrivateKey`] directly through
+    /// [`Unredacted::<&PrivateKey>::write_string`].
     pub fn to_string(&self) -> HeaplessString<{ Strkey::MAX_ENCODED_LEN }> {
-        let mut s: HeaplessString<{ Strkey::MAX_ENCODED_LEN }> = HeaplessString::new();
-        // Display can't fail for these strkey types and the buffer is sized
-        // to the longest variant, so a heapless capacity error here is
-        // unreachable.
-        let _ = write!(s, "{}", self);
-        s
+        let mut zeroizing: Zeroizing<HeaplessString<{ Strkey::MAX_ENCODED_LEN }>> =
+            Zeroizing::new(HeaplessString::new());
+        // The buffer is sized to the longest variant, so a heapless
+        // capacity error is unreachable.
+        write!(*zeroizing, "{}", self).expect("MAX_ENCODED_LEN bound covers every variant");
+        let mut out: HeaplessString<{ Strkey::MAX_ENCODED_LEN }> = HeaplessString::new();
+        out.push_str(&zeroizing).unwrap();
+        out
     }
 }
 
-impl<'a> Display for Unredacted<&'a Strkey> {
+impl Display for Unredacted<&Strkey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.0 {
             Strkey::PublicKeyEd25519(k) => Display::fmt(k, f),
@@ -133,7 +153,7 @@ impl<'a> Display for Unredacted<&'a Strkey> {
     }
 }
 
-impl<'a> Debug for Unredacted<&'a Strkey> {
+impl Debug for Unredacted<&Strkey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.0 {
             Strkey::PublicKeyEd25519(k) => write!(f, "PublicKeyEd25519({:?})", k),
@@ -149,7 +169,7 @@ impl<'a> Debug for Unredacted<&'a Strkey> {
     }
 }
 
-impl<'a> Display for Redacted<&'a Strkey> {
+impl Display for Redacted<&Strkey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.0 {
             Strkey::PublicKeyEd25519(k) => Display::fmt(k, f),
@@ -165,7 +185,7 @@ impl<'a> Display for Redacted<&'a Strkey> {
     }
 }
 
-impl<'a> Debug for Redacted<&'a Strkey> {
+impl Debug for Redacted<&Strkey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.0 {
             Strkey::PublicKeyEd25519(k) => write!(f, "PublicKeyEd25519({:?})", k),
@@ -249,7 +269,7 @@ impl FromStr for Unredacted<Strkey> {
 
 #[cfg(feature = "serde")]
 mod serde_impl {
-    use super::{Redacted, Unredacted};
+    use super::Unredacted;
     use core::fmt::{self, Display};
     use core::marker::PhantomData;
     use core::str::FromStr;
@@ -264,14 +284,12 @@ mod serde_impl {
         }
     }
 
-    impl<T> Serialize for Redacted<T>
-    where
-        Self: Display,
-    {
-        fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-            s.collect_str(self)
-        }
-    }
+    // No `Serialize` for `Redacted<T>`: `S[REDACTED]` cannot round-trip
+    // through `Deserialize`, and for `Redacted<Strkey>` the serialized shape
+    // would be variant-dependent (full strkey for non-private variants,
+    // `S[REDACTED]` for the private one). Callers who need the redacted
+    // string in serialized output can render via `Display` and serialize
+    // that themselves.
 
     impl<'de, T> Deserialize<'de> for Unredacted<T>
     where

@@ -28,7 +28,7 @@ Some features utilize the `alloc` crate.
 |---------|-------|--------------|-------------|
 | `default` | | | By default there are no features enabled |
 | `serde` | | | Enables serde serialization/deserialization as strkey strings |
-| `serde-decoded` | ✓ | `serde` | Enables serde serialization/deserialization via `Decoded<T>` as JSON objects, with byte fields hex-encoded |
+| `serde-decoded` | ✓ | `serde` | Enables serde serialization/deserialization via `UnredactedDecoded<T>` as JSON objects, with byte fields hex-encoded |
 | `cli` | ✓ | `serde`, `serde-decoded` | For use when installing the `stellar-strkey` cli |
 
 To use in a `no_std` environment without an allocator:
@@ -43,7 +43,7 @@ To enable serde support:
 stellar-strkey = { version = "...", features = ["serde"] }
 ```
 
-To enable the `Decoded` JSON format (requires an allocator):
+To enable the `UnredactedDecoded` JSON format (requires an allocator):
 
 ```toml
 stellar-strkey = { version = "...", features = ["serde-decoded"] }

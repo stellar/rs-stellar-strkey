@@ -604,7 +604,8 @@ mod signed_payload_decoded_serde_impl {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
             let sp = SignedPayload::new(ed25519, &payload)
-                .map_err(|_| de::Error::custom("invalid signed payload"))?;
+            let sp = SignedPayload::new(ed25519, &payload)
+                .map_err(|e| de::Error::custom(format_args!("invalid signed payload: {e}")))?;
             Ok(Decoded(sp))
         }
     }

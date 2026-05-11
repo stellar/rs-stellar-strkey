@@ -1,5 +1,5 @@
 use crate::{
-    ed25519, ClaimableBalance, Contract, UnredactedDecoded, HashX, LiquidityPool, PreAuthTx, Strkey,
+    ed25519, ClaimableBalance, Contract, HashX, LiquidityPool, PreAuthTx, Strkey, UnredactedDecoded,
 };
 use clap::{Args, ValueEnum};
 

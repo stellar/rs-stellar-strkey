@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{DecodeError, UnredactedDecoded, Strkey};
+use crate::{DecodeError, Strkey, UnredactedDecoded};
 use clap::Args;
 
 #[derive(Debug)]

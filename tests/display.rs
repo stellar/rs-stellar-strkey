@@ -245,28 +245,3 @@ fn test_claimable_balance_display() {
         "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDE"
     );
 }
-
-#[test]
-fn test_ed25519_private_key_redacted() {
-    let key = ed25519::PrivateKey([0u8; 32]);
-    assert_eq!(format!("{}", key.as_redacted()), "S[REDACTED]");
-}
-
-#[test]
-fn test_strkey_ed25519_private_key_redacted() {
-    let strkey = Strkey::PrivateKeyEd25519(ed25519::PrivateKey([0u8; 32]));
-    assert_eq!(format!("{}", strkey.as_redacted()), "S[REDACTED]");
-}
-
-#[test]
-fn test_strkey_non_private_key_redacted_renders_full() {
-    let strkey = Strkey::PublicKeyEd25519(ed25519::PublicKey([
-        0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
-        0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d, 0x05, 0xc7,
-        0xb1, 0x03,
-    ]));
-    assert_eq!(
-        format!("{}", strkey.as_redacted()),
-        "GA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5",
-    );
-}

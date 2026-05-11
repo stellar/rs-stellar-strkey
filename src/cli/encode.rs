@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::{UnredactedDecoded, Strkey};
+use crate::{Strkey, UnredactedDecoded};
 
 // Bound on the JSON input size. The largest legitimate UnredactedDecoded<Strkey> JSON
 // (a pretty-printed signed_payload_ed25519 with a max 64-byte payload) is

@@ -35,8 +35,8 @@
 ///
 /// `UnredactedDecoded<&ed25519::PrivateKey>` serializes the raw 32-byte seed as hex
 /// — that is the feature's purpose, but it is a deliberate byte-exposing
-/// path that bypasses the [`Unredacted`](crate::Unredacted) /
-/// [`Redacted`](crate::Redacted) gating that the rest of the public API
-/// applies to private-key bytes. Reach for this wrapper only when callers
-/// intentionally want the raw bytes in their JSON output.
+/// path that bypasses the [`Unredacted`](crate::Unredacted) gating that the
+/// rest of the public API applies to private-key bytes. Reach for this
+/// wrapper only when callers intentionally want the raw bytes in their JSON
+/// output.
 pub struct UnredactedDecoded<T>(pub T);

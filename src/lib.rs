@@ -20,8 +20,8 @@
 //! - [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr)
 //!   implementations for every kind, plus inherent `to_string` /
 //!   `from_string` / `from_slice` methods. [`Strkey`] and
-//!   [`ed25519::PrivateKey`] expose `Display` and `to_string` through their
-//!   [`Unredacted`] / [`Redacted`] wrappers instead of directly.
+//!   [`ed25519::PrivateKey`] expose `Display` and `to_string` through the
+//!   [`Unredacted`] wrapper instead of directly.
 //!
 //! # Strkey kinds
 //!
@@ -121,7 +121,7 @@ mod typ;
 mod version;
 
 pub use error::*;
-pub use redacted::{Redacted, Unredacted};
+pub use redacted::Unredacted;
 pub use strkey::*;
 
 #[cfg(feature = "serde-decoded")]

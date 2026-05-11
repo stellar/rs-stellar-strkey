@@ -1,7 +1,7 @@
 use crate::{
     convert::{binary_len, decode, decode_zeroizing, encode, encode_len},
     error::DecodeError,
-    redacted::{Redacted, Unredacted},
+    redacted::Unredacted,
     version,
 };
 
@@ -27,11 +27,9 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// does not implement [`Display`] or `Serialize` directly — that
 /// asymmetry is intentional: `Deserialize` lets a private key be parsed
 /// from a serialized string (input is not a leak vector), while `Serialize`
-/// is gated to force callers to choose between [`Unredacted`] (full strkey
-/// form, leaks the encoded bytes through the formatter) and [`Redacted`]
-/// (only `S[REDACTED]`, never the encoded bytes), or
-/// [`UnredactedDecoded`](crate::UnredactedDecoded) under `serde-decoded` for the JSON-bytes
-/// form.
+/// is gated. To render or serialize the encoded form, wrap the value in
+/// [`Unredacted`], or use [`UnredactedDecoded`](crate::UnredactedDecoded)
+/// under `serde-decoded` for the JSON-bytes form.
 ///
 /// [`Unredacted::<&PrivateKey>::write_string`] is the encoding path that
 /// wraps its scratch buffers in [`Zeroizing`] and writes directly into a
@@ -55,16 +53,8 @@ impl PrivateKey {
         assert!(Self::ENCODED_LEN == 56);
     };
 
-    pub fn as_redacted(&self) -> Redacted<&Self> {
-        Redacted(self)
-    }
-
     pub fn as_unredacted(&self) -> Unredacted<&Self> {
         Unredacted(self)
-    }
-
-    pub fn to_redacted(&self) -> Redacted<Self> {
-        Redacted(self.clone())
     }
 
     pub fn to_unredacted(&self) -> Unredacted<Self> {

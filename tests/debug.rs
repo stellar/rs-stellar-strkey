@@ -300,16 +300,6 @@ fn test_ed25519_private_key_debug_unredacted() {
 }
 
 #[test]
-fn test_ed25519_private_key_debug_redacted() {
-    let key = ed25519::PrivateKey([
-        0x69, 0xa8, 0xc4, 0xcb, 0xb9, 0xf6, 0x4e, 0x8a, 0x07, 0x98, 0xf6, 0xe1, 0xac, 0x65, 0xd0,
-        0x6c, 0x31, 0x62, 0x92, 0x90, 0x56, 0xbc, 0xf4, 0xcd, 0xb7, 0xd3, 0x73, 0x8d, 0x18, 0x55,
-        0xf3, 0x63,
-    ]);
-    assert_eq!(format!("{:?}", key.as_redacted()), "PrivateKey([REDACTED])");
-}
-
-#[test]
 fn test_strkey_ed25519_private_key_debug_unredacted() {
     let strkey = Strkey::PrivateKeyEd25519(ed25519::PrivateKey([
         0x69, 0xa8, 0xc4, 0xcb, 0xb9, 0xf6, 0x4e, 0x8a, 0x07, 0x98, 0xf6, 0xe1, 0xac, 0x65, 0xd0,
@@ -323,15 +313,6 @@ fn test_strkey_ed25519_private_key_debug_unredacted() {
 }
 
 #[test]
-fn test_strkey_ed25519_private_key_debug_redacted() {
-    let strkey = Strkey::PrivateKeyEd25519(ed25519::PrivateKey([0x00; 32]));
-    assert_eq!(
-        format!("{:?}", strkey.as_redacted()),
-        "PrivateKeyEd25519(PrivateKey([REDACTED]))",
-    );
-}
-
-#[test]
 fn test_strkey_ed25519_public_key_debug_unredacted() {
     let strkey = Strkey::PublicKeyEd25519(ed25519::PublicKey([
         0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
@@ -340,20 +321,6 @@ fn test_strkey_ed25519_public_key_debug_unredacted() {
     ]));
     assert_eq!(
         format!("{:?}", strkey.as_unredacted()),
-        "PublicKeyEd25519(PublicKey(363eaa3867841fbad0f4ed88c779e4fe66e56a2470dc98c0ec9c073d05c7b103))",
-    );
-}
-
-#[test]
-fn test_strkey_ed25519_public_key_debug_redacted() {
-    let strkey = Strkey::PublicKeyEd25519(ed25519::PublicKey([
-        0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79, 0xe4,
-        0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d, 0x05, 0xc7,
-        0xb1, 0x03,
-    ]));
-    // Non-secret variant: Redacted matches bare Debug (= Unredacted) exactly.
-    assert_eq!(
-        format!("{:?}", strkey.as_redacted()),
         "PublicKeyEd25519(PublicKey(363eaa3867841fbad0f4ed88c779e4fe66e56a2470dc98c0ec9c073d05c7b103))",
     );
 }

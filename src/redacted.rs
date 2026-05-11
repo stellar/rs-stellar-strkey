@@ -1,20 +1,12 @@
-//! Redacted and Unredacted wrappers for [`PrivateKey`] and [`Strkey`].
+//! Unredacted wrapper for [`PrivateKey`] and [`Strkey`].
 //!
 //! `PrivateKey` and `Strkey` do not implement [`Display`] or `Serialize`
 //! directly. To render the encoded strkey form or serialize via `serde`,
-//! callers wrap a value in [`Unredacted`] (full strkey form) or
-//! [`Redacted`] (redacts the private-key bytes — `Display` only; no
-//! `Serialize`, since the redacted form cannot round-trip).
+//! callers wrap a value in [`Unredacted`].
 //!
 //! `Debug` is implemented on the bare types (and emits the redacted form),
 //! and `Deserialize` is implemented (input only — parsing a strkey string
 //! does not leak), so neither requires a wrapper.
-//!
-//! For `PrivateKey`, [`Redacted`] writes only `S[REDACTED]`. For `Strkey`,
-//! [`Redacted`] writes `S[REDACTED]` for the
-//! [`PrivateKeyEd25519`](Strkey::PrivateKeyEd25519) variant and renders
-//! every other variant in its full strkey form (none of those variants
-//! contain secret material).
 
 use core::fmt::{self, Debug, Display, Formatter, Write};
 use core::str::FromStr;
@@ -28,20 +20,6 @@ use crate::{convert::encode_zeroizing, ed25519::PrivateKey, error::DecodeError, 
 /// in its full strkey form.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Unredacted<T>(pub T);
-
-/// Wraps a [`PrivateKey`] or [`Strkey`] so it can be rendered without
-/// exposing private-key bytes. Render-only — no `Serialize` (the redacted
-/// form cannot round-trip through `Deserialize`); use `Display` if you need
-/// the redacted text in a serialized output.
-///
-/// `Redacted<&PrivateKey>` writes `S[REDACTED]`. `Redacted<&Strkey>` writes
-/// `S[REDACTED]` for the
-/// [`PrivateKeyEd25519`](Strkey::PrivateKeyEd25519) variant; all other
-/// variants render their full strkey form (none of those variants contain
-/// secret material — reach for [`Unredacted`] if a uniform shape across
-/// variants matters to you).
-#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Redacted<T>(pub T);
 
 // --- PrivateKey ---
 
@@ -97,18 +75,6 @@ impl Debug for Unredacted<&PrivateKey> {
             write!(f, "{b:02x}")?;
         }
         f.write_str(")")
-    }
-}
-
-impl Display for Redacted<&PrivateKey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str("S[REDACTED]")
-    }
-}
-
-impl Debug for Redacted<&PrivateKey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str("PrivateKey([REDACTED])")
     }
 }
 
@@ -181,38 +147,6 @@ impl Debug for Unredacted<&Strkey> {
     }
 }
 
-impl Display for Redacted<&Strkey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            Strkey::PublicKeyEd25519(k) => Display::fmt(k, f),
-            Strkey::PrivateKeyEd25519(k) => Display::fmt(&Redacted(k), f),
-            Strkey::PreAuthTx(k) => Display::fmt(k, f),
-            Strkey::HashX(k) => Display::fmt(k, f),
-            Strkey::MuxedAccountEd25519(k) => Display::fmt(k, f),
-            Strkey::SignedPayloadEd25519(k) => Display::fmt(k, f),
-            Strkey::Contract(k) => Display::fmt(k, f),
-            Strkey::LiquidityPool(k) => Display::fmt(k, f),
-            Strkey::ClaimableBalance(k) => Display::fmt(k, f),
-        }
-    }
-}
-
-impl Debug for Redacted<&Strkey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self.0 {
-            Strkey::PublicKeyEd25519(k) => write!(f, "PublicKeyEd25519({:?})", k),
-            Strkey::PrivateKeyEd25519(k) => write!(f, "PrivateKeyEd25519({:?})", Redacted(k)),
-            Strkey::PreAuthTx(k) => write!(f, "PreAuthTx({:?})", k),
-            Strkey::HashX(k) => write!(f, "HashX({:?})", k),
-            Strkey::MuxedAccountEd25519(k) => write!(f, "MuxedAccountEd25519({:?})", k),
-            Strkey::SignedPayloadEd25519(k) => write!(f, "SignedPayloadEd25519({:?})", k),
-            Strkey::Contract(k) => write!(f, "Contract({:?})", k),
-            Strkey::LiquidityPool(k) => write!(f, "LiquidityPool({:?})", k),
-            Strkey::ClaimableBalance(k) => write!(f, "ClaimableBalance({:?})", k),
-        }
-    }
-}
-
 // --- Owned Display/Debug (delegate to borrowed form) ---
 
 impl Display for Unredacted<PrivateKey> {
@@ -224,18 +158,6 @@ impl Display for Unredacted<PrivateKey> {
 impl Debug for Unredacted<PrivateKey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Debug::fmt(&Unredacted(&self.0), f)
-    }
-}
-
-impl Display for Redacted<PrivateKey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&Redacted(&self.0), f)
-    }
-}
-
-impl Debug for Redacted<PrivateKey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Debug::fmt(&Redacted(&self.0), f)
     }
 }
 
@@ -251,19 +173,7 @@ impl Debug for Unredacted<Strkey> {
     }
 }
 
-impl Display for Redacted<Strkey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&Redacted(&self.0), f)
-    }
-}
-
-impl Debug for Redacted<Strkey> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Debug::fmt(&Redacted(&self.0), f)
-    }
-}
-
-// --- FromStr (Unredacted only; Redacted has no round-trip) ---
+// --- FromStr ---
 
 impl FromStr for Unredacted<PrivateKey> {
     type Err = DecodeError;
@@ -295,13 +205,6 @@ mod serde_impl {
             s.collect_str(self)
         }
     }
-
-    // No `Serialize` for `Redacted<T>`: `S[REDACTED]` cannot round-trip
-    // through `Deserialize`, and for `Redacted<Strkey>` the serialized shape
-    // would be variant-dependent (full strkey for non-private variants,
-    // `S[REDACTED]` for the private one). Callers who need the redacted
-    // string in serialized output can render via `Display` and serialize
-    // that themselves.
 
     impl<'de, T> Deserialize<'de> for Unredacted<T>
     where

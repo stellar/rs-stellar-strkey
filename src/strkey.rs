@@ -9,7 +9,7 @@ use crate::{
     convert::{binary_len, decode, encode, encode_len},
     ed25519,
     error::DecodeError,
-    redacted::{Redacted, Unredacted},
+    redacted::Unredacted,
     version,
 };
 
@@ -23,11 +23,8 @@ use crate::{
 /// do not leak. `Strkey` does not implement [`Display`] or `Serialize`
 /// directly — that asymmetry is intentional: `Deserialize` lets a strkey
 /// be parsed from a serialized string (input is not a leak vector), while
-/// `Serialize` is gated. Because a `Strkey` may be a `PrivateKeyEd25519`
-/// variant, callers must wrap it in [`Unredacted`] (full strkey form for
-/// every variant) or [`Redacted`] (renders only `S[REDACTED]` for the
-/// `PrivateKeyEd25519` variant; all other variants render their full
-/// strkey form) to render or serialize.
+/// `Serialize` is gated. To render or serialize the encoded form, wrap the
+/// value in [`Unredacted`].
 ///
 /// # Zeroize
 ///
@@ -98,16 +95,8 @@ impl Strkey {
         assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
     };
 
-    pub fn as_redacted(&self) -> Redacted<&Self> {
-        Redacted(self)
-    }
-
     pub fn as_unredacted(&self) -> Unredacted<&Self> {
         Unredacted(self)
-    }
-
-    pub fn to_redacted(&self) -> Redacted<Self> {
-        Redacted(self.clone())
     }
 
     pub fn to_unredacted(&self) -> Unredacted<Self> {

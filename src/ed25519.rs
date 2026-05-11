@@ -41,7 +41,7 @@ impl Debug for PrivateKey {
 impl PrivateKey {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -204,7 +204,7 @@ impl Debug for PublicKey {
 impl PublicKey {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -308,7 +308,7 @@ impl Debug for MuxedAccount {
 impl MuxedAccount {
     pub(crate) const PAYLOAD_LEN: usize = 32 + 8; // ed25519 + id
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 43);
         assert!(Self::ENCODED_LEN == 69);
@@ -433,7 +433,7 @@ impl SignedPayload {
     // Max payload: 32 ed25519 + 4 len + 64 inner payload = 100
     pub(crate) const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
     pub(crate) const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
-    pub(crate) const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    pub const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
     const MIN_INNER_PAYLOAD_LEN: usize = 1;
     const MAX_INNER_PAYLOAD_LEN: usize = 64;
     const MAX_INNER_PAYLOAD_LEN_U32: u32 = 64;

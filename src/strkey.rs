@@ -281,7 +281,7 @@ impl Debug for PreAuthTx {
 impl PreAuthTx {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -378,7 +378,7 @@ impl Debug for HashX {
 impl HashX {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -475,7 +475,7 @@ impl Debug for Contract {
 impl Contract {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -572,7 +572,7 @@ impl Debug for LiquidityPool {
 impl LiquidityPool {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -678,7 +678,7 @@ impl ClaimableBalance {
     // Payload: 1 version byte + 32 hash bytes = 33
     pub(crate) const PAYLOAD_LEN: usize = 1 + 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::PAYLOAD_LEN == 33);
         assert!(Self::BINARY_LEN == 36);

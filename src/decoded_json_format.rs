@@ -31,14 +31,8 @@
 /// allocation-sensitive application, callers should validate the input
 /// length prior to deserializing to avoid unexpected or unbounded allocations.
 ///
-/// # Security
-///
 /// `Decoded` is not implemented directly for
-/// [`ed25519::PrivateKey`](crate::ed25519::PrivateKey); the only path that
-/// serializes private-key bytes as hex is
-/// `Decoded<Unredacted<&ed25519::PrivateKey>>`. Wrapping in
-/// [`Unredacted`](crate::Unredacted) is required to opt in to exposing the
-/// raw seed — that double-wrap is the same gating the rest of the public
-/// API applies to private-key bytes. Reach for this wrapper only when
-/// callers intentionally want the raw bytes in their JSON output.
+/// [`ed25519::PrivateKey`](crate::ed25519::PrivateKey); private-key bytes are
+/// serialized only through `Decoded<Unredacted<&PrivateKey>>`, requiring an
+/// explicit [`Unredacted`](crate::Unredacted) wrap to opt in.
 pub struct Decoded<T>(pub T);

@@ -11,37 +11,36 @@
 //!
 //! This crate provides:
 //!
-//! - The [`Strkey`] enum, which round-trips any non-secret strkey kind.
-//!   The `PrivateKeyEd25519` (`S…`) variant is intentionally omitted —
-//!   private-key strkeys are encoded and decoded directly via
-//!   [`ed25519::PrivateKey`], with rendering gated behind [`Unredacted`].
+//! - The [`Strkey`] enum, which can hold and round-trip any strkey kind
+//!   other than `PrivateKeyEd25519` (`S…`); private-key strkeys are
+//!   handled directly via [`ed25519::PrivateKey`], with rendering gated
+//!   behind [`Unredacted`].
 //! - Per-kind types in this module ([`PreAuthTx`], [`HashX`], [`Contract`],
 //!   [`LiquidityPool`], [`ClaimableBalance`]) and in [`ed25519`]
 //!   ([`ed25519::PublicKey`], [`ed25519::PrivateKey`],
-//!   [`ed25519::MuxedAccount`], [`ed25519::SignedPayload`]).
+//!   [`ed25519::MuxedAccount`], [`ed25519::SignedPayload`]) for callers that
+//!   know the kind in advance.
 //! - [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr)
 //!   implementations for every kind, plus inherent `to_string` /
-//!   `from_string` / `from_slice` methods. [`ed25519::PrivateKey`] exposes
-//!   `Display` and `to_string` through the [`Unredacted`] wrapper instead
-//!   of directly.
+//!   `from_string` / `from_slice` methods.
 //!
 //! # Strkey kinds
 //!
 //! | Prefix | Kind                                                                  | Payload bytes |
 //! |--------|-----------------------------------------------------------------------|---------------|
-//! | `G`    | [`ed25519::PublicKey`]                                                 |            32 |
-//! | `S`    | [`ed25519::PrivateKey`]                                                |            32 |
-//! | `M`    | [`ed25519::MuxedAccount`]                                              |            40 |
-//! | `T`    | [`PreAuthTx`]                                                          |            32 |
-//! | `X`    | [`HashX`]                                                              |            32 |
-//! | `P`    | [`ed25519::SignedPayload`]                                             |        40–100 |
-//! | `C`    | [`Contract`]                                                           |            32 |
-//! | `L`    | [`LiquidityPool`]                                                      |            32 |
-//! | `B`    | [`ClaimableBalance`]                                                   |            33 |
+//! | `G`    | [`Strkey::PublicKeyEd25519`] / [`ed25519::PublicKey`]                  |            32 |
+//! | `S`    | [`ed25519::PrivateKey`] only (omitted from [`Strkey`])                 |            32 |
+//! | `M`    | [`Strkey::MuxedAccountEd25519`] / [`ed25519::MuxedAccount`]            |            40 |
+//! | `T`    | [`Strkey::PreAuthTx`] / [`PreAuthTx`]                                  |            32 |
+//! | `X`    | [`Strkey::HashX`] / [`HashX`]                                          |            32 |
+//! | `P`    | [`Strkey::SignedPayloadEd25519`] / [`ed25519::SignedPayload`]          |        40–100 |
+//! | `C`    | [`Strkey::Contract`] / [`Contract`]                                    |            32 |
+//! | `L`    | [`Strkey::LiquidityPool`] / [`LiquidityPool`]                          |            32 |
+//! | `B`    | [`Strkey::ClaimableBalance`] / [`ClaimableBalance`]                    |            33 |
 //!
 //! # Examples
 //!
-//! Parse any non-secret strkey kind when the kind isn't known up front:
+//! Parse any strkey when the kind isn't known up front:
 //!
 //! ```
 //! use stellar_strkey::Strkey;

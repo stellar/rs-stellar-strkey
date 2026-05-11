@@ -20,20 +20,12 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// are overwritten with zeroes when a value is dropped.
 /// [`from_string`](Self::from_string) and [`from_slice`](Self::from_slice)
 /// zero their intermediate scratch buffers when they return.
-///
-/// [`Debug`] is implemented and emits `PrivateKey([REDACTED])`; it never
-/// exposes the seed bytes. [`FromStr`] and `Deserialize` parse from the
-/// strkey string form; both are input-only and do not leak. `PrivateKey`
-/// does not implement [`Display`] or `Serialize` directly — that
-/// asymmetry is intentional: `Deserialize` lets a private key be parsed
-/// from a serialized string (input is not a leak vector), while `Serialize`
-/// is gated. To render or serialize the encoded form, wrap the value in
-/// [`Unredacted`], or use `Decoded` (under the `serde-decoded`
-/// feature) for the JSON-bytes form.
-///
 /// [`Unredacted::<&PrivateKey>::write_string`] is the encoding path that
 /// wraps its scratch buffers in [`Zeroizing`] and writes directly into a
 /// caller-provided buffer, avoiding any return-value move.
+///
+/// [`Debug`] emits `PrivateKey([REDACTED])`. To render the encoded strkey
+/// form or serialize via `serde`, wrap the value in [`Unredacted`].
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]
 pub struct PrivateKey(pub [u8; 32]);
@@ -113,10 +105,6 @@ impl PrivateKey {
 
     pub fn as_unredacted(&self) -> Unredacted<&Self> {
         Unredacted(self)
-    }
-
-    pub fn to_unredacted(&self) -> Unredacted<Self> {
-        Unredacted(self.clone())
     }
 }
 
@@ -632,8 +620,8 @@ mod tests {
     use heapless::String;
     use zeroize::Zeroizing;
 
-    /// `Unredacted::write_string` must produce the same strkey bytes as
-    /// `Unredacted::to_string`. Only the buffer-zeroization story differs.
+    /// `write_string` must produce the same strkey bytes as `to_string`.
+    /// Only the buffer-zeroization story differs.
     #[test]
     fn test_private_key_write_string_matches_to_string() {
         let key = PrivateKey([

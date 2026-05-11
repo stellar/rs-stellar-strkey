@@ -12,14 +12,10 @@ use crate::{
     version,
 };
 
-/// A decoded Stellar strkey of any supported non-secret type.
+/// A decoded Stellar strkey of any supported type.
 ///
-/// This enum intentionally does not include the `PrivateKeyEd25519` (`S…`)
-/// strkey, because that variant carries secret key material and is gated
-/// behind a separate type with zeroization and redacted formatting. To
-/// encode or decode a private-key strkey, use
-/// [`ed25519::PrivateKey`] directly — `Strkey::from_string` / `FromStr`
-/// will reject `S…` inputs.
+/// The `PrivateKeyEd25519` (`S…`) variant is intentionally not included;
+/// use [`ed25519::PrivateKey`] directly to encode or decode `S…` strkeys.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -117,8 +113,6 @@ impl Strkey {
             version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
                 ClaimableBalance::from_payload(&payload)?,
             )),
-            // version::PRIVATE_KEY_ED25519 is intentionally not supported here;
-            // use ed25519::PrivateKey directly to decode `S…` strkeys.
             _ => Err(DecodeError::Invalid),
         }
     }

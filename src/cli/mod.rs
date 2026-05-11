@@ -22,6 +22,9 @@ use crate::Strkey;
 pub struct Root {
     #[command(subcommand)]
     cmd: Cmd,
+    /// Suppress stderr log and warning output
+    #[arg(long, short = 'q', global = true)]
+    quiet: bool,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -44,8 +47,8 @@ impl Root {
     /// If the root command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
         match &self.cmd {
-            Cmd::Decode(c) => c.run()?,
-            Cmd::Encode(c) => c.run()?,
+            Cmd::Decode(c) => c.run(self.quiet)?,
+            Cmd::Encode(c) => c.run(self.quiet)?,
             Cmd::Zero(c) => c.run(),
             Cmd::Version => version::Cmd::run(),
         }

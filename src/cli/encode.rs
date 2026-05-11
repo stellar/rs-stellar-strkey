@@ -34,13 +34,10 @@ pub struct Cmd {
     /// JSON for Strkey to encode
     #[arg()]
     json: String,
-    /// Suppress stderr log and warning output
-    #[arg(long, short = 'q')]
-    quiet: bool,
 }
 
 impl Cmd {
-    pub fn run(&self) -> Result<(), Error> {
+    pub fn run(&self, quiet: bool) -> Result<(), Error> {
         if self.json.len() > MAX_JSON_LEN {
             return Err(Error::InputTooLarge {
                 len: self.json.len(),
@@ -49,7 +46,7 @@ impl Cmd {
         }
         let Decoded(strkey): Decoded<Strkey> =
             serde_json::from_str(&self.json).map_err(Error::Json)?;
-        if !self.quiet {
+        if !quiet {
             super::warn_if_private(&strkey);
         }
         println!("{strkey}");

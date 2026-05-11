@@ -27,9 +27,7 @@ impl core::fmt::Display for Error {
             )),
             Error::Json(e) => f.write_fmt(format_args!("{e}")),
             Error::Io(e) => f.write_fmt(format_args!("reading stdin: {e}")),
-            Error::NoInput => {
-                f.write_str("no input: provide a positional argument or pipe input to stdin")
-            }
+            Error::NoInput => f.write_str("no input: pipe input to stdin"),
         }
     }
 }
@@ -38,39 +36,27 @@ impl core::error::Error for Error {}
 
 #[derive(Args, Debug, Clone)]
 #[command()]
-pub struct Cmd {
-    /// JSON for Strkey to encode (reads from stdin if not provided)
-    #[arg()]
-    json: Option<String>,
-}
+pub struct Cmd {}
 
 impl Cmd {
     pub fn run(&self, opts: &super::RunOpts) -> Result<(), Error> {
-        let buf;
-        let input = match &self.json {
-            Some(s) => s.as_str(),
-            None => {
-                let stdin = std::io::stdin();
-                if stdin.is_terminal() {
-                    return Err(Error::NoInput);
-                }
-                let mut s = String::new();
-                stdin
-                    .lock()
-                    .take(MAX_JSON_LEN as u64 + 1)
-                    .read_to_string(&mut s)
-                    .map_err(Error::Io)?;
-                buf = s;
-                buf.as_str()
-            }
-        };
+        let stdin = std::io::stdin();
+        if stdin.is_terminal() {
+            return Err(Error::NoInput);
+        }
+        let mut input = String::new();
+        stdin
+            .lock()
+            .take(MAX_JSON_LEN as u64 + 1)
+            .read_to_string(&mut input)
+            .map_err(Error::Io)?;
         if input.len() > MAX_JSON_LEN {
             return Err(Error::InputTooLarge {
                 len: input.len(),
                 max: MAX_JSON_LEN,
             });
         }
-        let Decoded(strkey): Decoded<Strkey> = serde_json::from_str(input).map_err(Error::Json)?;
+        let Decoded(strkey): Decoded<Strkey> = serde_json::from_str(&input).map_err(Error::Json)?;
         if !opts.quiet {
             super::warn_if_private(&strkey);
         }

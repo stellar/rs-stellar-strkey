@@ -31,13 +31,11 @@ pub struct Root {
 enum Cmd {
     /// Decode strkey
     ///
-    /// Reads the strkey from the positional argument, or from stdin if no
-    /// argument is provided.
+    /// Reads the strkey from stdin.
     Decode(decode::Cmd),
     /// Encode strkey
     ///
-    /// Reads the JSON from the positional argument, or from stdin if no
-    /// argument is provided.
+    /// Reads the JSON from stdin.
     Encode(encode::Cmd),
     /// Generate the zero strkey
     Zero(zero::Cmd),

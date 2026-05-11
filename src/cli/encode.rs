@@ -37,20 +37,23 @@ impl core::error::Error for Error {}
 pub struct Cmd {
     /// JSON for Strkey to encode (reads from stdin if not provided)
     #[arg()]
-    json: Option<String>,
+    pub(super) json: Option<String>,
 }
 
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
+        let buf;
         let input = match &self.json {
-            Some(s) => s.clone(),
+            Some(s) => s.as_str(),
             None => {
                 let mut s = String::new();
                 std::io::stdin()
+                    .lock()
                     .take(MAX_JSON_LEN as u64 + 1)
                     .read_to_string(&mut s)
                     .map_err(Error::Io)?;
-                s
+                buf = s;
+                buf.as_str()
             }
         };
         if input.len() > MAX_JSON_LEN {
@@ -59,7 +62,7 @@ impl Cmd {
                 max: MAX_JSON_LEN,
             });
         }
-        let Decoded(strkey): Decoded<Strkey> = serde_json::from_str(&input).map_err(Error::Json)?;
+        let Decoded(strkey): Decoded<Strkey> = serde_json::from_str(input).map_err(Error::Json)?;
         println!("{strkey}");
         Ok(())
     }

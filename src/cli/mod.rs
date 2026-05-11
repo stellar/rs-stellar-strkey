@@ -41,8 +41,22 @@ enum Cmd {
 
 /// Runtime options sourced from global flags on [`Root`] and threaded to each
 /// subcommand's `run`.
+///
+/// Marked `#[non_exhaustive]` so adding fields is not a breaking change;
+/// external callers construct via [`RunOpts::default`] and the chainable
+/// setters (e.g. `RunOpts::default().quiet(true)`).
+#[non_exhaustive]
+#[derive(Default)]
 pub struct RunOpts {
     pub quiet: bool,
+}
+
+impl RunOpts {
+    #[must_use]
+    pub fn quiet(mut self, quiet: bool) -> Self {
+        self.quiet = quiet;
+        self
+    }
 }
 
 impl Root {

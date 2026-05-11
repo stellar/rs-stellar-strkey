@@ -1,19 +1,15 @@
-use std::io::Read;
+use std::io::{IsTerminal, Read};
 use std::str::FromStr;
 
 use crate::{DecodeError, Decoded, Strkey};
 use clap::Args;
-
-// Bound on the strkey input size. The longest legitimate strkey is a
-// signed_payload_ed25519 with a 64-byte payload, encoded to 165 base32
-// characters; 256 allows headroom and prevents unbounded reads from stdin.
-const MAX_STRKEY_LEN: usize = 256;
 
 #[derive(Debug)]
 pub enum Error {
     Decode(String, DecodeError),
     InputTooLarge { len: usize, max: usize },
     Io(std::io::Error),
+    NoInput,
 }
 
 impl core::fmt::Display for Error {
@@ -24,6 +20,9 @@ impl core::fmt::Display for Error {
                 "strkey input too large: {len} bytes (max {max})"
             )),
             Error::Io(e) => f.write_fmt(format_args!("reading stdin: {e}")),
+            Error::NoInput => {
+                f.write_str("no input: provide a positional argument or pipe input to stdin")
+            }
         }
     }
 }
@@ -35,7 +34,7 @@ impl core::error::Error for Error {}
 pub struct Cmd {
     /// Strkey to decode (reads from stdin if not provided)
     #[arg()]
-    pub(super) strkey: Option<String>,
+    strkey: Option<String>,
 }
 
 impl Cmd {
@@ -44,20 +43,28 @@ impl Cmd {
         let input = match &self.strkey {
             Some(s) => s.trim(),
             None => {
+                let stdin = std::io::stdin();
+                if stdin.is_terminal() {
+                    return Err(Error::NoInput);
+                }
+                // Read with a small amount of headroom over the longest valid
+                // strkey to accommodate trailing whitespace from pipes.
+                let cap = Strkey::MAX_ENCODED_LEN + 16;
                 let mut s = String::new();
-                std::io::stdin()
+                stdin
                     .lock()
-                    .take(MAX_STRKEY_LEN as u64 + 1)
+                    .take(cap as u64 + 1)
                     .read_to_string(&mut s)
                     .map_err(Error::Io)?;
-                if s.len() > MAX_STRKEY_LEN {
+                buf = s;
+                let trimmed = buf.trim();
+                if trimmed.len() > Strkey::MAX_ENCODED_LEN {
                     return Err(Error::InputTooLarge {
-                        len: s.len(),
-                        max: MAX_STRKEY_LEN,
+                        len: trimmed.len(),
+                        max: Strkey::MAX_ENCODED_LEN,
                     });
                 }
-                buf = s;
-                buf.trim()
+                trimmed
             }
         };
         let strkey = Strkey::from_str(input).map_err(|e| Error::Decode(input.to_string(), e))?;

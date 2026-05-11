@@ -3,8 +3,7 @@ pub mod encode;
 pub mod version;
 pub mod zero;
 
-use clap::{CommandFactory, Parser, Subcommand};
-use std::io::IsTerminal;
+use clap::{Parser, Subcommand};
 use std::{ffi::OsString, fmt::Debug};
 
 #[derive(Parser, Debug, Clone)]
@@ -49,25 +48,12 @@ impl Root {
     /// If the root command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
         match &self.cmd {
-            Cmd::Decode(c) if c.strkey.is_none() && std::io::stdin().is_terminal() => {
-                print_subcommand_help("decode");
-            }
-            Cmd::Encode(c) if c.json.is_none() && std::io::stdin().is_terminal() => {
-                print_subcommand_help("encode");
-            }
             Cmd::Decode(c) => c.run()?,
             Cmd::Encode(c) => c.run()?,
             Cmd::Zero(c) => c.run(),
             Cmd::Version => version::Cmd::run(),
         }
         Ok(())
-    }
-}
-
-fn print_subcommand_help(name: &str) {
-    let mut cmd = Root::command();
-    if let Some(sub) = cmd.find_subcommand_mut(name) {
-        let _ = sub.print_long_help();
     }
 }
 

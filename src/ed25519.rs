@@ -1,7 +1,7 @@
 use crate::{
     convert::{binary_len, decode, decode_zeroizing, encode, encode_len},
     error::DecodeError,
-    redacted::Unredacted,
+    unredacted::Unredacted,
     version,
 };
 

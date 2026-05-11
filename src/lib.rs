@@ -115,14 +115,14 @@ pub mod convert;
 mod crc;
 pub mod ed25519;
 mod error;
-mod redacted;
 mod strkey;
 mod typ;
+mod unredacted;
 mod version;
 
 pub use error::*;
-pub use redacted::Unredacted;
 pub use strkey::*;
+pub use unredacted::Unredacted;
 
 #[cfg(feature = "serde-decoded")]
 pub mod decoded_json_format;

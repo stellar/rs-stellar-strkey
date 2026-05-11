@@ -9,7 +9,7 @@ use crate::{
     convert::{binary_len, decode, encode, encode_len},
     ed25519,
     error::DecodeError,
-    redacted::Unredacted,
+    unredacted::Unredacted,
     version,
 };
 

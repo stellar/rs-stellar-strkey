@@ -5,3 +5,13 @@
 /// to serialize it through `serde`.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Unredacted<T>(pub T);
+
+#[cfg(feature = "serde")]
+impl<T> serde::Serialize for Unredacted<T>
+where
+    Self: core::fmt::Display,
+{
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(self)
+    }
+}

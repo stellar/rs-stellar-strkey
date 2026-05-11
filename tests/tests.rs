@@ -80,9 +80,11 @@ fn test_valid_private_keys_via_ed25519_private_key() {
 
 #[test]
 fn test_invalid_private_keys() {
-    // Too long strkey input.
+    // Too long strkey input. Strkey does not validate the private-key
+    // payload — any `S…` version byte returns `PrivateKey` to route the
+    // caller to `ed25519::PrivateKey`.
     let r: Result<Strkey, _> = "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV764SE".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::PrivateKey));
 }
 
 #[test]

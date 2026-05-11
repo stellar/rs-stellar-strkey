@@ -113,10 +113,7 @@ impl Strkey {
             version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
                 ClaimableBalance::from_payload(&payload)?,
             )),
-            version::PRIVATE_KEY_ED25519 => {
-                let _ = ed25519::PrivateKey::from_payload(&payload)?;
-                Err(DecodeError::PrivateKey)
-            }
+            version::PRIVATE_KEY_ED25519 => Err(DecodeError::PrivateKey),
             _ => Err(DecodeError::Invalid),
         }
     }

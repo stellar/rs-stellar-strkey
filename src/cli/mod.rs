@@ -86,7 +86,7 @@ where
 pub(crate) fn warn_if_private(strkey: &Strkey) {
     if matches!(strkey, Strkey::PrivateKeyEd25519(_)) {
         eprintln!(
-            "⚠️\u{fe0f}  Warning: output contains a private key with secret material. Handle with care."
+            "⚠️  Warning: output contains a private key with secret material. Handle with care."
         );
     }
 }

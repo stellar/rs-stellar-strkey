@@ -1,3 +1,5 @@
+use std::io::Read;
+
 use clap::Args;
 
 use crate::{Decoded, Strkey};
@@ -13,6 +15,7 @@ const MAX_JSON_LEN: usize = 10 * 1024;
 pub enum Error {
     InputTooLarge { len: usize, max: usize },
     Json(serde_json::Error),
+    Io(std::io::Error),
 }
 
 impl core::fmt::Display for Error {
@@ -22,6 +25,7 @@ impl core::fmt::Display for Error {
                 "json input too large: {len} bytes (max {max})"
             )),
             Error::Json(e) => f.write_fmt(format_args!("{e}")),
+            Error::Io(e) => f.write_fmt(format_args!("reading stdin: {e}")),
         }
     }
 }
@@ -31,21 +35,31 @@ impl core::error::Error for Error {}
 #[derive(Args, Debug, Clone)]
 #[command()]
 pub struct Cmd {
-    /// JSON for Strkey to encode
+    /// JSON for Strkey to encode (reads from stdin if not provided)
     #[arg()]
-    json: String,
+    json: Option<String>,
 }
 
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
-        if self.json.len() > MAX_JSON_LEN {
+        let input = match &self.json {
+            Some(s) => s.clone(),
+            None => {
+                let mut s = String::new();
+                std::io::stdin()
+                    .take(MAX_JSON_LEN as u64 + 1)
+                    .read_to_string(&mut s)
+                    .map_err(Error::Io)?;
+                s
+            }
+        };
+        if input.len() > MAX_JSON_LEN {
             return Err(Error::InputTooLarge {
-                len: self.json.len(),
+                len: input.len(),
                 max: MAX_JSON_LEN,
             });
         }
-        let Decoded(strkey): Decoded<Strkey> =
-            serde_json::from_str(&self.json).map_err(Error::Json)?;
+        let Decoded(strkey): Decoded<Strkey> = serde_json::from_str(&input).map_err(Error::Json)?;
         println!("{strkey}");
         Ok(())
     }

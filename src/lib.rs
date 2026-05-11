@@ -126,9 +126,6 @@ pub use error::*;
 pub use strkey::*;
 pub use unredacted::Unredacted;
 
-#[doc(hidden)]
-pub use paste;
-
 #[cfg(feature = "serde-decoded")]
 pub mod decoded_json_format;
 #[cfg(feature = "serde-decoded")]

@@ -2,11 +2,19 @@
 
 use libfuzzer_sys::{fuzz_target, Corpus};
 
-use stellar_strkey::cli::strkey::Strkey as StrkeyNew;
+use stellar_strkey::ed25519::PrivateKey as PrivateKeyNew;
+use stellar_strkey::{Strkey as StrkeyNew, Unredacted};
 use stellar_strkey_v16::Strkey as StrkeyOld;
 
 // Compare parsing and encoding between the current library and v0.0.16.
 fuzz_target!(|s: &str| -> Corpus {
+    // The current crate moved the PrivateKeyEd25519 variant out of Strkey;
+    // `S…` inputs are now parsed via ed25519::PrivateKey directly. Route
+    // those here so the comparison still exercises private-key roundtrips.
+    if s.starts_with('S') {
+        return compare_private_key(s);
+    }
+
     // Try parsing with both versions.
     let old_result: Result<StrkeyOld, _> = s.parse();
     let new_result: Result<StrkeyNew, _> = s.parse();
@@ -57,9 +65,6 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         (StrkeyNew::PublicKeyEd25519(n), StrkeyOld::PublicKeyEd25519(o)) => {
             assert_eq!(n.0, o.0, "PublicKeyEd25519 data mismatch");
         }
-        (StrkeyNew::PrivateKeyEd25519(n), StrkeyOld::PrivateKeyEd25519(o)) => {
-            assert_eq!(n.0 .0, o.0, "PrivateKeyEd25519 data mismatch");
-        }
         (StrkeyNew::PreAuthTx(n), StrkeyOld::PreAuthTx(o)) => {
             assert_eq!(n.0, o.0, "PreAuthTx data mismatch");
         }
@@ -97,6 +102,43 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         },
         _ => {
             panic!("Strkey variant mismatch\nNew: {new:?}\nOld: {old:?}");
+        }
+    }
+}
+
+/// Compare new's `ed25519::PrivateKey` parse path against old's
+/// `Strkey::PrivateKeyEd25519` for `S…` inputs.
+fn compare_private_key(s: &str) -> Corpus {
+    let old_result: Result<StrkeyOld, _> = s.parse();
+    let new_result: Result<PrivateKeyNew, _> = s.parse();
+
+    match (&new_result, &old_result) {
+        (Ok(new), Ok(StrkeyOld::PrivateKeyEd25519(old))) => {
+            assert_eq!(new.0, old.0, "PrivateKeyEd25519 data mismatch");
+            let new_str = Unredacted(new).to_string();
+            let old_str = old_result.as_ref().unwrap().to_string();
+            assert_eq!(
+                new_str.as_str(),
+                old_str.as_str(),
+                "S-strkey string mismatch"
+            );
+            assert_eq!(new_str.as_str(), s, "New version roundtrip failed");
+            Corpus::Keep
+        }
+        (Ok(_), Ok(old)) => {
+            panic!("Old version parsed S-prefixed input as non-PrivateKey variant: {old:?}");
+        }
+        (Err(_), Err(_)) => Corpus::Keep,
+        (Ok(new), Err(old_err)) => {
+            panic!(
+                "New version parsed but old version failed\nInput: {s}\nNew result: {new:?}\nOld error: {old_err:?}",
+                new = Unredacted(new),
+            );
+        }
+        (Err(new_err), Ok(old)) => {
+            panic!(
+                "Old version parsed but new version failed\nInput: {s}\nOld result: {old:?}\nNew error: {new_err:?}"
+            );
         }
     }
 }

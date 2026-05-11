@@ -32,7 +32,6 @@ serde_test = "1.0.177"
 [dependencies]
 data-encoding = { version = "2.6.0", default-features = false }
 heapless = { version = "0.9", default-features = false, features = ["zeroize"] }
-paste = "1"
 zeroize = { version = "1", default-features = false, features = ["derive"] }
 clap = { version = "4.2.4", default-features = false, features = ["std", "derive", "usage", "help"], optional = true }
 serde_with = { version = "3.11.0", optional = true, features = ["hex"] }

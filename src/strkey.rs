@@ -7,198 +7,256 @@ use heapless::String as HeaplessString;
 
 use crate::{
     convert::{binary_len, decode, encode, encode_len},
+    ed25519,
     error::DecodeError,
     version,
 };
 
-/// Define an enum that wraps multiple strkey kinds and dispatches
-/// [`Display`](core::fmt::Display), [`FromStr`](core::str::FromStr), and
-/// `Decoded` serde impls across the variants.
+/// A decoded Stellar strkey of any supported non-secret type.
 ///
-/// Internal macro: invocations must live inside the `stellar-strkey` crate
-/// because the generated `Decoded<&Self>` Serialize impl would otherwise
-/// violate Rust's orphan rule.
-///
-/// Each variant takes a wrapped type. The variant identifier is converted
-/// to snake_case to form the JSON key used by the `Decoded` representation
-/// (e.g. `PublicKeyEd25519` → `"public_key_ed25519"`).
-macro_rules! strkey_enum {
-    (
-        $(#[$attr:meta])*
-        $vis:vis enum $name:ident {
-            $($variant:ident($ty:ty)),* $(,)?
-        }
-    ) => {
-        $(#[$attr])*
-        #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
-        $vis enum $name {
-            $($variant($ty),)*
-        }
-
-        impl $name {
-            pub fn from_string(s: &str) -> ::core::result::Result<Self, $crate::DecodeError> {
-                Self::from_slice(s.as_bytes())
-            }
-
-            pub fn from_slice(s: &[u8]) -> ::core::result::Result<Self, $crate::DecodeError> {
-                $(
-                    if let ::core::result::Result::Ok(k) = <$ty>::from_slice(s) {
-                        return ::core::result::Result::Ok(Self::$variant(k));
-                    }
-                )*
-                ::core::result::Result::Err($crate::DecodeError::Invalid)
-            }
-        }
-
-        impl ::core::fmt::Display for $name {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-                match self {
-                    $(Self::$variant(k) => ::core::fmt::Display::fmt(k, f),)*
-                }
-            }
-        }
-
-        impl ::core::str::FromStr for $name {
-            type Err = $crate::DecodeError;
-            fn from_str(s: &str) -> ::core::result::Result<Self, Self::Err> {
-                Self::from_string(s)
-            }
-        }
-
-        #[cfg(feature = "serde")]
-        impl ::serde::Serialize for $name {
-            fn serialize<__S: ::serde::Serializer>(
-                &self,
-                serializer: __S,
-            ) -> ::core::result::Result<__S::Ok, __S::Error> {
-                serializer.collect_str(self)
-            }
-        }
-
-        #[cfg(feature = "serde")]
-        impl<'de> ::serde::Deserialize<'de> for $name {
-            fn deserialize<__D: ::serde::Deserializer<'de>>(
-                deserializer: __D,
-            ) -> ::core::result::Result<Self, __D::Error> {
-                struct __V;
-                impl<'de> ::serde::de::Visitor<'de> for __V {
-                    type Value = $name;
-                    fn expecting(
-                        &self,
-                        f: &mut ::core::fmt::Formatter<'_>,
-                    ) -> ::core::fmt::Result {
-                        f.write_str("a strkey string")
-                    }
-                    fn visit_str<__E: ::serde::de::Error>(
-                        self,
-                        s: &str,
-                    ) -> ::core::result::Result<Self::Value, __E> {
-                        <Self::Value as ::core::str::FromStr>::from_str(s)
-                            .map_err(__E::custom)
-                    }
-                }
-                deserializer.deserialize_str(__V)
-            }
-        }
-
-        #[cfg(feature = "serde-decoded")]
-        $crate::paste::paste! {
-            impl ::serde::Serialize for $crate::Decoded<&$name> {
-                fn serialize<__S: ::serde::Serializer>(
-                    &self,
-                    serializer: __S,
-                ) -> ::core::result::Result<__S::Ok, __S::Error> {
-                    use ::serde::ser::SerializeMap;
-                    let mut map = serializer.serialize_map(::core::option::Option::Some(1))?;
-                    match self.0 {
-                        $(
-                            $name::$variant(k) => {
-                                map.serialize_entry(
-                                    ::core::stringify!([< $variant:snake >]),
-                                    &$crate::Decoded(k),
-                                )?;
-                            }
-                        )*
-                    }
-                    map.end()
-                }
-            }
-
-            impl<'de> ::serde::Deserialize<'de> for $crate::Decoded<$name> {
-                fn deserialize<__D: ::serde::Deserializer<'de>>(
-                    deserializer: __D,
-                ) -> ::core::result::Result<Self, __D::Error> {
-                    struct __V;
-                    impl<'de> ::serde::de::Visitor<'de> for __V {
-                        type Value = $crate::Decoded<$name>;
-                        fn expecting(
-                            &self,
-                            f: &mut ::core::fmt::Formatter<'_>,
-                        ) -> ::core::fmt::Result {
-                            f.write_str("a strkey object")
-                        }
-                        fn visit_map<__M: ::serde::de::MapAccess<'de>>(
-                            self,
-                            mut map: __M,
-                        ) -> ::core::result::Result<Self::Value, __M::Error> {
-                            let key: ::std::string::String = map.next_key()?.ok_or_else(|| {
-                                <__M::Error as ::serde::de::Error>::custom(
-                                    "expected a variant key",
-                                )
-                            })?;
-                            let value = match key.as_str() {
-                                $(
-                                    ::core::stringify!([< $variant:snake >]) => {
-                                        let $crate::Decoded(inner) =
-                                            map.next_value::<$crate::Decoded<$ty>>()?;
-                                        $name::$variant(inner)
-                                    },
-                                )*
-                                _ => {
-                                    return ::core::result::Result::Err(
-                                        <__M::Error as ::serde::de::Error>::unknown_variant(
-                                            &key,
-                                            &[
-                                                $(::core::stringify!([< $variant:snake >]),)*
-                                            ],
-                                        ),
-                                    );
-                                }
-                            };
-                            if map.next_key::<::serde::de::IgnoredAny>()?.is_some() {
-                                return ::core::result::Result::Err(
-                                    <__M::Error as ::serde::de::Error>::custom(
-                                        "expected exactly one variant key",
-                                    ),
-                                );
-                            }
-                            ::core::result::Result::Ok($crate::Decoded(value))
-                        }
-                    }
-                    deserializer.deserialize_map(__V)
-                }
-            }
-        }
-    };
+/// This enum intentionally does not include the `PrivateKeyEd25519` (`S…`)
+/// strkey, because that variant carries secret key material and is gated
+/// behind a separate type with zeroization and redacted formatting. To
+/// encode or decode a private-key strkey, use
+/// [`ed25519::PrivateKey`] directly — `Strkey::from_string` / `FromStr`
+/// will reject `S…` inputs.
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+pub enum Strkey {
+    PublicKeyEd25519(ed25519::PublicKey),
+    PreAuthTx(PreAuthTx),
+    HashX(HashX),
+    MuxedAccountEd25519(ed25519::MuxedAccount),
+    SignedPayloadEd25519(ed25519::SignedPayload),
+    Contract(Contract),
+    LiquidityPool(LiquidityPool),
+    ClaimableBalance(ClaimableBalance),
 }
 
-pub(crate) use strkey_enum;
+impl Strkey {
+    // SignedPayload is the longest strkey type.
+    const MAX_PAYLOAD_LEN: usize = ed25519::SignedPayload::MAX_PAYLOAD_LEN;
+    const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
+    const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::MAX_PAYLOAD_LEN == 100);
+        assert!(Self::MAX_BINARY_LEN == 103);
+        assert!(Self::MAX_ENCODED_LEN == 165);
+        // Verify MAX_PAYLOAD_LEN >= all type payload lengths.
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::PrivateKey::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::PublicKey::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::MuxedAccount::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ed25519::SignedPayload::MAX_PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= PreAuthTx::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= HashX::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= Contract::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= LiquidityPool::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= ClaimableBalance::PAYLOAD_LEN);
+        // Verify MAX_BINARY_LEN >= all type binary lengths.
+        assert!(Self::MAX_BINARY_LEN >= ed25519::PrivateKey::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ed25519::PublicKey::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ed25519::MuxedAccount::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ed25519::SignedPayload::MAX_BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= PreAuthTx::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= HashX::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= Contract::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= LiquidityPool::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= ClaimableBalance::BINARY_LEN);
+        // Verify MAX_ENCODED_LEN >= all type encoded lengths.
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::PrivateKey::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::PublicKey::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::MuxedAccount::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ed25519::SignedPayload::MAX_ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= PreAuthTx::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= HashX::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= Contract::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= LiquidityPool::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
+    };
 
-strkey_enum! {
-    /// A decoded Stellar strkey of any supported non-secret kind.
-    ///
-    /// This enum intentionally does not include the `PrivateKeyEd25519`
-    /// (`S…`) variant — that kind carries secret key material and is
-    /// handled separately via [`ed25519::PrivateKey`](crate::ed25519::PrivateKey).
-    pub enum Strkey {
-        PublicKeyEd25519(crate::ed25519::PublicKey),
-        PreAuthTx(crate::PreAuthTx),
-        HashX(crate::HashX),
-        MuxedAccountEd25519(crate::ed25519::MuxedAccount),
-        SignedPayloadEd25519(crate::ed25519::SignedPayload),
-        Contract(crate::Contract),
-        LiquidityPool(crate::LiquidityPool),
-        ClaimableBalance(crate::ClaimableBalance),
+    pub fn to_string(&self) -> HeaplessString<{ Self::MAX_ENCODED_LEN }> {
+        let mut s: HeaplessString<{ Self::MAX_ENCODED_LEN }> = HeaplessString::new();
+        match self {
+            Self::PublicKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::PreAuthTx(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::HashX(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::MuxedAccountEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::SignedPayloadEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::Contract(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::LiquidityPool(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::ClaimableBalance(x) => s.push_str(x.to_string().as_str()).unwrap(),
+        }
+        s
+    }
+
+    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::MAX_PAYLOAD_LEN }, { Self::MAX_BINARY_LEN }>(s)?;
+        match ver {
+            version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
+                ed25519::PublicKey::from_payload(&payload)?,
+            )),
+            version::PRE_AUTH_TX => Ok(Self::PreAuthTx(PreAuthTx::from_payload(&payload)?)),
+            version::HASH_X => Ok(Self::HashX(HashX::from_payload(&payload)?)),
+            version::MUXED_ACCOUNT_ED25519 => Ok(Self::MuxedAccountEd25519(
+                ed25519::MuxedAccount::from_payload(&payload)?,
+            )),
+            version::SIGNED_PAYLOAD_ED25519 => Ok(Self::SignedPayloadEd25519(
+                ed25519::SignedPayload::from_payload(&payload)?,
+            )),
+            version::CONTRACT => Ok(Self::Contract(Contract::from_payload(&payload)?)),
+            version::LIQUIDITY_POOL => {
+                Ok(Self::LiquidityPool(LiquidityPool::from_payload(&payload)?))
+            }
+            version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
+                ClaimableBalance::from_payload(&payload)?,
+            )),
+            // version::PRIVATE_KEY_ED25519 is intentionally not supported here;
+            // use ed25519::PrivateKey directly to decode `S…` strkeys.
+            _ => Err(DecodeError::Invalid),
+        }
+    }
+}
+
+impl Display for Strkey {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl FromStr for Strkey {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Strkey::from_string(s)
+    }
+}
+
+#[cfg(feature = "serde-decoded")]
+mod strkey_decoded_serde_impl {
+    use super::*;
+    use crate::decoded_json_format::Decoded;
+    use serde::{
+        de::{self, MapAccess, Visitor},
+        ser::SerializeMap,
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
+
+    impl Serialize for Decoded<&Strkey> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let mut map = serializer.serialize_map(Some(1))?;
+            match self.0 {
+                Strkey::PublicKeyEd25519(key) => {
+                    map.serialize_entry("public_key_ed25519", &Decoded(key))?;
+                }
+                Strkey::PreAuthTx(key) => {
+                    map.serialize_entry("pre_auth_tx", &Decoded(key))?;
+                }
+                Strkey::HashX(key) => {
+                    map.serialize_entry("hash_x", &Decoded(key))?;
+                }
+                Strkey::MuxedAccountEd25519(key) => {
+                    map.serialize_entry("muxed_account_ed25519", &Decoded(key))?;
+                }
+                Strkey::SignedPayloadEd25519(key) => {
+                    map.serialize_entry("signed_payload_ed25519", &Decoded(key))?;
+                }
+                Strkey::Contract(key) => {
+                    map.serialize_entry("contract", &Decoded(key))?;
+                }
+                Strkey::LiquidityPool(key) => {
+                    map.serialize_entry("liquidity_pool", &Decoded(key))?;
+                }
+                Strkey::ClaimableBalance(key) => {
+                    map.serialize_entry("claimable_balance", &Decoded(key))?;
+                }
+            }
+            map.end()
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Decoded<Strkey> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            struct StrkeyVisitor;
+
+            impl<'de> Visitor<'de> for StrkeyVisitor {
+                type Value = Decoded<Strkey>;
+
+                fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+                    formatter.write_str("a strkey object")
+                }
+
+                fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
+                    let key: &str = map
+                        .next_key()?
+                        .ok_or_else(|| de::Error::custom("expected a variant key"))?;
+
+                    let strkey = match key {
+                        "public_key_ed25519" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::PublicKeyEd25519(inner)
+                        }
+                        "pre_auth_tx" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::PreAuthTx(inner)
+                        }
+                        "hash_x" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::HashX(inner)
+                        }
+                        "muxed_account_ed25519" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::MuxedAccountEd25519(inner)
+                        }
+                        "signed_payload_ed25519" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::SignedPayloadEd25519(inner)
+                        }
+                        "contract" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::Contract(inner)
+                        }
+                        "liquidity_pool" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::LiquidityPool(inner)
+                        }
+                        "claimable_balance" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::ClaimableBalance(inner)
+                        }
+                        _ => {
+                            return Err(de::Error::unknown_variant(
+                                key,
+                                &[
+                                    "public_key_ed25519",
+                                    "pre_auth_tx",
+                                    "hash_x",
+                                    "muxed_account_ed25519",
+                                    "signed_payload_ed25519",
+                                    "contract",
+                                    "liquidity_pool",
+                                    "claimable_balance",
+                                ],
+                            ))
+                        }
+                    };
+
+                    if map.next_key::<de::IgnoredAny>()?.is_some() {
+                        return Err(de::Error::custom("expected exactly one variant key"));
+                    }
+
+                    Ok(Decoded(strkey))
+                }
+            }
+
+            deserializer.deserialize_map(StrkeyVisitor)
+        }
     }
 }
 

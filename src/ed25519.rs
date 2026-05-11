@@ -189,7 +189,7 @@ mod private_key_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for Decoded<&Unredacted<PrivateKey>> {
+    impl Serialize for Decoded<Unredacted<&PrivateKey>> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
             let Self(Unredacted(PrivateKey(bytes))) = self;
             DecodedBorrowed(bytes).serialize(serializer)

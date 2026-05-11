@@ -1,6 +1,5 @@
 use crate::{
-    cli::strkey::Strkey, ed25519, ClaimableBalance, Contract, Decoded, HashX, LiquidityPool,
-    PreAuthTx,
+    ed25519, ClaimableBalance, Contract, Decoded, HashX, LiquidityPool, PreAuthTx, Strkey,
 };
 use clap::{Args, ValueEnum};
 

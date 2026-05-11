@@ -295,7 +295,7 @@ fn test_ed25519_private_key_debug_unredacted() {
     ]);
     assert_eq!(
         format!("{:?}", key.as_unredacted()),
-        "PrivateKey(69a8c4cbb9f64e8a0798f6e1ac65d06c3162929056bcf4cdb7d3738d1855f363)",
+        "PrivateKey([REDACTED])"
     );
 }
 
@@ -318,7 +318,7 @@ fn test_strkey_ed25519_private_key_debug_unredacted() {
     ]));
     assert_eq!(
         format!("{:?}", strkey.as_unredacted()),
-        "PrivateKeyEd25519(PrivateKey(69a8c4cbb9f64e8a0798f6e1ac65d06c3162929056bcf4cdb7d3738d1855f363))",
+        "PrivateKeyEd25519(PrivateKey([REDACTED]))",
     );
 }
 

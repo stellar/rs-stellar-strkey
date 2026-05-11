@@ -14,6 +14,7 @@ zeroize = { version = "1", default-features = false }
 
 [dependencies.stellar-strkey]
 path = ".."
+features = ["cli"]
 
 [dependencies.stellar-strkey-v13]
 package = "stellar-strkey"

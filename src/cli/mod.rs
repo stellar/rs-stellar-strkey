@@ -1,6 +1,6 @@
 pub mod decode;
 pub mod encode;
-pub mod unredacted_private_strkey;
+pub mod strkey;
 pub mod version;
 pub mod zero;
 

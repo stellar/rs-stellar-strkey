@@ -6,6 +6,7 @@ test:
 	cargo test
 	cargo test --features serde
 	cargo test --features serde-decoded
+	cargo test --features cli
 	cargo +nightly fuzz run fuzz_roundtrip -- -runs=0
 	cargo +nightly fuzz run fuzz_compare_v13 -- -runs=0
 

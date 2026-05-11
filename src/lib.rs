@@ -11,45 +11,35 @@
 //!
 //! This crate provides:
 //!
-//! - The [`Strkey`] enum, which can hold and round-trip any strkey kind.
 //! - Per-kind types in this module ([`PreAuthTx`], [`HashX`], [`Contract`],
 //!   [`LiquidityPool`], [`ClaimableBalance`]) and in [`ed25519`]
 //!   ([`ed25519::PublicKey`], [`ed25519::PrivateKey`],
-//!   [`ed25519::MuxedAccount`], [`ed25519::SignedPayload`]) for callers that
-//!   know the kind in advance.
+//!   [`ed25519::MuxedAccount`], [`ed25519::SignedPayload`]).
 //! - [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr)
 //!   implementations for every kind, plus inherent `to_string` /
 //!   `from_string` / `from_slice` methods. [`ed25519::PrivateKey`] exposes
 //!   `Display` and `to_string` through the [`Unredacted`] wrapper instead
-//!   of directly. The [`Strkey`] enum intentionally omits the
-//!   `PrivateKeyEd25519` variant — `S…` strkeys can only be encoded or
-//!   decoded through [`ed25519::PrivateKey`] directly.
+//!   of directly.
+//! - The [`strkey_enum!`] macro for callers who need to round-trip multiple
+//!   strkey kinds through a single enum (e.g. parsing JSON that can carry
+//!   any of several kinds). The crate intentionally does not ship a
+//!   concrete super-type; each caller defines the subset it needs.
 //!
 //! # Strkey kinds
 //!
 //! | Prefix | Kind                                                                  | Payload bytes |
 //! |--------|-----------------------------------------------------------------------|---------------|
-//! | `G`    | [`Strkey::PublicKeyEd25519`] / [`ed25519::PublicKey`]                  |            32 |
-//! | `S`    | [`ed25519::PrivateKey`] only (omitted from [`Strkey`])                 |            32 |
-//! | `M`    | [`Strkey::MuxedAccountEd25519`] / [`ed25519::MuxedAccount`]            |            40 |
-//! | `T`    | [`Strkey::PreAuthTx`] / [`PreAuthTx`]                                  |            32 |
-//! | `X`    | [`Strkey::HashX`] / [`HashX`]                                          |            32 |
-//! | `P`    | [`Strkey::SignedPayloadEd25519`] / [`ed25519::SignedPayload`]          |        40–100 |
-//! | `C`    | [`Strkey::Contract`] / [`Contract`]                                    |            32 |
-//! | `L`    | [`Strkey::LiquidityPool`] / [`LiquidityPool`]                          |            32 |
-//! | `B`    | [`Strkey::ClaimableBalance`] / [`ClaimableBalance`]                    |            33 |
+//! | `G`    | [`ed25519::PublicKey`]                                                 |            32 |
+//! | `S`    | [`ed25519::PrivateKey`]                                                |            32 |
+//! | `M`    | [`ed25519::MuxedAccount`]                                              |            40 |
+//! | `T`    | [`PreAuthTx`]                                                          |            32 |
+//! | `X`    | [`HashX`]                                                              |            32 |
+//! | `P`    | [`ed25519::SignedPayload`]                                             |        40–100 |
+//! | `C`    | [`Contract`]                                                           |            32 |
+//! | `L`    | [`LiquidityPool`]                                                      |            32 |
+//! | `B`    | [`ClaimableBalance`]                                                   |            33 |
 //!
 //! # Examples
-//!
-//! Parse any strkey when the kind isn't known up front:
-//!
-//! ```
-//! use stellar_strkey::Strkey;
-//!
-//! let s = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
-//! let strkey: Strkey = s.parse().unwrap();
-//! assert!(matches!(strkey, Strkey::PublicKeyEd25519(_)));
-//! ```
 //!
 //! Parse a specific kind and reject anything else:
 //!
@@ -125,6 +115,9 @@ mod version;
 pub use error::*;
 pub use strkey::*;
 pub use unredacted::Unredacted;
+
+#[doc(hidden)]
+pub use paste;
 
 #[cfg(feature = "serde-decoded")]
 pub mod decoded_json_format;

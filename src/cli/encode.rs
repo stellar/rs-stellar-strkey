@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::{cli::unredacted_private_strkey::UnredactedPrivateStrkey, Decoded, Strkey};
+use crate::{cli::strkey::Strkey, Decoded};
 
 // Bound on the JSON input size. The largest legitimate Decoded<Strkey> JSON
 // (a pretty-printed signed_payload_ed25519 with a max 64-byte payload) is
@@ -44,25 +44,9 @@ impl Cmd {
                 max: MAX_JSON_LEN,
             });
         }
-        // Peek at the variant key: `private_key_ed25519` is handled outside
-        // the Strkey enum and routed through `UnredactedPrivateStrkey`.
-        let value: serde_json::Value = serde_json::from_str(&self.json).map_err(Error::Json)?;
-        let is_private = value
-            .as_object()
-            .filter(|m| m.len() == 1)
-            .and_then(|m| m.keys().next())
-            .map(|k| k == "private_key_ed25519")
-            .unwrap_or(false);
-        if is_private {
-            let Decoded(UnredactedPrivateStrkey::PrivateKeyEd25519(unredacted)): Decoded<
-                UnredactedPrivateStrkey,
-            > = serde_json::from_value(value).map_err(Error::Json)?;
-            println!("{unredacted}");
-        } else {
-            let Decoded(strkey): Decoded<Strkey> =
-                serde_json::from_value(value).map_err(Error::Json)?;
-            println!("{strkey}");
-        }
+        let Decoded(strkey): Decoded<Strkey> =
+            serde_json::from_str(&self.json).map_err(Error::Json)?;
+        println!("{strkey}");
         Ok(())
     }
 }

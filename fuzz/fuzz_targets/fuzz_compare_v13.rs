@@ -2,15 +2,16 @@
 
 use libfuzzer_sys::{fuzz_target, Corpus};
 
-use stellar_strkey::Strkey as StrkeyNew;
+use stellar_strkey::ed25519::PrivateKey as PrivateKeyNew;
+use stellar_strkey::{Strkey as StrkeyNew, Unredacted};
 use stellar_strkey_v13::Strkey as StrkeyOld;
 
 // Compare parsing and encoding between the current library and v0.13.
 fuzz_target!(|s: &str| -> Corpus {
-    // `S…` strkeys are not handled by the current Strkey enum; covered by
-    // fuzz_roundtrip via ed25519::PrivateKey directly.
+    // `S…` strkeys are parsed via ed25519::PrivateKey on the new side and
+    // Strkey::PrivateKeyEd25519 on the old side.
     if s.starts_with('S') {
-        return Corpus::Reject;
+        return compare_private_key(s);
     }
 
     // Try parsing with both versions.
@@ -101,5 +102,21 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         _ => {
             panic!("Strkey variant mismatch\nNew: {new:?}\nOld: {old:?}");
         }
+    }
+}
+
+/// Compare new's `ed25519::PrivateKey` parse against old's
+/// `Strkey::PrivateKeyEd25519` for `S…` inputs.
+fn compare_private_key(s: &str) -> Corpus {
+    let new: Result<PrivateKeyNew, _> = s.parse();
+    let old: Result<StrkeyOld, _> = s.parse();
+    match (new, old) {
+        (Ok(new), Ok(StrkeyOld::PrivateKeyEd25519(old))) => {
+            assert_eq!(new.0, old.0, "PrivateKeyEd25519 data mismatch");
+            assert_eq!(Unredacted(&new).to_string().as_str(), s, "roundtrip failed");
+            Corpus::Keep
+        }
+        (Err(_), Err(_)) => Corpus::Keep,
+        (new, old) => panic!("private-key parse mismatch\nInput: {s}\nNew: {new:?}\nOld: {old:?}"),
     }
 }

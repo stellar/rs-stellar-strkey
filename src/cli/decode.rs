@@ -41,7 +41,7 @@ impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
         let buf;
         let input = match &self.strkey {
-            Some(s) => s.as_str(),
+            Some(s) => s.trim(),
             None => {
                 let stdin = std::io::stdin();
                 if stdin.is_terminal() {

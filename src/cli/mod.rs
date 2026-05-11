@@ -27,9 +27,15 @@ pub struct Root {
 
 #[derive(Subcommand, Debug, Clone)]
 enum Cmd {
-    /// Decode strkey (reads from stdin)
+    /// Decode strkey
+    ///
+    /// Reads the strkey from the positional argument, or from stdin if no
+    /// argument is provided.
     Decode(decode::Cmd),
-    /// Encode strkey (reads JSON from stdin)
+    /// Encode strkey
+    ///
+    /// Reads the JSON from the positional argument, or from stdin if no
+    /// argument is provided.
     Encode(encode::Cmd),
     /// Generate the zero strkey
     Zero(zero::Cmd),

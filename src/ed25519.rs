@@ -28,8 +28,8 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// asymmetry is intentional: `Deserialize` lets a private key be parsed
 /// from a serialized string (input is not a leak vector), while `Serialize`
 /// is gated. To render or serialize the encoded form, wrap the value in
-/// [`Unredacted`], or use [`UnredactedDecoded`](crate::UnredactedDecoded)
-/// under `serde-decoded` for the JSON-bytes form.
+/// [`Unredacted`], or use `UnredactedDecoded` (under the `serde-decoded`
+/// feature) for the JSON-bytes form.
 ///
 /// [`Unredacted::<&PrivateKey>::write_string`] is the encoding path that
 /// wraps its scratch buffers in [`Zeroizing`] and writes directly into a

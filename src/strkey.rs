@@ -43,7 +43,7 @@ impl Strkey {
     // SignedPayload is the longest strkey type.
     const MAX_PAYLOAD_LEN: usize = ed25519::SignedPayload::MAX_PAYLOAD_LEN;
     const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
-    const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    pub(crate) const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::MAX_PAYLOAD_LEN == 100);
         assert!(Self::MAX_BINARY_LEN == 103);

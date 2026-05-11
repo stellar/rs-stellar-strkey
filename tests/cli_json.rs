@@ -1,6 +1,6 @@
 #![cfg(feature = "cli")]
 
-use stellar_strkey::{ed25519, *};
+use stellar_strkey::{cli::unredacted_private_strkey::UnredactedPrivateStrkey, ed25519, *};
 
 #[test]
 fn test_ed25519_public_key() {
@@ -19,12 +19,10 @@ fn test_ed25519_public_key() {
 
 #[test]
 fn test_ed25519_private_key() {
-    let pk = ed25519::PrivateKey([0x00; 32]);
+    let wrapper =
+        UnredactedPrivateStrkey::PrivateKeyEd25519(Unredacted(ed25519::PrivateKey([0x00; 32])));
     assert_eq!(
-        serde_json::to_string_pretty(&serde_json::json!({
-            "private_key_ed25519": Decoded(Unredacted(&pk)),
-        }))
-        .unwrap(),
+        serde_json::to_string_pretty(&Decoded(&wrapper)).unwrap(),
         r#"{
   "private_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
 }"#,

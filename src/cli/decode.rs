@@ -1,6 +1,9 @@
 use std::str::FromStr;
 
-use crate::{ed25519, DecodeError, Decoded, Strkey, Unredacted};
+use crate::{
+    cli::unredacted_private_strkey::UnredactedPrivateStrkey, ed25519, DecodeError, Decoded, Strkey,
+    Unredacted,
+};
 use clap::Args;
 
 #[derive(Debug)]
@@ -35,10 +38,8 @@ impl Cmd {
             serde_json::to_string_pretty(&Decoded(&k)).unwrap()
         } else {
             let pk = ed25519::PrivateKey::from_str(s).map_err(|e| Error::Decode(s.clone(), e))?;
-            serde_json::to_string_pretty(&serde_json::json!({
-                "private_key_ed25519": Decoded(Unredacted(&pk)),
-            }))
-            .unwrap()
+            let wrapper = UnredactedPrivateStrkey::PrivateKeyEd25519(Unredacted(pk));
+            serde_json::to_string_pretty(&Decoded(&wrapper)).unwrap()
         };
         println!("{json}");
         Ok(())

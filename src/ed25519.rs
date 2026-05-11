@@ -158,6 +158,12 @@ impl FromStr for PrivateKey {
     }
 }
 
+impl Unredacted<PrivateKey> {
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        PrivateKey::from_slice(s).map(Unredacted)
+    }
+}
+
 impl FromStr for Unredacted<PrivateKey> {
     type Err = DecodeError;
 

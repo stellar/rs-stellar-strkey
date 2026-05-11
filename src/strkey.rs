@@ -22,7 +22,6 @@ use crate::{
 /// Each variant takes a wrapped type. The variant identifier is converted
 /// to snake_case to form the JSON key used by the `Decoded` representation
 /// (e.g. `PublicKeyEd25519` → `"public_key_ed25519"`).
-#[cfg(feature = "cli")]
 macro_rules! strkey_enum {
     (
         $(#[$attr:meta])*
@@ -38,7 +37,16 @@ macro_rules! strkey_enum {
 
         impl $name {
             pub fn from_string(s: &str) -> ::core::result::Result<Self, $crate::DecodeError> {
-                <Self as ::core::str::FromStr>::from_str(s)
+                Self::from_slice(s.as_bytes())
+            }
+
+            pub fn from_slice(s: &[u8]) -> ::core::result::Result<Self, $crate::DecodeError> {
+                $(
+                    if let ::core::result::Result::Ok(k) = <$ty>::from_slice(s) {
+                        return ::core::result::Result::Ok(Self::$variant(k));
+                    }
+                )*
+                ::core::result::Result::Err($crate::DecodeError::Invalid)
             }
         }
 
@@ -53,14 +61,7 @@ macro_rules! strkey_enum {
         impl ::core::str::FromStr for $name {
             type Err = $crate::DecodeError;
             fn from_str(s: &str) -> ::core::result::Result<Self, Self::Err> {
-                $(
-                    if let ::core::result::Result::Ok(k) =
-                        <$ty as ::core::str::FromStr>::from_str(s)
-                    {
-                        return ::core::result::Result::Ok(Self::$variant(k));
-                    }
-                )*
-                ::core::result::Result::Err($crate::DecodeError::Invalid)
+                Self::from_string(s)
             }
         }
 
@@ -181,8 +182,25 @@ macro_rules! strkey_enum {
     };
 }
 
-#[cfg(feature = "cli")]
 pub(crate) use strkey_enum;
+
+strkey_enum! {
+    /// A decoded Stellar strkey of any supported non-secret kind.
+    ///
+    /// This enum intentionally does not include the `PrivateKeyEd25519`
+    /// (`S…`) variant — that kind carries secret key material and is
+    /// handled separately via [`ed25519::PrivateKey`](crate::ed25519::PrivateKey).
+    pub enum Strkey {
+        PublicKeyEd25519(crate::ed25519::PublicKey),
+        PreAuthTx(crate::PreAuthTx),
+        HashX(crate::HashX),
+        MuxedAccountEd25519(crate::ed25519::MuxedAccount),
+        SignedPayloadEd25519(crate::ed25519::SignedPayload),
+        Contract(crate::Contract),
+        LiquidityPool(crate::LiquidityPool),
+        ClaimableBalance(crate::ClaimableBalance),
+    }
+}
 
 /// A pre-authorized transaction signer (`T...`).
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]

@@ -11,6 +11,10 @@
 //!
 //! This crate provides:
 //!
+//! - The [`Strkey`] enum, which round-trips any non-secret strkey kind.
+//!   The `PrivateKeyEd25519` (`S…`) variant is intentionally omitted —
+//!   private-key strkeys are encoded and decoded directly via
+//!   [`ed25519::PrivateKey`], with rendering gated behind [`Unredacted`].
 //! - Per-kind types in this module ([`PreAuthTx`], [`HashX`], [`Contract`],
 //!   [`LiquidityPool`], [`ClaimableBalance`]) and in [`ed25519`]
 //!   ([`ed25519::PublicKey`], [`ed25519::PrivateKey`],
@@ -20,10 +24,6 @@
 //!   `from_string` / `from_slice` methods. [`ed25519::PrivateKey`] exposes
 //!   `Display` and `to_string` through the [`Unredacted`] wrapper instead
 //!   of directly.
-//! - The [`strkey_enum!`] macro for callers who need to round-trip multiple
-//!   strkey kinds through a single enum (e.g. parsing JSON that can carry
-//!   any of several kinds). The crate intentionally does not ship a
-//!   concrete super-type; each caller defines the subset it needs.
 //!
 //! # Strkey kinds
 //!
@@ -40,6 +40,16 @@
 //! | `B`    | [`ClaimableBalance`]                                                   |            33 |
 //!
 //! # Examples
+//!
+//! Parse any non-secret strkey kind when the kind isn't known up front:
+//!
+//! ```
+//! use stellar_strkey::Strkey;
+//!
+//! let s = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
+//! let strkey: Strkey = s.parse().unwrap();
+//! assert!(matches!(strkey, Strkey::PublicKeyEd25519(_)));
+//! ```
 //!
 //! Parse a specific kind and reject anything else:
 //!

@@ -1,6 +1,4 @@
-#![cfg(feature = "cli")]
-
-use stellar_strkey::{cli::strkey::Strkey, *};
+use stellar_strkey::*;
 
 #[test]
 fn test_strkey_ed25519_public_key_display() {

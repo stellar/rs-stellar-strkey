@@ -1,8 +1,6 @@
-#![cfg(feature = "cli")]
-
 extern crate proptest;
 use proptest::proptest;
-use stellar_strkey::{cli::strkey::Strkey, *};
+use stellar_strkey::*;
 
 #[test]
 fn test_valid_public_keys() {
@@ -56,15 +54,27 @@ fn test_invalid_public_keys() {
 }
 
 #[test]
-fn test_valid_private_keys() {
-    assert_convert_roundtrip(
-        "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR",
-        &Strkey::PrivateKeyEd25519(Unredacted(ed25519::PrivateKey([
+fn test_strkey_rejects_private_key() {
+    // The Strkey enum intentionally excludes the PrivateKeyEd25519 variant.
+    // Parsing an `S…` strkey via Strkey must fail; use ed25519::PrivateKey
+    // directly for that kind.
+    let r: Result<Strkey, _> = "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR".parse();
+    assert_eq!(r, Err(DecodeError::Invalid));
+}
+
+#[test]
+fn test_valid_private_keys_via_ed25519_private_key() {
+    let s = "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR";
+    let key: ed25519::PrivateKey = s.parse().unwrap();
+    assert_eq!(
+        key.0,
+        [
             0x69, 0xa8, 0xc4, 0xcb, 0xb9, 0xf6, 0x4e, 0x8a, 0x07, 0x98, 0xf6, 0xe1, 0xac, 0x65,
             0xd0, 0x6c, 0x31, 0x62, 0x92, 0x90, 0x56, 0xbc, 0xf4, 0xcd, 0xb7, 0xd3, 0x73, 0x8d,
             0x18, 0x55, 0xf3, 0x63,
-        ]))),
+        ],
     );
+    assert_eq!(format!("{}", key.as_unredacted()), s);
 }
 
 #[test]

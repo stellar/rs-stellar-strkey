@@ -27,10 +27,10 @@ pub struct Cmd {
 }
 
 impl Cmd {
-    pub fn run(&self, quiet: bool) -> Result<(), Error> {
+    pub fn run(&self, opts: &super::RunOpts) -> Result<(), Error> {
         let strkey =
             Strkey::from_str(&self.strkey).map_err(|e| Error::Decode(self.strkey.clone(), e))?;
-        if !quiet {
+        if !opts.quiet {
             super::warn_if_private(&strkey);
         }
         let json = serde_json::to_string_pretty(&Decoded(&strkey)).unwrap();

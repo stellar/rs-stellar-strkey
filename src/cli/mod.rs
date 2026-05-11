@@ -39,6 +39,12 @@ enum Cmd {
     Version,
 }
 
+/// Runtime options sourced from global flags on [`Root`] and threaded to each
+/// subcommand's `run`.
+pub struct RunOpts {
+    pub quiet: bool,
+}
+
 impl Root {
     /// Run the CLIs root command.
     ///
@@ -46,9 +52,10 @@ impl Root {
     ///
     /// If the root command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
+        let opts = RunOpts { quiet: self.quiet };
         match &self.cmd {
-            Cmd::Decode(c) => c.run(self.quiet)?,
-            Cmd::Encode(c) => c.run(self.quiet)?,
+            Cmd::Decode(c) => c.run(&opts)?,
+            Cmd::Encode(c) => c.run(&opts)?,
             Cmd::Zero(c) => c.run(),
             Cmd::Version => version::Cmd::run(),
         }

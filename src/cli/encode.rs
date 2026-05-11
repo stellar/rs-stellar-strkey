@@ -37,7 +37,7 @@ pub struct Cmd {
 }
 
 impl Cmd {
-    pub fn run(&self, quiet: bool) -> Result<(), Error> {
+    pub fn run(&self, opts: &super::RunOpts) -> Result<(), Error> {
         if self.json.len() > MAX_JSON_LEN {
             return Err(Error::InputTooLarge {
                 len: self.json.len(),
@@ -46,7 +46,7 @@ impl Cmd {
         }
         let Decoded(strkey): Decoded<Strkey> =
             serde_json::from_str(&self.json).map_err(Error::Json)?;
-        if !quiet {
+        if !opts.quiet {
             super::warn_if_private(&strkey);
         }
         println!("{strkey}");

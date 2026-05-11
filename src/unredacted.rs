@@ -1,8 +1,18 @@
 /// Wrapper that opts a value in to formatting or serialization that would
-/// otherwise expose private-key bytes. Wrap an
-/// [`ed25519::PrivateKey`](crate::ed25519::PrivateKey) in `Unredacted` to
-/// render its encoded strkey form via [`Display`](core::fmt::Display) or
-/// to serialize it through `serde`.
+/// otherwise expose private-key bytes.
+///
+/// Wrap an [`ed25519::PrivateKey`](crate::ed25519::PrivateKey) in `Unredacted`
+/// for any of:
+///
+/// - [`Display`](core::fmt::Display) / `to_string` / `write_string` — renders
+///   the encoded strkey string (`S…`).
+/// - [`Debug`](core::fmt::Debug) — prints the raw 32-byte seed as hex
+///   (`PrivateKey(<hex>)`). Bare `PrivateKey`'s `Debug` redacts.
+/// - `serde::Serialize` (under the `serde` feature) — serializes as the
+///   strkey string form.
+/// - [`Decoded`](crate::Decoded)`<Unredacted<&PrivateKey>>` (under the
+///   `serde-decoded` feature) — serializes the raw seed as hex inside a
+///   JSON object.
 #[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Unredacted<T>(pub T);
 

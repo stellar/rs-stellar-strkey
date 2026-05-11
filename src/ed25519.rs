@@ -25,7 +25,9 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// caller-provided buffer, avoiding any return-value move.
 ///
 /// [`Debug`] emits `PrivateKey([REDACTED])`. To render the encoded strkey
-/// form or serialize via `serde`, wrap the value in [`Unredacted`].
+/// form, serialize via `serde`, or emit the raw seed bytes in any form,
+/// wrap the value in [`Unredacted`] — see [`Unredacted`]'s doc for the full
+/// list of paths that opt-in unlocks.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
 #[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]
 pub struct PrivateKey(pub [u8; 32]);

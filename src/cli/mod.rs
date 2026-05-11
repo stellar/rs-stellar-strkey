@@ -6,7 +6,6 @@ pub mod zero;
 use clap::{Parser, Subcommand};
 use std::{ffi::OsString, fmt::Debug};
 
-
 #[derive(Parser, Debug, Clone)]
 #[command(
     author,
@@ -96,7 +95,5 @@ where
 /// Emit a stderr warning that the output bound for stdout contains secret
 /// material. Called from CLI paths that handle private-key strkeys.
 pub(crate) fn warn_private_key() {
-    eprintln!(
-        "⚠️  Warning: output contains a private key with secret material. Handle with care."
-    );
+    eprintln!("⚠️  Warning: output contains a private key with secret material. Handle with care.");
 }

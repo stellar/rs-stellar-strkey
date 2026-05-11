@@ -1,5 +1,5 @@
 use crate::{
-    convert::{binary_len, decode, decode_zeroizing, encode, encode_len},
+    convert::{binary_len, decode, decode_zeroizing, encode, encode_len, encode_zeroizing},
     error::DecodeError,
     unredacted::Unredacted,
     version,
@@ -52,15 +52,45 @@ impl PrivateKey {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
     };
+}
 
-    pub fn as_unredacted(&self) -> Unredacted<&Self> {
-        Unredacted(self)
+impl Unredacted<&PrivateKey> {
+    /// Encodes this private key to its strkey string form.
+    ///
+    /// # Zeroize
+    ///
+    /// The intermediate scratch buffers used during encoding are zeroed on
+    /// drop, but the returned `String` itself is plain — its bytes are not
+    /// zeroed when the value is dropped. Use
+    /// [`write_string`](Self::write_string) for zeroizing.
+    pub fn to_string(&self) -> String<{ PrivateKey::ENCODED_LEN }> {
+        let mut zeroizing: Zeroizing<String<{ PrivateKey::ENCODED_LEN }>> =
+            Zeroizing::new(String::new());
+        self.write_string(&mut zeroizing);
+        let mut out: String<{ PrivateKey::ENCODED_LEN }> = String::new();
+        out.push_str(&zeroizing).unwrap();
+        out
     }
 
-    pub fn to_unredacted(&self) -> Unredacted<Self> {
-        Unredacted(self.clone())
+    /// Encodes this private key to its strkey string form, writing the
+    /// result into the caller-provided buffer.
+    ///
+    /// # Zeroize
+    ///
+    /// The intermediate scratch buffers used during encoding are wrapped in
+    /// [`Zeroizing`] and zeroed on drop, and the encoded bytes are written
+    /// directly into `out` rather than returned by value, so no copy is left
+    /// on this method's stack frame.
+    pub fn write_string(&self, out: &mut Zeroizing<String<{ PrivateKey::ENCODED_LEN }>>) {
+        encode_zeroizing::<
+            { PrivateKey::PAYLOAD_LEN },
+            { PrivateKey::BINARY_LEN },
+            { PrivateKey::ENCODED_LEN },
+        >(version::PRIVATE_KEY_ED25519, &self.0 .0, out);
     }
+}
 
+impl PrivateKey {
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
             Ok(ed25519) => Ok(Self(ed25519)),
@@ -80,6 +110,44 @@ impl PrivateKey {
             _ => Err(DecodeError::Invalid),
         }
     }
+
+    pub fn as_unredacted(&self) -> Unredacted<&Self> {
+        Unredacted(self)
+    }
+
+    pub fn to_unredacted(&self) -> Unredacted<Self> {
+        Unredacted(self.clone())
+    }
+}
+
+impl Display for Unredacted<&PrivateKey> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        let mut buf: Zeroizing<String<{ PrivateKey::ENCODED_LEN }>> = Zeroizing::new(String::new());
+        self.write_string(&mut buf);
+        f.write_str(&buf)
+    }
+}
+
+impl Debug for Unredacted<&PrivateKey> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "PrivateKey(")?;
+        for b in &self.0 .0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
+    }
+}
+
+impl Display for Unredacted<PrivateKey> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Display::fmt(&Unredacted(&self.0), f)
+    }
+}
+
+impl Debug for Unredacted<PrivateKey> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&Unredacted(&self.0), f)
+    }
 }
 
 impl FromStr for PrivateKey {
@@ -87,6 +155,14 @@ impl FromStr for PrivateKey {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         PrivateKey::from_string(s)
+    }
+}
+
+impl FromStr for Unredacted<PrivateKey> {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        PrivateKey::from_string(s).map(Unredacted)
     }
 }
 

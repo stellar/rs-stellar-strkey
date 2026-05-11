@@ -38,12 +38,10 @@ use crate::{
 /// [`ed25519::PrivateKey::from_string`] directly.
 ///
 /// Likewise, encoding a `PrivateKeyEd25519` variant via
-/// [`Unredacted::<&Strkey>::to_string`] or [`Display`] zeroes its internal
-/// scratch but leaves the encoded bytes in the returned `HeaplessString`
-/// (or in the caller's formatter). To encode a private key strkey with the
-/// scratch zeroed and no return-value move, render the inner
-/// [`ed25519::PrivateKey`] directly through
-/// [`Unredacted::<&PrivateKey>::write_string`]. See
+/// [`Unredacted::<&Strkey>::to_string`] zeroes its internal scratch but
+/// leaves the encoded bytes in the returned `HeaplessString`. To encode
+/// a private key strkey with the scratch zeroed and no return-value
+/// move, use [`Unredacted::<&Strkey>::write_string`]. See
 /// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]

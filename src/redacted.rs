@@ -115,21 +115,33 @@ impl Unredacted<&Strkey> {
     ///
     /// # Zeroize
     ///
-    /// For the `PrivateKeyEd25519` variant, the encoded private key bytes
-    /// pass through both an internal scratch buffer (zeroed on drop) and
-    /// the returned `HeaplessString` (which is plain — its bytes are not
-    /// zeroed). To encode a private key strkey with the intermediate buffer
-    /// zeroed, render the inner [`PrivateKey`] directly through
-    /// [`Unredacted::<&PrivateKey>::write_string`].
+    /// For the `PrivateKeyEd25519` variant, the intermediate scratch
+    /// buffers used during encoding are zeroed on drop, but the returned
+    /// `HeaplessString` itself is plain — its bytes are not zeroed when
+    /// the value is dropped. Use [`write_string`](Self::write_string) for
+    /// zeroizing.
     pub fn to_string(&self) -> HeaplessString<{ Strkey::MAX_ENCODED_LEN }> {
         let mut zeroizing: Zeroizing<HeaplessString<{ Strkey::MAX_ENCODED_LEN }>> =
             Zeroizing::new(HeaplessString::new());
-        // The buffer is sized to the longest variant, so a heapless
-        // capacity error is unreachable.
-        write!(*zeroizing, "{}", self).expect("MAX_ENCODED_LEN bound covers every variant");
+        self.write_string(&mut zeroizing);
         let mut out: HeaplessString<{ Strkey::MAX_ENCODED_LEN }> = HeaplessString::new();
         out.push_str(&zeroizing).unwrap();
         out
+    }
+
+    /// Encodes this strkey to its full strkey string form, writing the
+    /// result into the caller-provided buffer.
+    ///
+    /// # Zeroize
+    ///
+    /// For the `PrivateKeyEd25519` variant, the inner encoding path's
+    /// scratch buffers are wrapped in [`Zeroizing`] and zeroed on drop,
+    /// and the encoded bytes are written directly into `out` rather than
+    /// returned by value, so no copy is left on this method's stack frame.
+    pub fn write_string(&self, out: &mut Zeroizing<HeaplessString<{ Strkey::MAX_ENCODED_LEN }>>) {
+        // The buffer is sized to the longest variant, so a heapless
+        // capacity error is unreachable.
+        write!(**out, "{}", self).expect("MAX_ENCODED_LEN bound covers every variant");
     }
 }
 

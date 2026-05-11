@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{cli::anystrkey::AnyStrkey, DecodeError, Decoded};
+use crate::{ed25519, DecodeError, Decoded, Strkey, Unredacted};
 use clap::Args;
 
 #[derive(Debug)]
@@ -28,9 +28,18 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
-        let strkey =
-            AnyStrkey::from_str(&self.strkey).map_err(|e| Error::Decode(self.strkey.clone(), e))?;
-        let json = serde_json::to_string_pretty(&Decoded(&strkey)).unwrap();
+        let s = &self.strkey;
+        // `S…` strkeys are decoded via `ed25519::PrivateKey` directly; the
+        // Strkey enum intentionally excludes that variant.
+        let json = if let Ok(k) = Strkey::from_str(s) {
+            serde_json::to_string_pretty(&Decoded(&k)).unwrap()
+        } else {
+            let pk = ed25519::PrivateKey::from_str(s).map_err(|e| Error::Decode(s.clone(), e))?;
+            serde_json::to_string_pretty(&serde_json::json!({
+                "private_key_ed25519": Decoded(Unredacted(&pk)),
+            }))
+            .unwrap()
+        };
         println!("{json}");
         Ok(())
     }

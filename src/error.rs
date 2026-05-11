@@ -13,7 +13,7 @@ impl core::fmt::Display for DecodeError {
         match self {
             DecodeError::Invalid {} => f.write_str("the strkey is invalid"),
             DecodeError::PrivateKey {} => {
-                f.write_str("the strkey is a private key; use ed25519::PrivateKey to decode it")
+                f.write_str("the strkey is `S`-prefixed; use ed25519::PrivateKey to decode it")
             }
         }
     }

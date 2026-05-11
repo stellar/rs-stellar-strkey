@@ -6,6 +6,7 @@ pub mod zero;
 use clap::{Parser, Subcommand};
 use std::{ffi::OsString, fmt::Debug};
 
+
 #[derive(Parser, Debug, Clone)]
 #[command(
     author,
@@ -20,18 +21,34 @@ use std::{ffi::OsString, fmt::Debug};
 pub struct Root {
     #[command(subcommand)]
     cmd: Cmd,
+    /// Suppress stderr log and warning output
+    #[arg(long, short = 'q', global = true)]
+    quiet: bool,
 }
 
 #[derive(Subcommand, Debug, Clone)]
 enum Cmd {
     /// Decode strkey
+    ///
+    /// Reads the strkey from the positional argument, or from stdin if no
+    /// argument is provided.
     Decode(decode::Cmd),
     /// Encode strkey
+    ///
+    /// Reads the JSON from the positional argument, or from stdin if no
+    /// argument is provided.
     Encode(encode::Cmd),
     /// Generate the zero strkey
     Zero(zero::Cmd),
     /// Print version information
     Version,
+}
+
+/// Runtime options sourced from global flags on [`Root`] and threaded to each
+/// subcommand's `run`.
+#[derive(Default)]
+pub struct RunOpts {
+    pub quiet: bool,
 }
 
 impl Root {
@@ -41,9 +58,10 @@ impl Root {
     ///
     /// If the root command is configured with state that is invalid.
     pub fn run(&self) -> Result<(), Error> {
+        let opts = RunOpts { quiet: self.quiet };
         match &self.cmd {
-            Cmd::Decode(c) => c.run()?,
-            Cmd::Encode(c) => c.run()?,
+            Cmd::Decode(c) => c.run(&opts)?,
+            Cmd::Encode(c) => c.run(&opts)?,
             Cmd::Zero(c) => c.run(),
             Cmd::Version => version::Cmd::run(),
         }
@@ -73,4 +91,12 @@ where
 {
     let root = Root::try_parse_from(args)?;
     root.run()
+}
+
+/// Emit a stderr warning that the output bound for stdout contains secret
+/// material. Called from CLI paths that handle private-key strkeys.
+pub(crate) fn warn_private_key() {
+    eprintln!(
+        "⚠️  Warning: output contains a private key with secret material. Handle with care."
+    );
 }

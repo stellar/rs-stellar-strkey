@@ -103,6 +103,9 @@ impl PrivateKey {
         }
     }
 
+    /// Borrows this private key as an [`Unredacted`] wrapper so it can be
+    /// rendered via [`Display`] or [`to_string`](Unredacted::to_string), or
+    /// serialized in its strkey string form.
     pub fn as_unredacted(&self) -> Unredacted<&Self> {
         Unredacted(self)
     }

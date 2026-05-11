@@ -2,7 +2,7 @@
 
 use libfuzzer_sys::{arbitrary::Result, fuzz_target, Corpus};
 
-use stellar_strkey::Strkey;
+use stellar_strkey::{ed25519::PrivateKey, Strkey, Unredacted};
 
 const BASE32_ALPHABET: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567=";
 
@@ -12,13 +12,26 @@ fuzz_target!(|s: &str| -> Corpus {
         return Corpus::Reject;
     }
 
+    // `S…` strkeys are parsed via ed25519::PrivateKey rather than the Strkey
+    // enum; handle that path separately so private-key roundtrips remain
+    // covered.
+    if s.starts_with('S') {
+        let Ok(pk): Result<PrivateKey, _> = s.parse() else {
+            return Corpus::Keep;
+        };
+        let roundtrip_s = Unredacted(&pk).to_string();
+        assert_eq!(roundtrip_s.as_str(), s);
+        assert_eq!(s.len(), 56);
+        return Corpus::Keep;
+    }
+
     // Parse the input as a strkey. Ignore invalid strkeys.
     let Ok(r): Result<Strkey, _> = s.parse() else {
         return Corpus::Keep;
     };
 
     // Check that the strkey roundtrips back to the identical string.
-    let roundtrip_s = r.as_unredacted().to_string();
+    let roundtrip_s = r.to_string();
     assert_eq!(roundtrip_s, s);
 
     // Check that the first character matches the expected prefix for the type.
@@ -27,7 +40,6 @@ fuzz_target!(|s: &str| -> Corpus {
         first_char,
         match r {
             Strkey::PublicKeyEd25519(_) => 'G',
-            Strkey::PrivateKeyEd25519(_) => 'S',
             Strkey::MuxedAccountEd25519(_) => 'M',
             Strkey::PreAuthTx(_) => 'T',
             Strkey::HashX(_) => 'X',
@@ -42,7 +54,6 @@ fuzz_target!(|s: &str| -> Corpus {
     let len = s.len();
     match &r {
         Strkey::PublicKeyEd25519(_) => assert_eq!(len, 56),
-        Strkey::PrivateKeyEd25519(_) => assert_eq!(len, 56),
         Strkey::PreAuthTx(_) => assert_eq!(len, 56),
         Strkey::HashX(_) => assert_eq!(len, 56),
         Strkey::MuxedAccountEd25519(_) => assert_eq!(len, 69),

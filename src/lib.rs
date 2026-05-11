@@ -19,16 +19,18 @@
 //!   know the kind in advance.
 //! - [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr)
 //!   implementations for every kind, plus inherent `to_string` /
-//!   `from_string` / `from_slice` methods. [`Strkey`] and
-//!   [`ed25519::PrivateKey`] expose `Display` and `to_string` through the
-//!   [`Unredacted`] wrapper instead of directly.
+//!   `from_string` / `from_slice` methods. [`ed25519::PrivateKey`] exposes
+//!   `Display` and `to_string` through the [`Unredacted`] wrapper instead
+//!   of directly. The [`Strkey`] enum intentionally omits the
+//!   `PrivateKeyEd25519` variant — `S…` strkeys can only be encoded or
+//!   decoded through [`ed25519::PrivateKey`] directly.
 //!
 //! # Strkey kinds
 //!
 //! | Prefix | Kind                                                                  | Payload bytes |
 //! |--------|-----------------------------------------------------------------------|---------------|
 //! | `G`    | [`Strkey::PublicKeyEd25519`] / [`ed25519::PublicKey`]                  |            32 |
-//! | `S`    | [`Strkey::PrivateKeyEd25519`] / [`ed25519::PrivateKey`]                |            32 |
+//! | `S`    | [`ed25519::PrivateKey`] only (omitted from [`Strkey`])                 |            32 |
 //! | `M`    | [`Strkey::MuxedAccountEd25519`] / [`ed25519::MuxedAccount`]            |            40 |
 //! | `T`    | [`Strkey::PreAuthTx`] / [`PreAuthTx`]                                  |            32 |
 //! | `X`    | [`Strkey::HashX`] / [`HashX`]                                          |            32 |

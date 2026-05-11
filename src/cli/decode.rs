@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::{DecodeError, Strkey, UnredactedDecoded};
+use crate::{cli::anystrkey::AnyStrkey, DecodeError, UnredactedDecoded};
 use clap::Args;
 
 #[derive(Debug)]
@@ -29,7 +29,7 @@ pub struct Cmd {
 impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
         let strkey =
-            Strkey::from_str(&self.strkey).map_err(|e| Error::Decode(self.strkey.clone(), e))?;
+            AnyStrkey::from_str(&self.strkey).map_err(|e| Error::Decode(self.strkey.clone(), e))?;
         let json = serde_json::to_string_pretty(&UnredactedDecoded(&strkey)).unwrap();
         println!("{json}");
         Ok(())

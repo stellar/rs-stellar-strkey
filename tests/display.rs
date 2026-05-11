@@ -8,21 +8,8 @@ fn test_strkey_ed25519_public_key_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "GA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5"
-    );
-}
-
-#[test]
-fn test_strkey_ed25519_private_key_display() {
-    let strkey = Strkey::PrivateKeyEd25519(ed25519::PrivateKey([
-        0x69, 0xa8, 0xc4, 0xcb, 0xb9, 0xf6, 0x4e, 0x8a, 0x07, 0x98, 0xf6, 0xe1, 0xac, 0x65, 0xd0,
-        0x6c, 0x31, 0x62, 0x92, 0x90, 0x56, 0xbc, 0xf4, 0xcd, 0xb7, 0xd3, 0x73, 0x8d, 0x18, 0x55,
-        0xf3, 0x63,
-    ]));
-    assert_eq!(
-        format!("{}", strkey.as_unredacted()),
-        "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR"
     );
 }
 
@@ -34,7 +21,7 @@ fn test_strkey_pre_auth_tx_display() {
         0xf3, 0x63,
     ]));
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "TBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHXL7"
     );
 }
@@ -47,7 +34,7 @@ fn test_strkey_hash_x_display() {
         0xf3, 0x63,
     ]));
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "XBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWGTOG"
     );
 }
@@ -63,7 +50,7 @@ fn test_strkey_ed25519_muxed_account_display() {
         id: 123456,
     });
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "MA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCICBKU"
     );
 }
@@ -79,7 +66,7 @@ fn test_strkey_ed25519_signed_payload_display() {
         payload: [0u8; 4].as_slice().try_into().unwrap(),
     });
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAACAAAAAABNWS"
     );
 }
@@ -92,7 +79,7 @@ fn test_strkey_contract_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "CA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAXE"
     );
 }
@@ -105,7 +92,7 @@ fn test_strkey_liquidity_pool_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "LA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGZ5J"
     );
 }
@@ -118,7 +105,7 @@ fn test_strkey_claimable_balance_display() {
         0xb1, 0x03,
     ]));
     assert_eq!(
-        format!("{}", strkey.as_unredacted()),
+        format!("{}", strkey),
         "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDE"
     );
 }

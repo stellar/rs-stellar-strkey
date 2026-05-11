@@ -1,6 +1,6 @@
 use clap::Args;
 
-use crate::{Strkey, UnredactedDecoded};
+use crate::{cli::anystrkey::AnyStrkey, UnredactedDecoded};
 
 // Bound on the JSON input size. The largest legitimate UnredactedDecoded<Strkey> JSON
 // (a pretty-printed signed_payload_ed25519 with a max 64-byte payload) is
@@ -44,9 +44,9 @@ impl Cmd {
                 max: MAX_JSON_LEN,
             });
         }
-        let UnredactedDecoded(strkey): UnredactedDecoded<Strkey> =
+        let UnredactedDecoded(strkey): UnredactedDecoded<AnyStrkey> =
             serde_json::from_str(&self.json).map_err(Error::Json)?;
-        println!("{}", strkey.as_unredacted());
+        println!("{}", strkey);
         Ok(())
     }
 }

@@ -1,33 +1,20 @@
 #![cfg(feature = "cli")]
 
-use stellar_strkey::{ed25519, *};
+use stellar_strkey::{cli::anystrkey::AnyStrkey, ed25519, *};
 
 #[test]
 fn test_ed25519_public_key() {
     assert_eq!(
-        serde_json::to_string_pretty(&UnredactedDecoded(&Strkey::PublicKeyEd25519(ed25519::PublicKey([
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-        ]))))
+        serde_json::to_string_pretty(&UnredactedDecoded(&Strkey::PublicKeyEd25519(
+            ed25519::PublicKey([
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ])
+        )))
         .unwrap(),
         r#"{
   "public_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
-}"#,
-    );
-}
-
-#[test]
-fn test_ed25519_private_key() {
-    assert_eq!(
-        serde_json::to_string_pretty(&UnredactedDecoded(&Strkey::PrivateKeyEd25519(ed25519::PrivateKey([
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-        ]))))
-        .unwrap(),
-        r#"{
-  "private_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
 }"#,
     );
 }
@@ -130,7 +117,8 @@ fn test_roundtrip_muxed_account() {
         id: 42,
     });
     let json = serde_json::to_string(&UnredactedDecoded(&original)).unwrap();
-    let UnredactedDecoded(deserialized): UnredactedDecoded<Strkey> = serde_json::from_str(&json).unwrap();
+    let UnredactedDecoded(deserialized): UnredactedDecoded<Strkey> =
+        serde_json::from_str(&json).unwrap();
     assert_eq!(original, deserialized);
 }
 
@@ -141,7 +129,8 @@ fn test_roundtrip_signed_payload() {
         payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
     });
     let json = serde_json::to_string(&UnredactedDecoded(&original)).unwrap();
-    let UnredactedDecoded(deserialized): UnredactedDecoded<Strkey> = serde_json::from_str(&json).unwrap();
+    let UnredactedDecoded(deserialized): UnredactedDecoded<Strkey> =
+        serde_json::from_str(&json).unwrap();
     assert_eq!(original, deserialized);
 }
 
@@ -149,8 +138,27 @@ fn test_roundtrip_signed_payload() {
 fn test_roundtrip_claimable_balance() {
     let original = Strkey::ClaimableBalance(ClaimableBalance::V0([0x00; 32]));
     let json = serde_json::to_string(&UnredactedDecoded(&original)).unwrap();
-    let UnredactedDecoded(deserialized): UnredactedDecoded<Strkey> = serde_json::from_str(&json).unwrap();
+    let UnredactedDecoded(deserialized): UnredactedDecoded<Strkey> =
+        serde_json::from_str(&json).unwrap();
     assert_eq!(original, deserialized);
+}
+
+#[test]
+fn test_ed25519_private_key() {
+    let original = AnyStrkey::PrivateKey(ed25519::PrivateKey([0x00; 32]));
+    assert_eq!(
+        serde_json::to_string_pretty(&UnredactedDecoded(&original)).unwrap(),
+        r#"{
+  "private_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
+}"#,
+    );
+    let json = serde_json::to_string(&UnredactedDecoded(&original)).unwrap();
+    let UnredactedDecoded(deserialized): UnredactedDecoded<AnyStrkey> =
+        serde_json::from_str(&json).unwrap();
+    match (&original, &deserialized) {
+        (AnyStrkey::PrivateKey(a), AnyStrkey::PrivateKey(b)) => assert_eq!(a.0, b.0),
+        _ => panic!("expected PrivateKey variant"),
+    }
 }
 
 #[test]

@@ -1,5 +1,5 @@
 use core::{
-    fmt::{Debug, Display},
+    fmt::{Debug, Display, Write},
     str::FromStr,
 };
 
@@ -9,42 +9,24 @@ use crate::{
     convert::{binary_len, decode, encode, encode_len},
     ed25519,
     error::DecodeError,
-    unredacted::Unredacted,
     version,
 };
 
-/// A decoded Stellar strkey of any supported type.
+/// A decoded Stellar strkey of any supported non-secret type.
 ///
-/// [`Debug`] is derived; for the
-/// [`PrivateKeyEd25519`](Self::PrivateKeyEd25519) variant the inner
-/// [`ed25519::PrivateKey`]'s `Debug` redacts the seed bytes
-/// (`PrivateKeyEd25519(PrivateKey([REDACTED]))`). [`FromStr`] and
-/// `Deserialize` parse from the strkey string form; both are input-only and
-/// do not leak. `Strkey` does not implement [`Display`] or `Serialize`
-/// directly — that asymmetry is intentional: `Deserialize` lets a strkey
-/// be parsed from a serialized string (input is not a leak vector), while
-/// `Serialize` is gated. To render or serialize the encoded form, wrap the
-/// value in [`Unredacted`].
-///
-/// # Zeroize
-///
-/// `Strkey::from_slice` / `Strkey::from_string` do not zero their
-/// intermediate scratch buffers, even when decoding a `PrivateKeyEd25519`
-/// variant. To decode a private key strkey with the intermediate buffers
-/// zeroed, use [`ed25519::PrivateKey::from_slice`] /
-/// [`ed25519::PrivateKey::from_string`] directly.
-///
-/// Likewise, encoding a `PrivateKeyEd25519` variant via
-/// [`Unredacted::<&Strkey>::to_string`] zeroes its internal scratch but
-/// leaves the encoded bytes in the returned `HeaplessString`. To encode
-/// a private key strkey with the scratch zeroed and no return-value
-/// move, use [`Unredacted::<&Strkey>::write_string`]. See
-/// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
+/// This enum intentionally does not include the `PrivateKeyEd25519` (`S…`)
+/// strkey, because that variant carries secret key material and is gated
+/// behind a separate type with zeroization and redacted formatting. To
+/// encode or decode a private-key strkey, use
+/// [`ed25519::PrivateKey`] directly — `Strkey::from_string` / `FromStr`
+/// will reject `S…` inputs.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
-#[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
-    PrivateKeyEd25519(ed25519::PrivateKey),
     PreAuthTx(PreAuthTx),
     HashX(HashX),
     MuxedAccountEd25519(ed25519::MuxedAccount),
@@ -95,12 +77,12 @@ impl Strkey {
         assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
     };
 
-    pub fn as_unredacted(&self) -> Unredacted<&Self> {
-        Unredacted(self)
-    }
-
-    pub fn to_unredacted(&self) -> Unredacted<Self> {
-        Unredacted(self.clone())
+    pub fn to_string(&self) -> HeaplessString<{ Self::MAX_ENCODED_LEN }> {
+        let mut s: HeaplessString<{ Self::MAX_ENCODED_LEN }> = HeaplessString::new();
+        // The buffer is sized to the longest variant, so a heapless
+        // capacity error is unreachable.
+        write!(s, "{}", self).expect("MAX_ENCODED_LEN bound covers every variant");
+        s
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -112,9 +94,6 @@ impl Strkey {
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
-            )),
-            version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(
-                ed25519::PrivateKey::from_payload(&payload)?,
             )),
             version::PRE_AUTH_TX => Ok(Self::PreAuthTx(PreAuthTx::from_payload(&payload)?)),
             version::HASH_X => Ok(Self::HashX(HashX::from_payload(&payload)?)),
@@ -131,7 +110,24 @@ impl Strkey {
             version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
                 ClaimableBalance::from_payload(&payload)?,
             )),
+            // version::PRIVATE_KEY_ED25519 is intentionally not supported here;
+            // use ed25519::PrivateKey directly to decode `S…` strkeys.
             _ => Err(DecodeError::Invalid),
+        }
+    }
+}
+
+impl Display for Strkey {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::PublicKeyEd25519(k) => Display::fmt(k, f),
+            Self::PreAuthTx(k) => Display::fmt(k, f),
+            Self::HashX(k) => Display::fmt(k, f),
+            Self::MuxedAccountEd25519(k) => Display::fmt(k, f),
+            Self::SignedPayloadEd25519(k) => Display::fmt(k, f),
+            Self::Contract(k) => Display::fmt(k, f),
+            Self::LiquidityPool(k) => Display::fmt(k, f),
+            Self::ClaimableBalance(k) => Display::fmt(k, f),
         }
     }
 }
@@ -160,9 +156,6 @@ mod strkey_decoded_serde_impl {
             match self.0 {
                 Strkey::PublicKeyEd25519(key) => {
                     map.serialize_entry("public_key_ed25519", &UnredactedDecoded(key))?;
-                }
-                Strkey::PrivateKeyEd25519(key) => {
-                    map.serialize_entry("private_key_ed25519", &UnredactedDecoded(key))?;
                 }
                 Strkey::PreAuthTx(key) => {
                     map.serialize_entry("pre_auth_tx", &UnredactedDecoded(key))?;
@@ -211,10 +204,6 @@ mod strkey_decoded_serde_impl {
                             let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::PublicKeyEd25519(inner)
                         }
-                        "private_key_ed25519" => {
-                            let UnredactedDecoded(inner) = map.next_value()?;
-                            Strkey::PrivateKeyEd25519(inner)
-                        }
                         "pre_auth_tx" => {
                             let UnredactedDecoded(inner) = map.next_value()?;
                             Strkey::PreAuthTx(inner)
@@ -248,7 +237,6 @@ mod strkey_decoded_serde_impl {
                                 key,
                                 &[
                                     "public_key_ed25519",
-                                    "private_key_ed25519",
                                     "pre_auth_tx",
                                     "hash_x",
                                     "muxed_account_ed25519",

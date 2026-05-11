@@ -56,9 +56,10 @@ fn test_invalid_public_keys() {
 #[test]
 fn test_strkey_rejects_private_key() {
     // The Strkey enum intentionally does not include the PrivateKeyEd25519
-    // variant. Parsing an `S…` strkey via Strkey must fail.
+    // variant. A valid `S…` strkey reports `PrivateKey` to point callers at
+    // `ed25519::PrivateKey`.
     let r: Result<Strkey, _> = "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::PrivateKey));
 }
 
 #[test]

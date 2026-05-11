@@ -92,7 +92,11 @@ impl Display for Unredacted<&PrivateKey> {
 
 impl Debug for Unredacted<&PrivateKey> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str("PrivateKey([REDACTED])")
+        f.write_str("PrivateKey(")?;
+        for b in &self.0 .0 {
+            write!(f, "{b:02x}")?;
+        }
+        f.write_str(")")
     }
 }
 

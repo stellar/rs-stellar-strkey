@@ -16,21 +16,6 @@ fn test_strkey_ed25519_public_key_debug() {
 }
 
 #[test]
-fn test_strkey_ed25519_private_key_debug() {
-    assert_eq!(
-        format!(
-            "{:?}",
-            Strkey::PrivateKeyEd25519(ed25519::PrivateKey([
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
-            ]))
-        ),
-        "PrivateKeyEd25519(PrivateKey(0000000000000000000000000000000000000000000000000000000000000000))",
-    );
-}
-
-#[test]
 fn test_strkey_contract_debug() {
     assert_eq!(
         format!(
@@ -98,14 +83,17 @@ fn test_strkey_ed25519_signed_payload_debug() {
     assert_eq!(
         format!(
             "{:?}",
-            Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
-                ed25519: [
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                ],
-                payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
-            })
+            Strkey::SignedPayloadEd25519(
+                ed25519::SignedPayload::new(
+                    [
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    ],
+                    &[1u8, 2, 3, 4],
+                )
+                .unwrap()
+            )
         ),
         "SignedPayloadEd25519(SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304))",
     );
@@ -169,7 +157,7 @@ fn test_ed25519_private_key_debug() {
                 0x00, 0x00, 0x00, 0x00,
             ])
         ),
-        "PrivateKey(0000000000000000000000000000000000000000000000000000000000000000)",
+        "PrivateKey([REDACTED])",
     );
 }
 
@@ -226,14 +214,15 @@ fn test_ed25519_signed_payload_debug() {
     assert_eq!(
         format!(
             "{:?}",
-            ed25519::SignedPayload {
-                ed25519: [
+            ed25519::SignedPayload::new(
+                [
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
-            }
+                &[1u8, 2, 3, 4],
+            )
+            .unwrap()
         ),
         "SignedPayload(0000000000000000000000000000000000000000000000000000000000000000, 01020304)",
     );
@@ -281,5 +270,20 @@ fn test_claimable_balance_debug() {
             ])
         ),
         "ClaimableBalance(V0(0000000000000000000000000000000000000000000000000000000000000000))",
+    );
+}
+
+// Debug via Unredacted wrapper for PrivateKey.
+
+#[test]
+fn test_ed25519_private_key_debug_unredacted() {
+    let key = ed25519::PrivateKey([
+        0x69, 0xa8, 0xc4, 0xcb, 0xb9, 0xf6, 0x4e, 0x8a, 0x07, 0x98, 0xf6, 0xe1, 0xac, 0x65, 0xd0,
+        0x6c, 0x31, 0x62, 0x92, 0x90, 0x56, 0xbc, 0xf4, 0xcd, 0xb7, 0xd3, 0x73, 0x8d, 0x18, 0x55,
+        0xf3, 0x63,
+    ]);
+    assert_eq!(
+        format!("{:?}", key.as_unredacted()),
+        "PrivateKey(69a8c4cbb9f64e8a0798f6e1ac65d06c3162929056bcf4cdb7d3738d1855f363)",
     );
 }

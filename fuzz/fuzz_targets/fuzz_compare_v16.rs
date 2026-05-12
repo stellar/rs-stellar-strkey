@@ -2,11 +2,18 @@
 
 use libfuzzer_sys::{fuzz_target, Corpus};
 
-use stellar_strkey::Strkey as StrkeyNew;
+use stellar_strkey::ed25519::PrivateKey as PrivateKeyNew;
+use stellar_strkey::{Strkey as StrkeyNew, Unredacted};
 use stellar_strkey_v16::Strkey as StrkeyOld;
 
 // Compare parsing and encoding between the current library and v0.0.16.
 fuzz_target!(|s: &str| -> Corpus {
+    // `S…` strkeys are parsed via ed25519::PrivateKey on the new side and
+    // Strkey::PrivateKeyEd25519 on the old side.
+    if s.starts_with('S') {
+        return compare_private_key(s);
+    }
+
     // Try parsing with both versions.
     let old_result: Result<StrkeyOld, _> = s.parse();
     let new_result: Result<StrkeyNew, _> = s.parse();
@@ -57,9 +64,6 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         (StrkeyNew::PublicKeyEd25519(n), StrkeyOld::PublicKeyEd25519(o)) => {
             assert_eq!(n.0, o.0, "PublicKeyEd25519 data mismatch");
         }
-        (StrkeyNew::PrivateKeyEd25519(n), StrkeyOld::PrivateKeyEd25519(o)) => {
-            assert_eq!(n.0, o.0, "PrivateKeyEd25519 data mismatch");
-        }
         (StrkeyNew::PreAuthTx(n), StrkeyOld::PreAuthTx(o)) => {
             assert_eq!(n.0, o.0, "PreAuthTx data mismatch");
         }
@@ -72,11 +76,12 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         }
         (StrkeyNew::SignedPayloadEd25519(n), StrkeyOld::SignedPayloadEd25519(o)) => {
             assert_eq!(
-                n.ed25519, o.ed25519,
+                n.ed25519(),
+                &o.ed25519,
                 "SignedPayloadEd25519 ed25519 mismatch"
             );
             assert_eq!(
-                n.payload.as_slice(),
+                n.payload(),
                 o.payload.as_slice(),
                 "SignedPayloadEd25519 payload mismatch"
             );
@@ -98,5 +103,21 @@ fn compare_internals(new: &StrkeyNew, old: &StrkeyOld) {
         _ => {
             panic!("Strkey variant mismatch\nNew: {new:?}\nOld: {old:?}");
         }
+    }
+}
+
+/// Compare new's `ed25519::PrivateKey` parse against old's
+/// `Strkey::PrivateKeyEd25519` for `S…` inputs.
+fn compare_private_key(s: &str) -> Corpus {
+    let new: Result<PrivateKeyNew, _> = s.parse();
+    let old: Result<StrkeyOld, _> = s.parse();
+    match (new, old) {
+        (Ok(new), Ok(StrkeyOld::PrivateKeyEd25519(old))) => {
+            assert_eq!(new.0, old.0, "PrivateKeyEd25519 data mismatch");
+            assert_eq!(Unredacted(&new).to_string().as_str(), s, "roundtrip failed");
+            Corpus::Keep
+        }
+        (Err(_), Err(_)) => Corpus::Keep,
+        (new, old) => panic!("private-key parse mismatch\nInput: {s}\nNew: {new:?}\nOld: {old:?}"),
     }
 }

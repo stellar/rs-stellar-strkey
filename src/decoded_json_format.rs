@@ -30,4 +30,9 @@
 /// If the input is untrusted, or this type is used in an
 /// allocation-sensitive application, callers should validate the input
 /// length prior to deserializing to avoid unexpected or unbounded allocations.
+///
+/// `Decoded` is not implemented directly for
+/// [`ed25519::PrivateKey`](crate::ed25519::PrivateKey); private-key bytes are
+/// serialized only through `Decoded<Unredacted<&PrivateKey>>`, requiring an
+/// explicit [`Unredacted`](crate::Unredacted) wrap to opt in.
 pub struct Decoded<T>(pub T);

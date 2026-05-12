@@ -1,6 +1,7 @@
 use crate::{
     convert::{binary_len, decode, decode_zeroizing, encode, encode_len, encode_zeroizing},
     error::DecodeError,
+    unredacted::Unredacted,
     version,
 };
 
@@ -19,42 +20,35 @@ use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 /// are overwritten with zeroes when a value is dropped.
 /// [`from_string`](Self::from_string) and [`from_slice`](Self::from_slice)
 /// zero their intermediate scratch buffers when they return.
-/// [`write_string`](Self::write_string) is the encoding path that wraps its
-/// scratch buffers in [`Zeroizing`] and writes directly into a
-/// caller-provided buffer, avoiding any return-value move.
+/// [`Unredacted::write_string`] is the encoding path that wraps its scratch
+/// buffers in [`Zeroizing`] and writes directly into a caller-provided
+/// buffer, avoiding any return-value move.
 ///
-/// Other functions and trait implementations listed below do not zero the
-/// private key value:
-/// - [`Debug`]
-/// - [`Display`]
-/// - [`to_string`](Self::to_string)
-/// - `Serialize`/`Deserialize` under the `serde` and `serde-decoded` features
+/// [`Debug`] emits `PrivateKey([REDACTED])`. To render the encoded strkey
+/// form, serialize via `serde`, or emit the raw seed bytes in any form,
+/// wrap the value in [`Unredacted`] — see [`Unredacted`]'s doc for the full
+/// list of paths that opt-in unlocks.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Zeroize, ZeroizeOnDrop)]
-#[cfg_attr(
-    feature = "serde",
-    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
-)]
+#[cfg_attr(feature = "serde", derive(serde_with::DeserializeFromStr))]
 pub struct PrivateKey(pub [u8; 32]);
 
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "PrivateKey(")?;
-        for b in &self.0 {
-            write!(f, "{b:02x}")?;
-        }
-        write!(f, ")")
+        f.write_str("PrivateKey([REDACTED])")
     }
 }
 
 impl PrivateKey {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
     };
+}
 
+impl Unredacted<&PrivateKey> {
     /// Encodes this private key to its strkey string form.
     ///
     /// # Zeroize
@@ -63,10 +57,11 @@ impl PrivateKey {
     /// drop, but the returned `String` itself is plain — its bytes are not
     /// zeroed when the value is dropped. Use
     /// [`write_string`](Self::write_string) for zeroizing.
-    pub fn to_string(&self) -> String<{ Self::ENCODED_LEN }> {
-        let mut zeroizing: Zeroizing<String<{ Self::ENCODED_LEN }>> = Zeroizing::new(String::new());
+    pub fn to_string(&self) -> String<{ PrivateKey::ENCODED_LEN }> {
+        let mut zeroizing: Zeroizing<String<{ PrivateKey::ENCODED_LEN }>> =
+            Zeroizing::new(String::new());
         self.write_string(&mut zeroizing);
-        let mut out: String<{ Self::ENCODED_LEN }> = String::new();
+        let mut out: String<{ PrivateKey::ENCODED_LEN }> = String::new();
         out.push_str(&zeroizing).unwrap();
         out
     }
@@ -80,14 +75,16 @@ impl PrivateKey {
     /// [`Zeroizing`] and zeroed on drop, and the encoded bytes are written
     /// directly into `out` rather than returned by value, so no copy is left
     /// on this method's stack frame.
-    pub fn write_string(&self, out: &mut Zeroizing<String<{ Self::ENCODED_LEN }>>) {
-        encode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
-            version::PRIVATE_KEY_ED25519,
-            &self.0,
-            out,
-        );
+    pub fn write_string(&self, out: &mut Zeroizing<String<{ PrivateKey::ENCODED_LEN }>>) {
+        encode_zeroizing::<
+            { PrivateKey::PAYLOAD_LEN },
+            { PrivateKey::BINARY_LEN },
+            { PrivateKey::ENCODED_LEN },
+        >(version::PRIVATE_KEY_ED25519, &self.0 .0, out);
     }
+}
 
+impl PrivateKey {
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
             Ok(ed25519) => Ok(Self(ed25519)),
@@ -107,13 +104,42 @@ impl PrivateKey {
             _ => Err(DecodeError::Invalid),
         }
     }
+
+    /// Borrows this private key as an [`Unredacted`] wrapper so it can be
+    /// rendered via [`Display`] or [`to_string`](Unredacted::to_string), or
+    /// serialized in its strkey string form.
+    pub fn as_unredacted(&self) -> Unredacted<&Self> {
+        Unredacted(self)
+    }
 }
 
-impl Display for PrivateKey {
+impl Display for Unredacted<&PrivateKey> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        let mut buf: Zeroizing<String<{ Self::ENCODED_LEN }>> = Zeroizing::new(String::new());
+        let mut buf: Zeroizing<String<{ PrivateKey::ENCODED_LEN }>> = Zeroizing::new(String::new());
         self.write_string(&mut buf);
         f.write_str(&buf)
+    }
+}
+
+impl Debug for Unredacted<&PrivateKey> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "PrivateKey(")?;
+        for b in &self.0 .0 {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ")")
+    }
+}
+
+impl Display for Unredacted<PrivateKey> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Display::fmt(&Unredacted(&self.0), f)
+    }
+}
+
+impl Debug for Unredacted<PrivateKey> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&Unredacted(&self.0), f)
     }
 }
 
@@ -128,7 +154,7 @@ impl FromStr for PrivateKey {
 #[cfg(feature = "serde-decoded")]
 mod private_key_decoded_serde_impl {
     use super::*;
-    use crate::decoded_json_format::Decoded;
+    use crate::{decoded_json_format::Decoded, unredacted::Unredacted};
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use serde_with::serde_as;
 
@@ -142,17 +168,17 @@ mod private_key_decoded_serde_impl {
     #[serde(transparent)]
     struct DecodedOwned(#[serde_as(as = "serde_with::hex::Hex")] [u8; 32]);
 
-    impl Serialize for Decoded<&PrivateKey> {
+    impl Serialize for Decoded<Unredacted<&PrivateKey>> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let Self(PrivateKey(bytes)) = self;
+            let Self(Unredacted(PrivateKey(bytes))) = self;
             DecodedBorrowed(bytes).serialize(serializer)
         }
     }
 
-    impl<'de> Deserialize<'de> for Decoded<PrivateKey> {
+    impl<'de> Deserialize<'de> for Decoded<Unredacted<PrivateKey>> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(PrivateKey(bytes)))
+            Ok(Decoded(Unredacted(PrivateKey(bytes))))
         }
     }
 }
@@ -178,7 +204,7 @@ impl Debug for PublicKey {
 impl PublicKey {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -282,7 +308,7 @@ impl Debug for MuxedAccount {
 impl MuxedAccount {
     pub(crate) const PAYLOAD_LEN: usize = 32 + 8; // ed25519 + id
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 43);
         assert!(Self::ENCODED_LEN == 69);
@@ -377,15 +403,16 @@ mod muxed_account_decoded_serde_impl {
 
 /// Stores a signed payload ed25519 signer.
 ///
-/// The payload must not have a size larger than 64 bytes.
+/// The inner payload must be 1..=64 bytes. Empty payloads are not valid per
+/// stellar-core (SetOptionsOpFrame rejects them with SET_OPTIONS_BAD_SIGNER).
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct SignedPayload {
-    pub ed25519: [u8; 32],
-    pub payload: Vec<u8, 64>,
+    ed25519: [u8; 32],
+    payload: Vec<u8, 64>,
 }
 
 impl Debug for SignedPayload {
@@ -406,12 +433,45 @@ impl SignedPayload {
     // Max payload: 32 ed25519 + 4 len + 64 inner payload = 100
     pub(crate) const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
     pub(crate) const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
-    pub(crate) const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    pub const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    const MIN_INNER_PAYLOAD_LEN: usize = 1;
+    const MAX_INNER_PAYLOAD_LEN: usize = 64;
+    const MAX_INNER_PAYLOAD_LEN_U32: u32 = 64;
     const _ASSERTS: () = {
         assert!(Self::MAX_PAYLOAD_LEN == 100);
         assert!(Self::MAX_BINARY_LEN == 103);
         assert!(Self::MAX_ENCODED_LEN == 165);
+        assert!(Self::MAX_INNER_PAYLOAD_LEN as u32 == Self::MAX_INNER_PAYLOAD_LEN_U32);
+        assert!(Self::MAX_INNER_PAYLOAD_LEN_U32 as usize == Self::MAX_INNER_PAYLOAD_LEN);
     };
+
+    /// Constructs a SignedPayload from an ed25519 public key and inner payload.
+    ///
+    /// ### Errors
+    ///
+    /// If the inner payload is empty or larger than 64 bytes.
+    pub fn new(ed25519: [u8; 32], payload: &[u8]) -> Result<Self, DecodeError> {
+        if !(Self::MIN_INNER_PAYLOAD_LEN..=Self::MAX_INNER_PAYLOAD_LEN).contains(&payload.len()) {
+            return Err(DecodeError::Invalid);
+        }
+        let mut p = Vec::new();
+        p.extend_from_slice(payload)
+            .map_err(|_| DecodeError::Invalid)?;
+        Ok(Self {
+            ed25519,
+            payload: p,
+        })
+    }
+
+    /// Returns the ed25519 public key.
+    pub fn ed25519(&self) -> &[u8; 32] {
+        &self.ed25519
+    }
+
+    /// Returns the inner payload.
+    pub fn payload(&self) -> &[u8] {
+        &self.payload
+    }
 
     /// Returns the strkey string for the signed payload signer.
     pub fn to_string(&self) -> String<{ Self::MAX_ENCODED_LEN }> {
@@ -436,15 +496,16 @@ impl SignedPayload {
     ///
     /// ### Errors
     ///
-    /// If the payload is larger than 64 bytes.
+    /// If the inner payload is empty or larger than 64 bytes, if the overall
+    /// layout is malformed (wrong total length, truncated fields), or if the
+    /// trailing padding bytes are not all zero.
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         // Min: 32-byte ed25519 key + 4-byte length prefix + 4 bytes (1-byte inner
         // payload padded to 4 per XDR). Empty inner payloads are not valid per
         // stellar-core (SetOptionsOpFrame rejects them with SET_OPTIONS_BAD_SIGNER).
         // Max: 32-byte ed25519 key + 4-byte length prefix + 64-byte inner payload.
-        const MAX_INNER_PAYLOAD_LENGTH: u32 = 64;
         const MIN_LENGTH: usize = 32 + 4 + 4;
-        const MAX_LENGTH: usize = 32 + 4 + (MAX_INNER_PAYLOAD_LENGTH as usize);
+        const MAX_LENGTH: usize = 32 + 4 + SignedPayload::MAX_INNER_PAYLOAD_LEN;
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::Invalid);
@@ -470,7 +531,7 @@ impl SignedPayload {
         offset += 4;
 
         // Check inner payload length is inside accepted range.
-        if inner_payload_len > MAX_INNER_PAYLOAD_LENGTH {
+        if inner_payload_len > Self::MAX_INNER_PAYLOAD_LEN_U32 {
             return Err(DecodeError::Invalid);
         }
 
@@ -499,11 +560,7 @@ impl SignedPayload {
             return Err(DecodeError::Invalid);
         }
 
-        let mut payload = Vec::new();
-        payload
-            .extend_from_slice(inner_payload)
-            .map_err(|_| DecodeError::Invalid)?;
-        Ok(Self { ed25519, payload })
+        Self::new(ed25519, inner_payload)
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -560,21 +617,21 @@ mod signed_payload_decoded_serde_impl {
 
     impl Serialize for Decoded<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let Self(SignedPayload { ed25519, payload }) = self;
-            DecodedBorrowed { ed25519, payload }.serialize(serializer)
+            let Self(sp) = self;
+            DecodedBorrowed {
+                ed25519: sp.ed25519(),
+                payload: sp.payload(),
+            }
+            .serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
-            Ok(Decoded(SignedPayload {
-                ed25519,
-                payload: payload
-                    .as_slice()
-                    .try_into()
-                    .map_err(|_| de::Error::custom("payload too large"))?,
-            }))
+            let sp = SignedPayload::new(ed25519, &payload)
+                .map_err(|e| de::Error::custom(format_args!("invalid signed payload: {e}")))?;
+            Ok(Decoded(sp))
         }
     }
 }
@@ -595,11 +652,11 @@ mod tests {
             0x18, 0x55, 0xf3, 0x63,
         ]);
         let mut buf: Zeroizing<String<{ PrivateKey::ENCODED_LEN }>> = Zeroizing::new(String::new());
-        key.write_string(&mut buf);
+        key.as_unredacted().write_string(&mut buf);
         assert_eq!(
             buf.as_str(),
             "SBU2RRGLXH3E5CQHTD3ODLDF2BWDCYUSSBLLZ5GNW7JXHDIYKXZWHOKR"
         );
-        assert_eq!(buf.as_str(), key.to_string().as_str());
+        assert_eq!(buf.as_str(), key.as_unredacted().to_string().as_str());
     }
 }

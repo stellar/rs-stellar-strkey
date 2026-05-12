@@ -11,7 +11,10 @@
 //!
 //! This crate provides:
 //!
-//! - The [`Strkey`] enum, which can hold and round-trip any strkey kind.
+//! - The [`Strkey`] enum, which can hold and round-trip any strkey kind
+//!   other than `PrivateKeyEd25519` (`S…`); private-key strkeys are
+//!   handled directly via [`ed25519::PrivateKey`], with rendering gated
+//!   behind [`Unredacted`].
 //! - Per-kind types in this module ([`PreAuthTx`], [`HashX`], [`Contract`],
 //!   [`LiquidityPool`], [`ClaimableBalance`]) and in [`ed25519`]
 //!   ([`ed25519::PublicKey`], [`ed25519::PrivateKey`],
@@ -19,14 +22,17 @@
 //!   know the kind in advance.
 //! - [`Display`](core::fmt::Display) and [`FromStr`](core::str::FromStr)
 //!   implementations for every kind, plus inherent `to_string` /
-//!   `from_string` / `from_slice` methods.
+//!   `from_string` / `from_slice` methods. [`ed25519::PrivateKey`] is the
+//!   exception: it does not implement `Display` or inherent `to_string`
+//!   directly — wrap it in [`Unredacted`] (`pk.as_unredacted()`) to render
+//!   the encoded strkey form.
 //!
 //! # Strkey kinds
 //!
 //! | Prefix | Kind                                                                  | Payload bytes |
 //! |--------|-----------------------------------------------------------------------|---------------|
 //! | `G`    | [`Strkey::PublicKeyEd25519`] / [`ed25519::PublicKey`]                  |            32 |
-//! | `S`    | [`Strkey::PrivateKeyEd25519`] / [`ed25519::PrivateKey`]                |            32 |
+//! | `S`    | [`ed25519::PrivateKey`] only (omitted from [`Strkey`])                 |            32 |
 //! | `M`    | [`Strkey::MuxedAccountEd25519`] / [`ed25519::MuxedAccount`]            |            40 |
 //! | `T`    | [`Strkey::PreAuthTx`] / [`PreAuthTx`]                                  |            32 |
 //! | `X`    | [`Strkey::HashX`] / [`HashX`]                                          |            32 |
@@ -79,7 +85,8 @@
 //! # Cargo features
 //!
 //! - `serde` — derives [`Serialize`]/[`Deserialize`] that round-trip strkeys
-//!   as their textual form.
+//!   as their textual form. [`ed25519::PrivateKey`] is `Deserialize` but
+//!   not directly `Serialize`; wrap in [`Unredacted`] to serialize.
 //! - `serde-decoded` — adds a `Decoded<T>` wrapper that serializes a strkey
 //!   as a structured JSON object with hex-encoded byte fields, which is
 //!   useful for tooling that wants to inspect the underlying bytes. Requires
@@ -115,10 +122,12 @@ pub mod ed25519;
 mod error;
 mod strkey;
 mod typ;
+mod unredacted;
 mod version;
 
 pub use error::*;
 pub use strkey::*;
+pub use unredacted::Unredacted;
 
 #[cfg(feature = "serde-decoded")]
 pub mod decoded_json_format;

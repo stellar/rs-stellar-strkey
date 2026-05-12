@@ -8,6 +8,8 @@ test:
 	cargo test --features serde-decoded
 	cargo +nightly fuzz run fuzz_roundtrip -- -runs=0
 	cargo +nightly fuzz run fuzz_compare_v13 -- -runs=0
+	cargo +nightly fuzz run fuzz_compare_v16 -- -runs=0
+	cargo +nightly fuzz run fuzz_compare_zeroizing -- -runs=0
 
 fuzz:
 	cargo +nightly fuzz run fuzz_roundtrip -j 4

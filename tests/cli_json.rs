@@ -19,12 +19,11 @@ fn test_ed25519_public_key() {
 
 #[test]
 fn test_ed25519_private_key() {
+    let pk = ed25519::PrivateKey([0x00; 32]);
     assert_eq!(
-        serde_json::to_string_pretty(&Decoded(&Strkey::PrivateKeyEd25519(ed25519::PrivateKey([
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00,
-        ]))))
+        serde_json::to_string_pretty(&serde_json::json!({
+            "private_key_ed25519": Decoded(Unredacted(&pk)),
+        }))
         .unwrap(),
         r#"{
   "private_key_ed25519": "0000000000000000000000000000000000000000000000000000000000000000"
@@ -104,14 +103,15 @@ fn test_ed25519_muxed_account() {
 fn test_ed25519_signed_payload() {
     assert_eq!(
         serde_json::to_string_pretty(&Decoded(&Strkey::SignedPayloadEd25519(
-            ed25519::SignedPayload {
-                ed25519: [
+            ed25519::SignedPayload::new(
+                [
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                 ],
-                payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
-            }
+                &[1u8, 2, 3, 4],
+            )
+            .unwrap()
         )))
         .unwrap(),
         r#"{
@@ -136,10 +136,9 @@ fn test_roundtrip_muxed_account() {
 
 #[test]
 fn test_roundtrip_signed_payload() {
-    let original = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
-        ed25519: [0x00; 32],
-        payload: [1u8, 2, 3, 4].as_slice().try_into().unwrap(),
-    });
+    let original = Strkey::SignedPayloadEd25519(
+        ed25519::SignedPayload::new([0x00; 32], &[1u8, 2, 3, 4]).unwrap(),
+    );
     let json = serde_json::to_string(&Decoded(&original)).unwrap();
     let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
     assert_eq!(original, deserialized);

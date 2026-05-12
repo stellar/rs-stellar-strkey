@@ -14,14 +14,8 @@ use crate::{
 
 /// A decoded Stellar strkey of any supported type.
 ///
-/// # Zeroize
-///
-/// `Strkey::from_slice` / `Strkey::from_string` do not zero their
-/// intermediate scratch buffers, even when decoding a `PrivateKeyEd25519`
-/// variant. To decode a private key strkey with the intermediate buffers
-/// zeroed, use [`ed25519::PrivateKey::from_slice`] /
-/// [`ed25519::PrivateKey::from_string`] directly. See
-/// [`ed25519::PrivateKey`]'s `# Zeroize` section for the full picture.
+/// The `PrivateKeyEd25519` (`S…`) variant is intentionally not included;
+/// use [`ed25519::PrivateKey`] directly to encode or decode `S…` strkeys.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -29,7 +23,6 @@ use crate::{
 )]
 pub enum Strkey {
     PublicKeyEd25519(ed25519::PublicKey),
-    PrivateKeyEd25519(ed25519::PrivateKey),
     PreAuthTx(PreAuthTx),
     HashX(HashX),
     MuxedAccountEd25519(ed25519::MuxedAccount),
@@ -43,7 +36,7 @@ impl Strkey {
     // SignedPayload is the longest strkey type.
     const MAX_PAYLOAD_LEN: usize = ed25519::SignedPayload::MAX_PAYLOAD_LEN;
     const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
-    const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
+    pub const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::MAX_PAYLOAD_LEN == 100);
         assert!(Self::MAX_BINARY_LEN == 103);
@@ -84,7 +77,6 @@ impl Strkey {
         let mut s: HeaplessString<{ Self::MAX_ENCODED_LEN }> = HeaplessString::new();
         match self {
             Self::PublicKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
-            Self::PrivateKeyEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
             Self::PreAuthTx(x) => s.push_str(x.to_string().as_str()).unwrap(),
             Self::HashX(x) => s.push_str(x.to_string().as_str()).unwrap(),
             Self::MuxedAccountEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
@@ -101,13 +93,16 @@ impl Strkey {
     }
 
     pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        // Short-circuit `S…` inputs before running the non-zeroizing
+        // `decode()` so private-key bytes never reach unzeroed scratch.
+        // Callers should use [`ed25519::PrivateKey`] to decode `S…` strkeys.
+        if s.first() == Some(&b'S') {
+            return Err(DecodeError::PrivateKey);
+        }
         let (ver, payload) = decode::<{ Self::MAX_PAYLOAD_LEN }, { Self::MAX_BINARY_LEN }>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Ok(Self::PublicKeyEd25519(
                 ed25519::PublicKey::from_payload(&payload)?,
-            )),
-            version::PRIVATE_KEY_ED25519 => Ok(Self::PrivateKeyEd25519(
-                ed25519::PrivateKey::from_payload(&payload)?,
             )),
             version::PRE_AUTH_TX => Ok(Self::PreAuthTx(PreAuthTx::from_payload(&payload)?)),
             version::HASH_X => Ok(Self::HashX(HashX::from_payload(&payload)?)),
@@ -160,9 +155,6 @@ mod strkey_decoded_serde_impl {
                 Strkey::PublicKeyEd25519(key) => {
                     map.serialize_entry("public_key_ed25519", &Decoded(key))?;
                 }
-                Strkey::PrivateKeyEd25519(key) => {
-                    map.serialize_entry("private_key_ed25519", &Decoded(key))?;
-                }
                 Strkey::PreAuthTx(key) => {
                     map.serialize_entry("pre_auth_tx", &Decoded(key))?;
                 }
@@ -210,10 +202,6 @@ mod strkey_decoded_serde_impl {
                             let Decoded(inner) = map.next_value()?;
                             Strkey::PublicKeyEd25519(inner)
                         }
-                        "private_key_ed25519" => {
-                            let Decoded(inner) = map.next_value()?;
-                            Strkey::PrivateKeyEd25519(inner)
-                        }
                         "pre_auth_tx" => {
                             let Decoded(inner) = map.next_value()?;
                             Strkey::PreAuthTx(inner)
@@ -247,7 +235,6 @@ mod strkey_decoded_serde_impl {
                                 key,
                                 &[
                                     "public_key_ed25519",
-                                    "private_key_ed25519",
                                     "pre_auth_tx",
                                     "hash_x",
                                     "muxed_account_ed25519",
@@ -294,7 +281,7 @@ impl Debug for PreAuthTx {
 impl PreAuthTx {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -391,7 +378,7 @@ impl Debug for HashX {
 impl HashX {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -488,7 +475,7 @@ impl Debug for Contract {
 impl Contract {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -585,7 +572,7 @@ impl Debug for LiquidityPool {
 impl LiquidityPool {
     pub(crate) const PAYLOAD_LEN: usize = 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::BINARY_LEN == 35);
         assert!(Self::ENCODED_LEN == 56);
@@ -691,7 +678,7 @@ impl ClaimableBalance {
     // Payload: 1 version byte + 32 hash bytes = 33
     pub(crate) const PAYLOAD_LEN: usize = 1 + 32;
     pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
-    pub(crate) const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
     const _ASSERTS: () = {
         assert!(Self::PAYLOAD_LEN == 33);
         assert!(Self::BINARY_LEN == 36);

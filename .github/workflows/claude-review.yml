@@ -38,6 +38,12 @@ jobs:
 
             Provide detailed feedback using inline comments for specific issues.
 
+            When using GitHub CLI commands always include the PR number explicitly,
+            e.g. `gh pr diff ${{ github.event.pull_request.number }}`,
+            `gh pr view ${{ github.event.pull_request.number }}`,
+            `gh pr comment ${{ github.event.pull_request.number }} --body "..."`.
+            Do not rely on the current directory context to infer the PR number.
+
           # --max-turns caps how many tool-use cycles Claude can run, which
           # bounds token spend per invocation. The allowed `gh pr` commands are
           # scoped to this PR's number so a misfire can't reach into another PR.

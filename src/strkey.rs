@@ -119,7 +119,7 @@ impl Strkey {
             version::CLAIMABLE_BALANCE => Ok(Self::ClaimableBalance(
                 ClaimableBalance::from_payload(&payload)?,
             )),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }
@@ -295,7 +295,11 @@ impl PreAuthTx {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
+        Ok(Self(
+            payload
+                .try_into()
+                .map_err(|_| DecodeError::InvalidPayloadLength)?,
+        ))
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -306,7 +310,7 @@ impl PreAuthTx {
         let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::PRE_AUTH_TX => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }
@@ -392,7 +396,11 @@ impl HashX {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
+        Ok(Self(
+            payload
+                .try_into()
+                .map_err(|_| DecodeError::InvalidPayloadLength)?,
+        ))
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -403,7 +411,7 @@ impl HashX {
         let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::HASH_X => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }
@@ -489,7 +497,11 @@ impl Contract {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
+        Ok(Self(
+            payload
+                .try_into()
+                .map_err(|_| DecodeError::InvalidPayloadLength)?,
+        ))
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -500,7 +512,7 @@ impl Contract {
         let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::CONTRACT => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }
@@ -586,7 +598,11 @@ impl LiquidityPool {
     }
 
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        Ok(Self(payload.try_into().map_err(|_| DecodeError::Invalid)?))
+        Ok(Self(
+            payload
+                .try_into()
+                .map_err(|_| DecodeError::InvalidPayloadLength)?,
+        ))
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -597,7 +613,7 @@ impl LiquidityPool {
         let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::LIQUIDITY_POOL => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }
@@ -702,8 +718,12 @@ impl ClaimableBalance {
     fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload {
             // First byte is zero for v0
-            [0, rest @ ..] => Ok(Self::V0(rest.try_into().map_err(|_| DecodeError::Invalid)?)),
-            _ => Err(DecodeError::Invalid),
+            [0, rest @ ..] => Ok(Self::V0(
+                rest.try_into()
+                    .map_err(|_| DecodeError::InvalidPayloadLength)?,
+            )),
+            [_, ..] => Err(DecodeError::UnsupportedClaimableBalanceVersion),
+            [] => Err(DecodeError::InvalidPayloadLength),
         }
     }
 
@@ -715,7 +735,7 @@ impl ClaimableBalance {
         let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::CLAIMABLE_BALANCE => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }

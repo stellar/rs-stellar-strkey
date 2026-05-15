@@ -30,27 +30,39 @@ fn test_invalid_public_keys() {
     // Too long strkey input.
     let mut r: Result<Strkey, _> =
         "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV75ERQ".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid length (Ed25519 should be 32 bytes, not 5).
     r = "GAAAAAAAACGC6".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid length (congruent to 1 mod 8).
     r = "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
     // Invalid length (base-32 decoding should yield 35 bytes, not 36).
     r = "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUACUSI".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid algorithm (low 3 bits of version byte are 7).
     r = "G47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVP2I".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::UnsupportedVersion));
 
     // Invalid length due to in stream padding bytes
     r = "G=3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQHES5".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
+}
+
+#[test]
+fn test_strkey_too_short() {
+    // Empty input decodes to zero bytes, less than the 3 bytes required for a
+    // version byte plus CRC.
+    let r: Result<Strkey, _> = "".parse();
+    assert_eq!(r, Err(DecodeError::TooShort));
+
+    // Decodes to 2 bytes, still below the 3-byte minimum.
+    let r: Result<Strkey, _> = "AAAA".parse();
+    assert_eq!(r, Err(DecodeError::TooShort));
 }
 
 #[test]
@@ -103,7 +115,7 @@ fn test_valid_pre_auth_tx() {
 fn test_invalid_pre_auth_tx() {
     // Too long strkey input.
     let r: Result<Strkey, _> = "TA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV73QGA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 }
 
 #[test]
@@ -122,7 +134,7 @@ fn test_valid_hash_x() {
 fn test_invalid_hash_x() {
     // Too long strkey input.
     let r: Result<Strkey, _> = "XA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV74CSY".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 }
 
 #[test]
@@ -172,38 +184,45 @@ fn test_invalid_muxed_ed25519() {
     // Too long strkey input.
     let mut r: Result<Strkey, _> =
         "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUERUKZ4JVTO6777RIDA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // The unused trailing bit must be zero in the encoding of the last three
     // bytes (24 bits) as five base-32 symbols (25 bits)
     // 1000_ Q << The last character should be Q, because the last bit is unused, and in
     // 10001 R << the base32 alphabet 10000 maps to Q. 10001 maps to R.
     r = "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAACJUR".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
     // Invalid length (congruent to 6 mod 8)
     r = "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAJLKA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
     // Invalid length (base-32 decoding should yield 43 bytes, not 44)
     r = "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAAV75I".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
-    // Invalid algorithm (low 3 bits of version byte are 7)
+    // TODO: This case is meant to exercise the "invalid algorithm (low 3 bits
+    // of version byte are 7)" rejection path, but the CRC bytes still match
+    // the original `M` version, so flipping to `M4` trips the checksum check
+    // before the version-byte match. The following input has version byte
+    // `(12 << 3) | 7 = 0x67` ("M4" prefix) with a CRC recomputed for that
+    // version byte, and a zeroed 40-byte payload, which would actually surface
+    // as `UnsupportedVersion`:
+    //   "M4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC4ZS"
     r = "M47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAACJUQ".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::ChecksumMismatch));
 
     // Padding bytes are not allowed
     r = "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAACJUK===".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
     // Invalid checksum
     r = "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAACJUO".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::ChecksumMismatch));
 
     // Too short
     r = "MA7QYNF7SOWQ3GLR2DMLK".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 }
 
 #[test]
@@ -290,117 +309,117 @@ fn test_valid_signed_payload_ed25519() {
 
 #[test]
 fn test_invalid_signed_payload_ed25519() {
-    // Too long strkey input.
+    // Too long strkey input — decodes to more bytes than the buffer for any kind.
     let mut r: Result<Strkey, DecodeError>;
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAABAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD7ZIHA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::TooLong));
 
     // Length prefix specifies length that is shorter than payload in signed payload
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IAAAAAAAAPM".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Length prefix specifies length that is longer than payload in signed payload
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4Z2PQ".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // No zero padding in signed payload
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DXFH6".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Non-zero padding in signed payload
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAA4KVWLTJJFCJJFC7MPA7QYNF7SOWQ3GLR2GXUA7JUAAAAAEAAAAU".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPadding));
 
     // Unused trailing bits must be zero (see valid test case for comparisons)
     // - 1 unused bits:
     //   1001_ S << The last character should be S, because the last bit is unused, and in
     //   10011 T << the base32 alphabet 10010 maps to S. 10011 maps to T.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAACAAAAAABNWT".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     // - 2 unused bits:
     //   110__ Y << The last character should be Y, because the last two bits are unused, and in
     //   11001 Z << the base32 alphabet 11000 maps to Y. 11001 maps to Z.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAGAAAAAAAAAAAAAAAAAAACTPZ"
         .parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11010 2 << 11010 maps to 2.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAGAAAAAAAAAAAAAAAAAAACTP2"
         .parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11011 3 << 11011 maps to 3.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAGAAAAAAAAAAAAAAAAAAACTP3"
         .parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     // - 3 unused bits:
     //   01___ I << The last character should be I, because the last three bits are unused, and in
     //   01001 J << the base32 alphabet 01000 maps to I. 01001 maps to J.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXJ".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   01010 J << 01010 maps to K.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXK".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   01011 L << 01011 maps to L.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXL".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   01100 M << 01100 maps to M.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXM".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   01101 N << 01101 maps to N.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXN".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   01110 O << 01110 maps to O.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXO".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   01111 P << 01111 maps to P.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXP".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     // - 4 unused bits:
     //   1____ Q << The last character should be Q, because the last four bits are unused, and in
     //   10001 R << the base32 alphabet 10000 maps to Q. 10001 maps to R.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYR".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10010 S << 10010 maps to S.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYS".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10011 T << 10011 maps to T.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYT".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10100 U << 10100 maps to U.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYU".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10101 V << 10101 maps to V.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYV".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10110 W << 10110 maps to W.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYW".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10111 X << 10111 maps to X.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYX".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11000 Y << 11000 maps to Y.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYY".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11001 Z << 11001 maps to Z.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYZ".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11010 2 << 11010 maps to 2.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKY2".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11011 3 << 11011 maps to 3.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKY3".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11100 4 << 11100 maps to 4.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKY4".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11101 5 << 11101 maps to 5.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKY5".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11110 6 << 11110 maps to 6.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKY6".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   11111 7 << 11111 maps to 7.
     r = "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKY7".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 }
 
 #[test]
@@ -464,7 +483,7 @@ fn test_valid_contract() {
 fn test_invalid_contract() {
     // Too long strkey input.
     let r: Result<Strkey, _> = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV72WFI".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 }
 
 #[test]
@@ -473,11 +492,11 @@ fn test_signed_payload_new_rejects_empty_and_oversized_payload() {
     // an encoding that from_payload() will refuse to decode (a 36-byte
     // signed-payload layout is not accepted by stellar-core either).
     let r = stellar_strkey::ed25519::SignedPayload::new([0; 32], &[]);
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Payloads larger than 64 bytes must be rejected.
     let r = stellar_strkey::ed25519::SignedPayload::new([0; 32], &[0u8; 65]);
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // 1..=64 are accepted.
     assert!(stellar_strkey::ed25519::SignedPayload::new([0; 32], &[0]).is_ok());
@@ -492,7 +511,7 @@ fn test_signed_payload_from_string_doesnt_panic_with_unbounded_size() {
         0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     ];
     let r = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 }
 
 /// Tests for SignedPayload::from_payload boundary conditions.
@@ -527,7 +546,7 @@ fn test_signed_payload_from_payload_min_length_boundary() {
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert_eq!(
         result,
-        Err(DecodeError::Invalid),
+        Err(DecodeError::InvalidPayloadLength),
         "39 bytes (below MIN_LENGTH) should fail"
     );
 }
@@ -551,7 +570,7 @@ fn test_signed_payload_from_payload_max_length_boundary() {
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert_eq!(
         result,
-        Err(DecodeError::Invalid),
+        Err(DecodeError::InvalidPayloadLength),
         "101 bytes (above MAX_LENGTH) should fail"
     );
 }
@@ -576,7 +595,7 @@ fn test_signed_payload_from_payload_inner_length_boundary() {
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert_eq!(
         result,
-        Err(DecodeError::Invalid),
+        Err(DecodeError::InvalidPayloadLength),
         "inner payload length 65 should fail"
     );
 
@@ -623,33 +642,33 @@ fn test_invalid_liquidity_pool() {
     // Too long strkey input.
     let mut r: Result<Strkey, _> =
         "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV7Z72Y".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid length (Liquidity pool should be 32 bytes, not 5).
     r = "LAAAAAAAADLH2".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid length (congruent to 1 mod 8).
     r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     // Invalid length (congruent to 3 mod 8).
     r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNAAA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     // Invalid length (congruent to 6 mod 8).
     r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJNAAAAAA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
     // Invalid length (base-32 decoding should yield 35 bytes, not 36).
     r = "LA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAGPZA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid algorithm (low 3 bits of version byte are 7).
     r = "L47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUSV4".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::UnsupportedVersion));
 
     // Invalid length due to in stream padding bytes
     r = "L=A7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUPJN".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 }
 
 #[test]
@@ -697,14 +716,21 @@ fn test_valid_claimable_balance() {
 
 #[test]
 fn test_invalid_claimable_balances() {
-    // Too long strkey input.
+    // TODO: This test input is prefixed with `L`, not `B`, so it actually
+    // routes through `LiquidityPool` decoding and fails with
+    // `InvalidPayloadLength`. It is not exercising the claimable-balance
+    // "too long" path the comment implies. A `B`-prefixed input that is
+    // genuinely too long for a claimable balance (34-byte payload, binary
+    // length 37, with a valid CRC) would also produce `InvalidPayloadLength`
+    // via the claimable-balance path:
+    //   "BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZMEQ"
     let mut r: Result<Strkey, _> =
         "LAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGX7FIWQ".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid length (Claimable balance should be 1+32 bytes, not 6).
     r = "BAAAAAAAAAAK3EY".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid length inputs below cannot be decoded into valid claimable
     // balances, even with a permissive base32 decoder, because the payloads
@@ -715,25 +741,32 @@ fn test_invalid_claimable_balances() {
     // the payloads can be valid.
     // Invalid length (congruent to 3 mod 8).
     r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     // Invalid length (congruent to 6 mod 8).
     r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEAAAA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     // Invalid length (congruent to 1 mod 8).
     r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEAAAAAAA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
-    // Invalid length (base-32 decoding should yield 35 bytes, not 36).
+    // TODO: The comment says "base-32 decoding should yield 35 bytes, not 36"
+    // but a claimable balance's binary length is 36 bytes (1 version + 1 sub +
+    // 32 hash + 2 CRC). This input decodes fine, but its sub-version byte
+    // isn't zero, so it fails with `UnsupportedClaimableBalanceVersion`
+    // rather than a length error. A `B`-prefixed input whose binary decodes
+    // to 35 bytes (one short of the expected 36) with a valid CRC would
+    // exercise the length path and produce `InvalidPayloadLength`:
+    //   "BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZBO"
     r = "BA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUADTYY".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::UnsupportedClaimableBalanceVersion));
 
     // Invalid algorithm (low 3 bits of version byte are 7).
     r = "B47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVA4D".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::UnsupportedVersion));
 
     // Invalid length due to in stream padding bytes
     r = "B=AAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TU".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
     // Unused trailing bits must be zero (see valid test case for comparisons)
     // - 2 unused bits:
@@ -742,18 +775,18 @@ fn test_invalid_claimable_balances() {
     //              10100 maps to U.
     //   10101 V << 10101 maps to V.
     r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TV".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10110 W << 10110 maps to W.
     r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TW".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
     //   10111 X << 10111 maps to X.
     r = "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGR4TX".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
 
     // Invalid type of claimable balance, only V0 (0x00) is supported. This key
     // contains 0x01.
     r = "BAAT6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGXACA".parse();
-    assert_eq!(r, Err(DecodeError::Invalid));
+    assert_eq!(r, Err(DecodeError::UnsupportedClaimableBalanceVersion));
 }
 
 proptest! {

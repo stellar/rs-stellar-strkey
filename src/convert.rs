@@ -135,10 +135,10 @@ pub fn encode_zeroizing<const P: usize, const B: usize, const E: usize>(
 ///
 /// # Errors
 ///
-/// Returns [`DecodeError::Invalid`] if:
-/// - The input is not valid base32
-/// - The decoded data is less than 3 bytes, meaning there is no payload
-/// - The checksum does not match
+/// - [`DecodeError::InvalidBase32`] if the input is not valid base32.
+/// - [`DecodeError::TooShort`] if the decoded data is less than 3 bytes.
+/// - [`DecodeError::TooLong`] if the decoded data is larger than `B`.
+/// - [`DecodeError::ChecksumMismatch`] if the checksum does not match.
 ///
 /// # Panics
 ///
@@ -152,17 +152,17 @@ pub fn decode<const P: usize, const B: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
     let mut data: Vec<u8, B> = Vec::new();
     let data_len = data_encoding::BASE32_NOPAD
         .decode_len(s.len())
-        .map_err(|_| DecodeError::Invalid)?;
+        .map_err(|_| DecodeError::InvalidBase32)?;
     if data_len < 3 {
-        return Err(DecodeError::Invalid);
+        return Err(DecodeError::TooShort);
     }
     data.resize_default(data_len)
-        .map_err(|_| DecodeError::Invalid)?;
+        .map_err(|_| DecodeError::TooLong)?;
 
     // Decode base32.
     data_encoding::BASE32_NOPAD
         .decode_mut(s, &mut data)
-        .map_err(|_| DecodeError::Invalid)?;
+        .map_err(|_| DecodeError::InvalidBase32)?;
 
     // Unpack version.
     let ver = data[0];
@@ -172,7 +172,7 @@ pub fn decode<const P: usize, const B: usize>(s: &[u8]) -> Result<(u8, Vec<u8, P
     let (data_without_crc, crc_actual) = data.split_at(data_len - 2);
     let crc_expect = checksum(data_without_crc);
     if crc_actual != crc_expect {
-        return Err(DecodeError::Invalid);
+        return Err(DecodeError::ChecksumMismatch);
     }
 
     // Unpack payload.
@@ -212,17 +212,17 @@ pub fn decode_zeroizing<const P: usize, const B: usize>(
     let mut data: Zeroizing<Vec<u8, B>> = Zeroizing::new(Vec::new());
     let data_len = data_encoding::BASE32_NOPAD
         .decode_len(s.len())
-        .map_err(|_| DecodeError::Invalid)?;
+        .map_err(|_| DecodeError::InvalidBase32)?;
     if data_len < 3 {
-        return Err(DecodeError::Invalid);
+        return Err(DecodeError::TooShort);
     }
     data.resize_default(data_len)
-        .map_err(|_| DecodeError::Invalid)?;
+        .map_err(|_| DecodeError::TooLong)?;
 
     // Decode base32.
     data_encoding::BASE32_NOPAD
         .decode_mut(s, &mut data)
-        .map_err(|_| DecodeError::Invalid)?;
+        .map_err(|_| DecodeError::InvalidBase32)?;
 
     // Unpack version.
     let ver = data[0];
@@ -232,7 +232,7 @@ pub fn decode_zeroizing<const P: usize, const B: usize>(
     let (data_without_crc, crc_actual) = data.split_at(data_len - 2);
     let crc_expect = checksum(data_without_crc);
     if crc_actual != crc_expect {
-        return Err(DecodeError::Invalid);
+        return Err(DecodeError::ChecksumMismatch);
     }
 
     // Copy the payload bytes directly into the caller-provided output. No
@@ -288,10 +288,10 @@ mod tests {
     #[test]
     fn test_decode_minimum_length() {
         // Empty input should fail
-        assert_eq!(decode::<0, 3>(b""), Err(DecodeError::Invalid));
+        assert_eq!(decode::<0, 3>(b""), Err(DecodeError::TooShort));
         // Too short base32 (decodes to < 3 bytes) should fail
-        assert_eq!(decode::<0, 3>(b"AA"), Err(DecodeError::Invalid)); // 1 byte
-        assert_eq!(decode::<0, 3>(b"AAAA"), Err(DecodeError::Invalid)); // 2 bytes
+        assert_eq!(decode::<0, 3>(b"AA"), Err(DecodeError::TooShort)); // 1 byte
+        assert_eq!(decode::<0, 3>(b"AAAA"), Err(DecodeError::TooShort)); // 2 bytes
 
         // Valid 3-byte input (version + empty payload + checksum) should succeed
         // "AAAAA" is encode::<0, 3, 5>(0x00, &[]) - version 0x00, empty payload, checksum 0x0000
@@ -381,7 +381,7 @@ mod tests {
 
         // Same buffer, invalid input — must reset, not retain prior payload.
         let err = decode_zeroizing::<32, 35>(b"", &mut buf);
-        assert_eq!(err, Err(DecodeError::Invalid));
+        assert_eq!(err, Err(DecodeError::TooShort));
         assert!(buf.is_empty());
     }
 }

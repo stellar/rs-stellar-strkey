@@ -88,7 +88,7 @@ impl PrivateKey {
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
             Ok(ed25519) => Ok(Self(ed25519)),
-            Err(_) => Err(DecodeError::Invalid),
+            Err(_) => Err(DecodeError::InvalidPayloadLength),
         }
     }
 
@@ -101,7 +101,7 @@ impl PrivateKey {
         let ver = decode_zeroizing::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s, &mut payload)?;
         match ver {
             version::PRIVATE_KEY_ED25519 => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 
@@ -220,7 +220,7 @@ impl PublicKey {
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
         match payload.try_into() {
             Ok(ed25519) => Ok(Self(ed25519)),
-            Err(_) => Err(DecodeError::Invalid),
+            Err(_) => Err(DecodeError::InvalidPayloadLength),
         }
     }
 
@@ -232,7 +232,7 @@ impl PublicKey {
         let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::PUBLIC_KEY_ED25519 => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }
@@ -326,13 +326,18 @@ impl MuxedAccount {
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        if payload.len() < 40 {
-            return Err(DecodeError::Invalid);
+        if payload.len() != 40 {
+            return Err(DecodeError::InvalidPayloadLength);
         }
         let (ed25519, id) = payload.split_at(32);
         Ok(Self {
-            ed25519: ed25519.try_into().map_err(|_| DecodeError::Invalid)?,
-            id: u64::from_be_bytes(id.try_into().map_err(|_| DecodeError::Invalid)?),
+            ed25519: ed25519
+                .try_into()
+                .map_err(|_| DecodeError::InvalidPayloadLength)?,
+            id: u64::from_be_bytes(
+                id.try_into()
+                    .map_err(|_| DecodeError::InvalidPayloadLength)?,
+            ),
         })
     }
 
@@ -344,7 +349,7 @@ impl MuxedAccount {
         let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
         match ver {
             version::MUXED_ACCOUNT_ED25519 => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }
@@ -452,11 +457,11 @@ impl SignedPayload {
     /// If the inner payload is empty or larger than 64 bytes.
     pub fn new(ed25519: [u8; 32], payload: &[u8]) -> Result<Self, DecodeError> {
         if !(Self::MIN_INNER_PAYLOAD_LEN..=Self::MAX_INNER_PAYLOAD_LEN).contains(&payload.len()) {
-            return Err(DecodeError::Invalid);
+            return Err(DecodeError::InvalidPayloadLength);
         }
         let mut p = Vec::new();
         p.extend_from_slice(payload)
-            .map_err(|_| DecodeError::Invalid)?;
+            .map_err(|_| DecodeError::InvalidPayloadLength)?;
         Ok(Self {
             ed25519,
             payload: p,
@@ -508,37 +513,37 @@ impl SignedPayload {
         const MAX_LENGTH: usize = 32 + 4 + SignedPayload::MAX_INNER_PAYLOAD_LEN;
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
-            return Err(DecodeError::Invalid);
+            return Err(DecodeError::InvalidPayloadLength);
         }
 
         // Decode ed25519 public key. 32 bytes.
         let mut offset = 0;
         let ed25519: [u8; 32] = payload
             .get(offset..offset + 32)
-            .ok_or(DecodeError::Invalid)?
+            .ok_or(DecodeError::InvalidPayloadLength)?
             .try_into()
-            .map_err(|_| DecodeError::Invalid)?;
+            .map_err(|_| DecodeError::InvalidPayloadLength)?;
         offset += 32;
 
         // Decode inner payload length. 4 bytes.
         let inner_payload_len = u32::from_be_bytes(
             payload
                 .get(offset..offset + 4)
-                .ok_or(DecodeError::Invalid)?
+                .ok_or(DecodeError::InvalidPayloadLength)?
                 .try_into()
-                .map_err(|_| DecodeError::Invalid)?,
+                .map_err(|_| DecodeError::InvalidPayloadLength)?,
         );
         offset += 4;
 
         // Check inner payload length is inside accepted range.
         if inner_payload_len > Self::MAX_INNER_PAYLOAD_LEN_U32 {
-            return Err(DecodeError::Invalid);
+            return Err(DecodeError::InvalidPayloadLength);
         }
 
         // Decode inner payload.
         let inner_payload = payload
             .get(offset..offset + inner_payload_len as usize)
-            .ok_or(DecodeError::Invalid)?;
+            .ok_or(DecodeError::InvalidPayloadLength)?;
         offset += inner_payload_len as usize;
 
         // Calculate padding at end of inner payload. 0-3 bytes.
@@ -547,17 +552,17 @@ impl SignedPayload {
         // Decode padding.
         let padding = payload
             .get(offset..offset + padding_len as usize)
-            .ok_or(DecodeError::Invalid)?;
+            .ok_or(DecodeError::InvalidPayloadLength)?;
         offset += padding_len as usize;
 
         // Check padding is all zeros.
         if padding.iter().any(|b| *b != 0) {
-            return Err(DecodeError::Invalid);
+            return Err(DecodeError::InvalidPadding);
         }
 
         // Check that entire payload consumed.
         if offset != payload_len {
-            return Err(DecodeError::Invalid);
+            return Err(DecodeError::InvalidPayloadLength);
         }
 
         Self::new(ed25519, inner_payload)
@@ -571,7 +576,7 @@ impl SignedPayload {
         let (ver, payload) = decode::<{ Self::MAX_PAYLOAD_LEN }, { Self::MAX_BINARY_LEN }>(s)?;
         match ver {
             version::SIGNED_PAYLOAD_ED25519 => Self::from_payload(&payload),
-            _ => Err(DecodeError::Invalid),
+            _ => Err(DecodeError::UnsupportedVersion),
         }
     }
 }

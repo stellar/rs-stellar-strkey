@@ -201,16 +201,20 @@ fn test_invalid_muxed_ed25519() {
     r = "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAAAAV75I".parse();
     assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
-    // TODO: This case is meant to exercise the "invalid algorithm (low 3 bits
-    // of version byte are 7)" rejection path, but the CRC bytes still match
-    // the original `M` version, so flipping to `M4` trips the checksum check
-    // before the version-byte match. The following input has version byte
-    // `(12 << 3) | 7 = 0x67` ("M4" prefix) with a CRC recomputed for that
-    // version byte, and a zeroed 40-byte payload, which would actually surface
-    // as `UnsupportedVersion`:
-    //   "M4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC4ZS"
+    // Invalid algorithm (low 3 bits of version byte are 7). This input was
+    // produced by flipping the algorithm bits of an otherwise valid `M`
+    // strkey without recomputing the CRC, so the checksum check fires before
+    // the version-byte match — see the `M4…C4ZS` case below for an input
+    // that reaches the `UnsupportedVersion` path.
     r = "M47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAACJUQ".parse();
     assert_eq!(r, Err(DecodeError::ChecksumMismatch));
+
+    // Invalid algorithm (low 3 bits of version byte are 7). Same ed25519 +
+    // id payload as the valid `MA7QYNF7…CJUQ` strkey above, but the version
+    // byte is `(12 << 3) | 7 = 0x67` with a CRC recomputed for that version
+    // byte, so the checksum check passes and the version-byte match fails.
+    r = "M47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAABIFE".parse();
+    assert_eq!(r, Err(DecodeError::UnsupportedVersion));
 
     // Padding bytes are not allowed
     r = "MA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAACJUK===".parse();
@@ -716,16 +720,12 @@ fn test_valid_claimable_balance() {
 
 #[test]
 fn test_invalid_claimable_balances() {
-    // TODO: This test input is prefixed with `L`, not `B`, so it actually
-    // routes through `LiquidityPool` decoding and fails with
-    // `InvalidPayloadLength`. It is not exercising the claimable-balance
-    // "too long" path the comment implies. A `B`-prefixed input that is
-    // genuinely too long for a claimable balance (34-byte payload, binary
-    // length 37, with a valid CRC) would also produce `InvalidPayloadLength`
-    // via the claimable-balance path:
-    //   "BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZMEQ"
+    // Too long strkey input. `B`-prefixed with a 34-byte payload (one byte
+    // longer than a claimable balance's 33-byte payload) and a valid CRC, so
+    // decoding reaches `ClaimableBalance::from_payload` with a 34-byte
+    // payload that fails its 33-byte length check.
     let mut r: Result<Strkey, _> =
-        "LAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGX7FIWQ".parse();
+        "BAAD6DBUX6J22DMZOHIEZTEQ64CVCHEDRKWZONFEUL5Q26QD7R76RGX74RYA".parse();
     assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid length (Claimable balance should be 1+32 bytes, not 6).
@@ -749,16 +749,19 @@ fn test_invalid_claimable_balances() {
     r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3CA3GDEAAAAAAA".parse();
     assert_eq!(r, Err(DecodeError::InvalidBase32));
 
-    // TODO: The comment says "base-32 decoding should yield 35 bytes, not 36"
-    // but a claimable balance's binary length is 36 bytes (1 version + 1 sub +
-    // 32 hash + 2 CRC). This input decodes fine, but its sub-version byte
-    // isn't zero, so it fails with `UnsupportedClaimableBalanceVersion`
-    // rather than a length error. A `B`-prefixed input whose binary decodes
-    // to 35 bytes (one short of the expected 36) with a valid CRC would
-    // exercise the length path and produce `InvalidPayloadLength`:
-    //   "BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZBO"
+    // Unsupported claimable-balance sub-version. The input is the right
+    // length (decodes to 36 bytes: 1 version + 1 sub + 32 hash + 2 CRC) but
+    // its sub-version byte is non-zero, so it fails the V0 check.
     r = "BA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUADTYY".parse();
     assert_eq!(r, Err(DecodeError::UnsupportedClaimableBalanceVersion));
+
+    // Invalid length (base-32 decoding yields 35 bytes, not the expected 36).
+    // Same V0 sub-version + 32-byte hash as the valid CB strkey, but with the
+    // trailing hash byte dropped — giving a 32-byte payload (V0 + 31 of 32
+    // hash bytes) that decoding routes to `ClaimableBalance::from_payload`
+    // and fails its length check.
+    r = "BAADMPVKHBTYIH522D2O3CGHPHSP4ZXFNISHBXEYYDWJYBZ5AXD3C3NP".parse();
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Invalid algorithm (low 3 bits of version byte are 7).
     r = "B47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVA4D".parse();

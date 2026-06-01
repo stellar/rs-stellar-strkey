@@ -112,13 +112,7 @@ pub struct Version<'a> {
 }
 pub const VERSION: Version = Version {
     pkg: env!("CARGO_PKG_VERSION"),
-    // crate-git-revision leaves GIT_REVISION unset when the revision cannot be
-    // derived (e.g. building from a source tarball or without git available),
-    // so read it with option_env! and fall back to avoid a hard compile error.
-    rev: match option_env!("GIT_REVISION") {
-        Some(rev) => rev,
-        None => "unknown",
-    },
+    rev: env!("GIT_REVISION"),
 };
 
 #[doc(hidden)]

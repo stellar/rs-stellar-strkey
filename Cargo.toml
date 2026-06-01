@@ -23,7 +23,7 @@ required-features = ["cli"]
 doctest = false
 
 [build-dependencies]
-crate-git-revision = "0.0.6"
+crate-git-revision = "0.0.9"
 
 [dev-dependencies]
 proptest ="1.0.0"

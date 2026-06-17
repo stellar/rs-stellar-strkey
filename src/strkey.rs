@@ -193,11 +193,16 @@ mod strkey_decoded_serde_impl {
                 }
 
                 fn visit_map<M: MapAccess<'de>>(self, mut map: M) -> Result<Self::Value, M::Error> {
-                    let key: &str = map
+                    // Read the variant key as an owned `String`, not a borrowed
+                    // `&str`. Deserializers that don't borrow from a contiguous
+                    // input buffer — e.g. `serde_json::from_value` /
+                    // `from_reader`, and most non-JSON formats — yield owned
+                    // keys that cannot be borrowed as `&str` and would fail here.
+                    let key: alloc::string::String = map
                         .next_key()?
                         .ok_or_else(|| de::Error::custom("expected a variant key"))?;
 
-                    let strkey = match key {
+                    let strkey = match key.as_str() {
                         "public_key_ed25519" => {
                             let Decoded(inner) = map.next_value()?;
                             Strkey::PublicKeyEd25519(inner)
@@ -232,7 +237,7 @@ mod strkey_decoded_serde_impl {
                         }
                         _ => {
                             return Err(de::Error::unknown_variant(
-                                key,
+                                &key,
                                 &[
                                     "public_key_ed25519",
                                     "pre_auth_tx",

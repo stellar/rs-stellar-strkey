@@ -1,4 +1,4 @@
-#![cfg(feature = "cli")]
+#![cfg(feature = "serde-decoded")]
 
 use stellar_strkey::{ed25519, *};
 
@@ -127,7 +127,8 @@ fn test_ed25519_signed_payload() {
 // yield owned (rather than borrowed) string keys. `serde_json::from_str`
 // borrows the variant key directly from the input buffer, but `from_value` and
 // `from_reader` cannot, so the map visitor must accept an owned key. The
-// `encode` CLI hits this via `from_value`. See issue #124.
+// `encode` CLI is one consumer that hits this, via `from_value`. See issue
+// #124.
 
 #[test]
 fn test_decode_strkey_from_value() {

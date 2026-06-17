@@ -124,6 +124,19 @@ fn test_ed25519_signed_payload() {
 }
 
 #[test]
+fn test_decode_strkey_from_value() {
+    // The `encode` CLI parses stdin into a `serde_json::Value` and then calls
+    // `serde_json::from_value`, which yields owned (not borrowed) strings. The
+    // `Decoded<Strkey>` map visitor must accept an owned variant key, otherwise
+    // this fails with "invalid type: string ..., expected a borrowed string".
+    let value = serde_json::json!({
+        "public_key_ed25519": "3330317ec241d79943bb9aa7c8ea5f8b89f9c6ea351fe03f8ec3d1127137d484",
+    });
+    let Decoded(strkey): Decoded<Strkey> = serde_json::from_value(value).unwrap();
+    assert!(matches!(strkey, Strkey::PublicKeyEd25519(_)));
+}
+
+#[test]
 fn test_roundtrip_muxed_account() {
     let original = Strkey::MuxedAccountEd25519(ed25519::MuxedAccount {
         ed25519: [0x00; 32],

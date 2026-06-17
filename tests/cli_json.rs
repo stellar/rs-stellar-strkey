@@ -123,6 +123,51 @@ fn test_ed25519_signed_payload() {
     );
 }
 
+// Regression tests for deserializing `Decoded<Strkey>` from deserializers that
+// yield owned (rather than borrowed) string keys. `serde_json::from_str`
+// borrows the variant key directly from the input buffer, but `from_value` and
+// `from_reader` cannot, so the map visitor must accept an owned key. The
+// `encode` CLI hits this via `from_value`. See issue #124.
+
+#[test]
+fn test_decode_strkey_from_value() {
+    let value = serde_json::json!({
+        "public_key_ed25519": "3330317ec241d79943bb9aa7c8ea5f8b89f9c6ea351fe03f8ec3d1127137d484",
+    });
+    let Decoded(strkey): Decoded<Strkey> = serde_json::from_value(value).unwrap();
+    assert!(matches!(strkey, Strkey::PublicKeyEd25519(_)));
+}
+
+#[test]
+fn test_decode_strkey_from_reader() {
+    // `from_reader` consumes a stream and cannot borrow keys from the input.
+    let json = r#"{"public_key_ed25519":"3330317ec241d79943bb9aa7c8ea5f8b89f9c6ea351fe03f8ec3d1127137d484"}"#;
+    let Decoded(strkey): Decoded<Strkey> = serde_json::from_reader(json.as_bytes()).unwrap();
+    assert!(matches!(strkey, Strkey::PublicKeyEd25519(_)));
+}
+
+#[test]
+fn test_decode_strkey_from_value_nested_variant() {
+    // A compound variant (nested object) exercised through the owned-key path.
+    let value = serde_json::json!({
+        "signed_payload_ed25519": {
+            "ed25519": "0000000000000000000000000000000000000000000000000000000000000000",
+            "payload": "01020304",
+        }
+    });
+    let Decoded(strkey): Decoded<Strkey> = serde_json::from_value(value).unwrap();
+    assert!(matches!(strkey, Strkey::SignedPayloadEd25519(_)));
+}
+
+#[test]
+fn test_roundtrip_public_key_via_value() {
+    // Serialize to a `serde_json::Value`, then deserialize back via `from_value`.
+    let original = Strkey::PublicKeyEd25519(ed25519::PublicKey([7u8; 32]));
+    let value = serde_json::to_value(Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> = serde_json::from_value(value).unwrap();
+    assert_eq!(original, deserialized);
+}
+
 #[test]
 fn test_roundtrip_muxed_account() {
     let original = Strkey::MuxedAccountEd25519(ed25519::MuxedAccount {

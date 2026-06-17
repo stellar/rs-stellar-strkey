@@ -152,6 +152,28 @@ fn test_roundtrip_claimable_balance() {
     assert_eq!(original, deserialized);
 }
 
+// Regression: the variant key must deserialize from non-borrowing
+// deserializers. `serde_json::from_value` is the exact path used by the
+// `encode` CLI, and `from_reader` is the streaming path used when reading
+// piped stdin. Neither can hand out a borrowed `&str` key; previously this
+// failed with "invalid type: string ..., expected a borrowed string".
+#[test]
+fn test_roundtrip_from_value() {
+    let original = Strkey::PublicKeyEd25519(ed25519::PublicKey([0x00; 32]));
+    let value = serde_json::to_value(Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> = serde_json::from_value(value).unwrap();
+    assert_eq!(original, deserialized);
+}
+
+#[test]
+fn test_roundtrip_from_reader() {
+    let original = Strkey::PublicKeyEd25519(ed25519::PublicKey([0x00; 32]));
+    let json = serde_json::to_string(&Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> =
+        serde_json::from_reader(json.as_bytes()).unwrap();
+    assert_eq!(original, deserialized);
+}
+
 #[test]
 fn test_extra_variant_keys_rejected() {
     let json = r#"{

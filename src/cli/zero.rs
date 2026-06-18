@@ -2,6 +2,7 @@ use crate::{
     ed25519, ClaimableBalance, Contract, Decoded, HashX, LiquidityPool, PreAuthTx, Strkey,
 };
 use clap::{Args, ValueEnum};
+use heapless::Vec;
 
 #[derive(Args, Debug, Clone)]
 #[command()]
@@ -47,7 +48,10 @@ impl Cmd {
                 id: 0,
             }),
             StrkeyType::SignedPayloadEd25519 => {
-                Strkey::SignedPayloadEd25519(ed25519::SignedPayload::new([0; 32], &[0]).unwrap())
+                Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+                    ed25519: [0; 32],
+                    payload: Vec::new(),
+                })
             }
             StrkeyType::Contract => Strkey::Contract(Contract([0; 32])),
             StrkeyType::LiquidityPool => Strkey::LiquidityPool(LiquidityPool([0; 32])),

@@ -233,22 +233,22 @@ fn test_invalid_muxed_ed25519() {
 fn test_valid_signed_payload_ed25519() {
     assert_convert_roundtrip(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAQACAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUPB6IBZGM",
-        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload::new(
-            [0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f, 0xe8, 0x9a, ],
-            &[
+        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519: [0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f, 0xe8, 0x9a, ],
+            payload: [
                 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20,
-            ],
-        ).unwrap()),
+            ].as_slice().try_into().unwrap(),
+        }),
     );
 
     assert_convert_roundtrip(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAOQCAQDAQCQMBYIBEFAWDANBYHRAEISCMKBKFQXDAMRUGY4DUAAAAFGBU",
-        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload::new(
-            [0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f, 0xe8, 0x9a, ],
-            &[
+        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519: [0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7, 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3, 0xfc, 0x7f, 0xe8, 0x9a, ],
+            payload: [
                 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d,
-            ],
-        ).unwrap()),
+            ].as_slice().try_into().unwrap(),
+        }),
     );
 
     // Unused trailing bits are zero
@@ -285,29 +285,42 @@ fn test_valid_signed_payload_ed25519() {
     // - 0 unused bits:
     assert_convert_roundtrip(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAKB5",
-        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload::new(ed25519, &[0; 16]).unwrap()),
+        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519,
+            payload: [0; 16].as_slice().try_into().unwrap(),
+        }),
     );
     // - 1 unused bits:
     assert_convert_roundtrip(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAACAAAAAABNWS",
-        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload::new(ed25519, &[0; 4]).unwrap()),
+        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519,
+            payload: [0; 4].as_slice().try_into().unwrap(),
+        }),
     );
     // - 2 unused bits:
     assert_convert_roundtrip(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAGAAAAAAAAAAAAAAAAAAACTPY",
-        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload::new(ed25519, &[0; 12]).unwrap()),
+        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519,
+            payload: [0; 12].as_slice().try_into().unwrap(),
+        }),
     );
     // - 3 unused bits:
     assert_convert_roundtrip(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALGXI",
-        &Strkey::SignedPayloadEd25519(
-            ed25519::SignedPayload::new(ed25519, &[0; 20]).unwrap(),
-        ),
+        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519,
+            payload: [0; 20].as_slice().try_into().unwrap(),
+        }),
     );
     // - 4 unused bits:
     assert_convert_roundtrip(
         "PA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAEAAAAAAAAAAAAARKYQ",
-        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload::new(ed25519, &[0; 8]).unwrap()),
+        &Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519,
+            payload: [0; 8].as_slice().try_into().unwrap(),
+        }),
     );
 }
 
@@ -428,23 +441,20 @@ fn test_invalid_signed_payload_ed25519() {
 
 #[test]
 fn test_signed_payload_ed25519_payload_sizes() {
-    for payload_size in 1..=64 {
+    for payload_size in 0..=64 {
         let mut payload_arr = [0u8; 64];
         for i in 0..payload_size {
             payload_arr[i] = i as u8;
         }
 
-        let signed_payload = Strkey::SignedPayloadEd25519(
-            ed25519::SignedPayload::new(
-                [
-                    0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90,
-                    0xf7, 0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd,
-                    0x7a, 0x3, 0xfc, 0x7f, 0xe8, 0x9a,
-                ],
-                &payload_arr[..payload_size],
-            )
-            .unwrap(),
-        );
+        let signed_payload = Strkey::SignedPayloadEd25519(ed25519::SignedPayload {
+            ed25519: [
+                0x3f, 0xc, 0x34, 0xbf, 0x93, 0xad, 0xd, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+                0x5, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0xd, 0x7a, 0x3,
+                0xfc, 0x7f, 0xe8, 0x9a,
+            ],
+            payload: payload_arr[..payload_size].try_into().unwrap(),
+        });
 
         // Verify round trips.
         let encoded = signed_payload.to_string();
@@ -491,20 +501,28 @@ fn test_invalid_contract() {
 }
 
 #[test]
-fn test_signed_payload_new_rejects_empty_and_oversized_payload() {
-    // Empty payloads must be rejected so that to_string() cannot produce
-    // an encoding that from_payload() will refuse to decode (a 36-byte
-    // signed-payload layout is not accepted by stellar-core either).
-    let r = stellar_strkey::ed25519::SignedPayload::new([0; 32], &[]);
-    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
+fn test_signed_payload_allows_empty_payload() {
+    // Empty payloads are valid and round trip through their string form.
+    let sp = ed25519::SignedPayload {
+        ed25519: [0; 32],
+        payload: Default::default(),
+    };
+    let encoded = sp.to_string();
+    let decoded = ed25519::SignedPayload::from_string(&encoded).unwrap();
+    assert_eq!(sp, decoded);
+    assert!(decoded.payload.is_empty());
 
-    // Payloads larger than 64 bytes must be rejected.
-    let r = stellar_strkey::ed25519::SignedPayload::new([0; 32], &[0u8; 65]);
-    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
-
-    // 1..=64 are accepted.
-    assert!(stellar_strkey::ed25519::SignedPayload::new([0; 32], &[0]).is_ok());
-    assert!(stellar_strkey::ed25519::SignedPayload::new([0; 32], &[0u8; 64]).is_ok());
+    // A 36-byte raw layout (32-byte key + 4-byte zero length) decodes to an
+    // empty payload.
+    let payload: &[u8] = &[
+        // ed25519 public key (32 bytes)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, // length prefix (4 bytes, big-endian) = 0
+        0x00, 0x00, 0x00, 0x00,
+    ];
+    let sp = ed25519::SignedPayload::from_payload(payload).unwrap();
+    assert!(sp.payload.is_empty());
 }
 
 #[test]
@@ -519,39 +537,37 @@ fn test_signed_payload_from_string_doesnt_panic_with_unbounded_size() {
 }
 
 /// Tests for SignedPayload::from_payload boundary conditions.
-/// These tests specifically target the MIN_LENGTH (32 + 4 + 4 = 40) and
+/// These tests specifically target the MIN_LENGTH (32 + 4 = 36) and
 /// MAX_LENGTH (32 + 4 + 64 = 100) arithmetic to ensure mutations are caught.
 #[test]
 fn test_signed_payload_from_payload_min_length_boundary() {
-    // Test exactly MIN_LENGTH (40 bytes): 32-byte key + 4-byte length (1) + 4-byte padded payload
-    // Inner payload length = 1, padded to 4 bytes
+    // Test exactly MIN_LENGTH (36 bytes): 32-byte key + 4-byte length (0),
+    // i.e. an empty inner payload.
     let payload: &[u8] = &[
         // ed25519 public key (32 bytes)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, // length prefix (4 bytes, big-endian) = 1
-        0x00, 0x00, 0x00, 0x01, // inner payload (1 byte) + padding (3 bytes)
-        0xAB, 0x00, 0x00, 0x00,
+        0x00, 0x00, // length prefix (4 bytes, big-endian) = 0
+        0x00, 0x00, 0x00, 0x00,
     ];
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
-    assert!(result.is_ok(), "MIN_LENGTH (40 bytes) should succeed");
+    assert!(result.is_ok(), "MIN_LENGTH (36 bytes) should succeed");
     let sp = result.unwrap();
-    assert_eq!(sp.payload(), &[0xAB]);
+    assert!(sp.payload.is_empty());
 
-    // Test MIN_LENGTH - 1 (39 bytes): should fail
+    // Test MIN_LENGTH - 1 (35 bytes): should fail
     let payload: &[u8] = &[
         // ed25519 public key (32 bytes)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, // length prefix (4 bytes) = 0
-        0x00, 0x00, 0x00, 0x00, // padding (3 bytes) - one byte short of MIN_LENGTH
+        0x00, 0x00, // length prefix (only 3 bytes) - one byte short of MIN_LENGTH
         0x00, 0x00, 0x00,
     ];
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert_eq!(
         result,
         Err(DecodeError::InvalidPayloadLength),
-        "39 bytes (below MIN_LENGTH) should fail"
+        "35 bytes (below MIN_LENGTH) should fail"
     );
 }
 

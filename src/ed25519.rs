@@ -408,16 +408,15 @@ mod muxed_account_decoded_serde_impl {
 
 /// Stores a signed payload ed25519 signer.
 ///
-/// The inner payload must be 1..=64 bytes. Empty payloads are not valid per
-/// stellar-core (SetOptionsOpFrame rejects them with SET_OPTIONS_BAD_SIGNER).
+/// The inner payload must not be larger than 64 bytes.
 #[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 #[cfg_attr(
     feature = "serde",
     derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
 )]
 pub struct SignedPayload {
-    ed25519: [u8; 32],
-    payload: Vec<u8, 64>,
+    pub ed25519: [u8; 32],
+    pub payload: Vec<u8, 64>,
 }
 
 impl Debug for SignedPayload {
@@ -439,44 +438,11 @@ impl SignedPayload {
     pub(crate) const MAX_PAYLOAD_LEN: usize = 32 + 4 + 64;
     pub(crate) const MAX_BINARY_LEN: usize = binary_len(Self::MAX_PAYLOAD_LEN);
     pub const MAX_ENCODED_LEN: usize = encode_len(Self::MAX_BINARY_LEN);
-    const MIN_INNER_PAYLOAD_LEN: usize = 1;
-    const MAX_INNER_PAYLOAD_LEN: usize = 64;
-    const MAX_INNER_PAYLOAD_LEN_U32: u32 = 64;
     const _ASSERTS: () = {
         assert!(Self::MAX_PAYLOAD_LEN == 100);
         assert!(Self::MAX_BINARY_LEN == 103);
         assert!(Self::MAX_ENCODED_LEN == 165);
-        assert!(Self::MAX_INNER_PAYLOAD_LEN as u32 == Self::MAX_INNER_PAYLOAD_LEN_U32);
-        assert!(Self::MAX_INNER_PAYLOAD_LEN_U32 as usize == Self::MAX_INNER_PAYLOAD_LEN);
     };
-
-    /// Constructs a SignedPayload from an ed25519 public key and inner payload.
-    ///
-    /// ### Errors
-    ///
-    /// If the inner payload is empty or larger than 64 bytes.
-    pub fn new(ed25519: [u8; 32], payload: &[u8]) -> Result<Self, DecodeError> {
-        if !(Self::MIN_INNER_PAYLOAD_LEN..=Self::MAX_INNER_PAYLOAD_LEN).contains(&payload.len()) {
-            return Err(DecodeError::InvalidPayloadLength);
-        }
-        let mut p = Vec::new();
-        p.extend_from_slice(payload)
-            .map_err(|_| DecodeError::InvalidPayloadLength)?;
-        Ok(Self {
-            ed25519,
-            payload: p,
-        })
-    }
-
-    /// Returns the ed25519 public key.
-    pub fn ed25519(&self) -> &[u8; 32] {
-        &self.ed25519
-    }
-
-    /// Returns the inner payload.
-    pub fn payload(&self) -> &[u8] {
-        &self.payload
-    }
 
     /// Returns the strkey string for the signed payload signer.
     pub fn to_string(&self) -> String<{ Self::MAX_ENCODED_LEN }> {
@@ -501,16 +467,15 @@ impl SignedPayload {
     ///
     /// ### Errors
     ///
-    /// If the inner payload is empty or larger than 64 bytes, if the overall
-    /// layout is malformed (wrong total length, truncated fields), or if the
-    /// trailing padding bytes are not all zero.
+    /// If the inner payload is larger than 64 bytes, if the overall layout is
+    /// malformed (wrong total length, truncated fields), or if the trailing
+    /// padding bytes are not all zero.
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        // Min: 32-byte ed25519 key + 4-byte length prefix + 4 bytes (1-byte inner
-        // payload padded to 4 per XDR). Empty inner payloads are not valid per
-        // stellar-core (SetOptionsOpFrame rejects them with SET_OPTIONS_BAD_SIGNER).
+        // Min: 32-byte ed25519 key + 4-byte length prefix (empty inner payload).
         // Max: 32-byte ed25519 key + 4-byte length prefix + 64-byte inner payload.
-        const MIN_LENGTH: usize = 32 + 4 + 4;
-        const MAX_LENGTH: usize = 32 + 4 + SignedPayload::MAX_INNER_PAYLOAD_LEN;
+        const MAX_INNER_PAYLOAD_LEN: u32 = 64;
+        const MIN_LENGTH: usize = 32 + 4;
+        const MAX_LENGTH: usize = 32 + 4 + MAX_INNER_PAYLOAD_LEN as usize;
         let payload_len = payload.len();
         if !(MIN_LENGTH..=MAX_LENGTH).contains(&payload_len) {
             return Err(DecodeError::InvalidPayloadLength);
@@ -536,7 +501,7 @@ impl SignedPayload {
         offset += 4;
 
         // Check inner payload length is inside accepted range.
-        if inner_payload_len > Self::MAX_INNER_PAYLOAD_LEN_U32 {
+        if inner_payload_len > MAX_INNER_PAYLOAD_LEN {
             return Err(DecodeError::InvalidPayloadLength);
         }
 
@@ -565,7 +530,11 @@ impl SignedPayload {
             return Err(DecodeError::InvalidPayloadLength);
         }
 
-        Self::new(ed25519, inner_payload)
+        let mut payload = Vec::new();
+        payload
+            .extend_from_slice(inner_payload)
+            .map_err(|_| DecodeError::InvalidPayloadLength)?;
+        Ok(Self { ed25519, payload })
     }
 
     pub fn from_string(s: &str) -> Result<Self, DecodeError> {
@@ -622,21 +591,21 @@ mod signed_payload_decoded_serde_impl {
 
     impl Serialize for Decoded<&SignedPayload> {
         fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-            let Self(sp) = self;
-            DecodedBorrowed {
-                ed25519: sp.ed25519(),
-                payload: sp.payload(),
-            }
-            .serialize(serializer)
+            let Self(SignedPayload { ed25519, payload }) = self;
+            DecodedBorrowed { ed25519, payload }.serialize(serializer)
         }
     }
 
     impl<'de> Deserialize<'de> for Decoded<SignedPayload> {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned { ed25519, payload } = DecodedOwned::deserialize(deserializer)?;
-            let sp = SignedPayload::new(ed25519, &payload)
-                .map_err(|e| de::Error::custom(format_args!("invalid signed payload: {e}")))?;
-            Ok(Decoded(sp))
+            Ok(Decoded(SignedPayload {
+                ed25519,
+                payload: payload
+                    .as_slice()
+                    .try_into()
+                    .map_err(|_| de::Error::custom("payload too large"))?,
+            }))
         }
     }
 }

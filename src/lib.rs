@@ -36,7 +36,7 @@
 //! | `M`    | [`Strkey::MuxedAccountEd25519`] / [`ed25519::MuxedAccount`]            |            40 |
 //! | `T`    | [`Strkey::PreAuthTx`] / [`PreAuthTx`]                                  |            32 |
 //! | `X`    | [`Strkey::HashX`] / [`HashX`]                                          |            32 |
-//! | `P`    | [`Strkey::SignedPayloadEd25519`] / [`ed25519::SignedPayload`]          |        40–100 |
+//! | `P`    | [`Strkey::SignedPayloadEd25519`] / [`ed25519::SignedPayload`]          |        36–100 |
 //! | `C`    | [`Strkey::Contract`] / [`Contract`]                                    |            32 |
 //! | `L`    | [`Strkey::LiquidityPool`] / [`LiquidityPool`]                          |            32 |
 //! | `B`    | [`Strkey::ClaimableBalance`] / [`ClaimableBalance`]                    |            33 |

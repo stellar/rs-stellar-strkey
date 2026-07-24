@@ -47,6 +47,27 @@ fn test_contract() {
 }
 
 #[test]
+fn test_muxed_contract() {
+    assert_eq!(
+        serde_json::to_string_pretty(&Decoded(&Strkey::MuxedContract(MuxedContract {
+            contract: [
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00,
+            ],
+            id: 0,
+        })))
+        .unwrap(),
+        r#"{
+  "muxed_contract": {
+    "contract": "0000000000000000000000000000000000000000000000000000000000000000",
+    "id": 0
+  }
+}"#,
+    );
+}
+
+#[test]
 fn test_hash_x() {
     assert_eq!(
         serde_json::to_string_pretty(&Decoded(&Strkey::HashX(HashX([
@@ -173,6 +194,17 @@ fn test_roundtrip_public_key_via_value() {
 fn test_roundtrip_muxed_account() {
     let original = Strkey::MuxedAccountEd25519(ed25519::MuxedAccount {
         ed25519: [0x00; 32],
+        id: 42,
+    });
+    let json = serde_json::to_string(&Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
+    assert_eq!(original, deserialized);
+}
+
+#[test]
+fn test_roundtrip_muxed_contract() {
+    let original = Strkey::MuxedContract(MuxedContract {
+        contract: [0x00; 32],
         id: 42,
     });
     let json = serde_json::to_string(&Decoded(&original)).unwrap();

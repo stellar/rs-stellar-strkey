@@ -5,6 +5,7 @@ pub const PRE_AUTH_TX: u8 = 19 << 3; // 'T' prefix
 pub const HASH_X: u8 = 23 << 3; // 'X' prefix
 pub const SIGNED_PAYLOAD: u8 = 15 << 3; // 'P' prefix
 pub const CONTRACT: u8 = 2 << 3; // 'C' prefix
+pub const MUXED_CONTRACT: u8 = 22 << 3; // 'W' prefix
 pub const LIQUIDITY_POOL: u8 = 11 << 3; // 'L' prefix
 pub const CLAIMABLE_BALANCE: u8 = 1 << 3; // 'B' prefix
 

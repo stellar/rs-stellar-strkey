@@ -28,6 +28,7 @@ pub enum Strkey {
     MuxedAccountEd25519(ed25519::MuxedAccount),
     SignedPayloadEd25519(ed25519::SignedPayload),
     Contract(Contract),
+    MuxedContract(MuxedContract),
     LiquidityPool(LiquidityPool),
     ClaimableBalance(ClaimableBalance),
 }
@@ -49,6 +50,7 @@ impl Strkey {
         assert!(Self::MAX_PAYLOAD_LEN >= PreAuthTx::PAYLOAD_LEN);
         assert!(Self::MAX_PAYLOAD_LEN >= HashX::PAYLOAD_LEN);
         assert!(Self::MAX_PAYLOAD_LEN >= Contract::PAYLOAD_LEN);
+        assert!(Self::MAX_PAYLOAD_LEN >= MuxedContract::PAYLOAD_LEN);
         assert!(Self::MAX_PAYLOAD_LEN >= LiquidityPool::PAYLOAD_LEN);
         assert!(Self::MAX_PAYLOAD_LEN >= ClaimableBalance::PAYLOAD_LEN);
         // Verify MAX_BINARY_LEN >= all type binary lengths.
@@ -59,6 +61,7 @@ impl Strkey {
         assert!(Self::MAX_BINARY_LEN >= PreAuthTx::BINARY_LEN);
         assert!(Self::MAX_BINARY_LEN >= HashX::BINARY_LEN);
         assert!(Self::MAX_BINARY_LEN >= Contract::BINARY_LEN);
+        assert!(Self::MAX_BINARY_LEN >= MuxedContract::BINARY_LEN);
         assert!(Self::MAX_BINARY_LEN >= LiquidityPool::BINARY_LEN);
         assert!(Self::MAX_BINARY_LEN >= ClaimableBalance::BINARY_LEN);
         // Verify MAX_ENCODED_LEN >= all type encoded lengths.
@@ -69,6 +72,7 @@ impl Strkey {
         assert!(Self::MAX_ENCODED_LEN >= PreAuthTx::ENCODED_LEN);
         assert!(Self::MAX_ENCODED_LEN >= HashX::ENCODED_LEN);
         assert!(Self::MAX_ENCODED_LEN >= Contract::ENCODED_LEN);
+        assert!(Self::MAX_ENCODED_LEN >= MuxedContract::ENCODED_LEN);
         assert!(Self::MAX_ENCODED_LEN >= LiquidityPool::ENCODED_LEN);
         assert!(Self::MAX_ENCODED_LEN >= ClaimableBalance::ENCODED_LEN);
     };
@@ -82,6 +86,7 @@ impl Strkey {
             Self::MuxedAccountEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
             Self::SignedPayloadEd25519(x) => s.push_str(x.to_string().as_str()).unwrap(),
             Self::Contract(x) => s.push_str(x.to_string().as_str()).unwrap(),
+            Self::MuxedContract(x) => s.push_str(x.to_string().as_str()).unwrap(),
             Self::LiquidityPool(x) => s.push_str(x.to_string().as_str()).unwrap(),
             Self::ClaimableBalance(x) => s.push_str(x.to_string().as_str()).unwrap(),
         }
@@ -113,6 +118,9 @@ impl Strkey {
                 ed25519::SignedPayload::from_payload(&payload)?,
             )),
             version::CONTRACT => Ok(Self::Contract(Contract::from_payload(&payload)?)),
+            version::MUXED_CONTRACT => {
+                Ok(Self::MuxedContract(MuxedContract::from_payload(&payload)?))
+            }
             version::LIQUIDITY_POOL => {
                 Ok(Self::LiquidityPool(LiquidityPool::from_payload(&payload)?))
             }
@@ -169,6 +177,9 @@ mod strkey_decoded_serde_impl {
                 }
                 Strkey::Contract(key) => {
                     map.serialize_entry("contract", &Decoded(key))?;
+                }
+                Strkey::MuxedContract(key) => {
+                    map.serialize_entry("muxed_contract", &Decoded(key))?;
                 }
                 Strkey::LiquidityPool(key) => {
                     map.serialize_entry("liquidity_pool", &Decoded(key))?;
@@ -227,6 +238,10 @@ mod strkey_decoded_serde_impl {
                             let Decoded(inner) = map.next_value()?;
                             Strkey::Contract(inner)
                         }
+                        "muxed_contract" => {
+                            let Decoded(inner) = map.next_value()?;
+                            Strkey::MuxedContract(inner)
+                        }
                         "liquidity_pool" => {
                             let Decoded(inner) = map.next_value()?;
                             Strkey::LiquidityPool(inner)
@@ -245,6 +260,7 @@ mod strkey_decoded_serde_impl {
                                     "muxed_account_ed25519",
                                     "signed_payload_ed25519",
                                     "contract",
+                                    "muxed_contract",
                                     "liquidity_pool",
                                     "claimable_balance",
                                 ],
@@ -564,6 +580,138 @@ mod contract_decoded_serde_impl {
         fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
             let DecodedOwned(bytes) = DecodedOwned::deserialize(deserializer)?;
             Ok(Decoded(Contract(bytes)))
+        }
+    }
+}
+
+/// A muxed contract address (`W...`).
+///
+/// A contract identifier paired with a `u64` multiplexing identifier, so that
+/// a single contract can represent many off-chain destinations, mirroring
+/// [`ed25519::MuxedAccount`] for contract addresses. The payload is the
+/// 32-byte contract id followed by the 8-byte big-endian id. See [CAP-84] and
+/// [SEP-23].
+///
+/// [CAP-84]: https://github.com/stellar/stellar-protocol/blob/master/core/cap-0084.md
+/// [SEP-23]: https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0023.md
+#[derive(Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr)
+)]
+pub struct MuxedContract {
+    pub contract: [u8; 32],
+    pub id: u64,
+}
+
+impl Debug for MuxedContract {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "MuxedContract(")?;
+        for b in &self.contract {
+            write!(f, "{b:02x}")?;
+        }
+        write!(f, ", {}", self.id)?;
+        write!(f, ")")
+    }
+}
+
+impl MuxedContract {
+    pub(crate) const PAYLOAD_LEN: usize = 32 + 8; // contract + id
+    pub(crate) const BINARY_LEN: usize = binary_len(Self::PAYLOAD_LEN);
+    pub const ENCODED_LEN: usize = encode_len(Self::BINARY_LEN);
+    const _ASSERTS: () = {
+        assert!(Self::BINARY_LEN == 43);
+        assert!(Self::ENCODED_LEN == 69);
+    };
+
+    pub fn to_string(&self) -> HeaplessString<{ Self::ENCODED_LEN }> {
+        let mut payload: [u8; Self::PAYLOAD_LEN] = [0; Self::PAYLOAD_LEN];
+        let (contract, id) = payload.split_at_mut(32);
+        contract.copy_from_slice(&self.contract);
+        id.copy_from_slice(&self.id.to_be_bytes());
+        encode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }, { Self::ENCODED_LEN }>(
+            version::MUXED_CONTRACT,
+            &payload,
+        )
+    }
+
+    fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
+        if payload.len() != Self::PAYLOAD_LEN {
+            return Err(DecodeError::InvalidPayloadLength);
+        }
+        let (contract, id) = payload.split_at(32);
+        Ok(Self {
+            contract: contract
+                .try_into()
+                .map_err(|_| DecodeError::InvalidPayloadLength)?,
+            id: u64::from_be_bytes(
+                id.try_into()
+                    .map_err(|_| DecodeError::InvalidPayloadLength)?,
+            ),
+        })
+    }
+
+    pub fn from_string(s: &str) -> Result<Self, DecodeError> {
+        Self::from_slice(s.as_bytes())
+    }
+
+    pub fn from_slice(s: &[u8]) -> Result<Self, DecodeError> {
+        let (ver, payload) = decode::<{ Self::PAYLOAD_LEN }, { Self::BINARY_LEN }>(s)?;
+        match ver {
+            version::MUXED_CONTRACT => Self::from_payload(&payload),
+            _ => Err(DecodeError::UnsupportedVersion),
+        }
+    }
+}
+
+impl Display for MuxedContract {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.to_string())
+    }
+}
+
+impl FromStr for MuxedContract {
+    type Err = DecodeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        MuxedContract::from_string(s)
+    }
+}
+
+#[cfg(feature = "serde-decoded")]
+mod muxed_contract_decoded_serde_impl {
+    use super::*;
+    use crate::decoded_json_format::Decoded;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use serde_with::serde_as;
+
+    #[serde_as]
+    #[derive(Serialize)]
+    struct DecodedBorrowed<'a> {
+        #[serde_as(as = "serde_with::hex::Hex")]
+        contract: &'a [u8; 32],
+        id: u64,
+    }
+
+    #[serde_as]
+    #[derive(Deserialize)]
+    struct DecodedOwned {
+        #[serde_as(as = "serde_with::hex::Hex")]
+        contract: [u8; 32],
+        id: u64,
+    }
+
+    impl Serialize for Decoded<&MuxedContract> {
+        fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+            let Self(MuxedContract { contract, id }) = self;
+            DecodedBorrowed { contract, id: *id }.serialize(serializer)
+        }
+    }
+
+    impl<'de> Deserialize<'de> for Decoded<MuxedContract> {
+        fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let DecodedOwned { contract, id } = DecodedOwned::deserialize(deserializer)?;
+            Ok(Decoded(MuxedContract { contract, id }))
         }
     }
 }

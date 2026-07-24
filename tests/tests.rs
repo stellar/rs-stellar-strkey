@@ -491,6 +491,72 @@ fn test_invalid_contract() {
 }
 
 #[test]
+fn test_valid_muxed_contract() {
+    // Valid muxed contract (id: 123456)
+    assert_convert_roundtrip(
+        "WA3D5KRYM6CB7OWQ6TWYRR3Z4T7GNZLKERYNZGGA5SOAOPIFY6YQGAAAAAAAAAPCIA6IG",
+        &Strkey::MuxedContract(MuxedContract {
+            contract: [
+                0x36, 0x3e, 0xaa, 0x38, 0x67, 0x84, 0x1f, 0xba, 0xd0, 0xf4, 0xed, 0x88, 0xc7, 0x79,
+                0xe4, 0xfe, 0x66, 0xe5, 0x6a, 0x24, 0x70, 0xdc, 0x98, 0xc0, 0xec, 0x9c, 0x07, 0x3d,
+                0x05, 0xc7, 0xb1, 0x03,
+            ],
+            id: 123456,
+        }),
+    );
+
+    // Valid muxed contract (id: 0)
+    assert_convert_roundtrip(
+        "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAWWC",
+        &Strkey::MuxedContract(MuxedContract {
+            contract: [
+                0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+                0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
+                0xfc, 0x7f, 0xe8, 0x9a,
+            ],
+            id: 0,
+        }),
+    );
+
+    // Valid muxed contract in which unsigned id exceeds maximum signed 64-bit integer
+    assert_convert_roundtrip(
+        "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVAAAAAAAAAAAACWJY",
+        &Strkey::MuxedContract(MuxedContract {
+            contract: [
+                0x3f, 0x0c, 0x34, 0xbf, 0x93, 0xad, 0x0d, 0x99, 0x71, 0xd0, 0x4c, 0xcc, 0x90, 0xf7,
+                0x05, 0x51, 0x1c, 0x83, 0x8a, 0xad, 0x97, 0x34, 0xa4, 0xa2, 0xfb, 0x0d, 0x7a, 0x03,
+                0xfc, 0x7f, 0xe8, 0x9a,
+            ],
+            id: 9223372036854775808,
+        }),
+    );
+}
+
+#[test]
+fn test_invalid_muxed_contract() {
+    // The unused trailing bit must be zero in the encoding of the last symbol.
+    let mut r: Result<Strkey, _> =
+        "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAWWD".parse();
+    assert_eq!(r, Err(DecodeError::InvalidBase32));
+
+    // Invalid checksum.
+    r = "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAWWA".parse();
+    assert_eq!(r, Err(DecodeError::ChecksumMismatch));
+
+    // Invalid algorithm (low 3 bits of version byte are 7). Same contract + id
+    // payload as the valid `WA7QYNF7…AWWC` strkey above, but the version byte
+    // is `(22 << 3) | 7 = 0xb7` with a CRC recomputed for that version byte,
+    // so the checksum check passes and the version-byte match fails.
+    r = "W47QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAADXHW".parse();
+    assert_eq!(r, Err(DecodeError::UnsupportedVersion));
+
+    // Too long strkey input (48-byte payload instead of 40).
+    r = "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAAAAAAAAAAAAAEXJY"
+        .parse();
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
+}
+
+#[test]
 fn test_signed_payload_new_rejects_empty_and_oversized_payload() {
     // Empty payloads must be rejected so that to_string() cannot produce
     // an encoding that from_payload() will refuse to decode (a 36-byte

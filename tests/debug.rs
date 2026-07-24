@@ -31,6 +31,24 @@ fn test_strkey_contract_debug() {
 }
 
 #[test]
+fn test_strkey_muxed_contract_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            Strkey::MuxedContract(MuxedContract {
+                contract: [
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                ],
+                id: 0,
+            })
+        ),
+        "MuxedContract(MuxedContract(0000000000000000000000000000000000000000000000000000000000000000, 0))",
+    );
+}
+
+#[test]
 fn test_strkey_hash_x_debug() {
     assert_eq!(
         format!(
@@ -240,6 +258,24 @@ fn test_contract_debug() {
             ])
         ),
         "Contract(0000000000000000000000000000000000000000000000000000000000000000)",
+    );
+}
+
+#[test]
+fn test_muxed_contract_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            MuxedContract {
+                contract: [
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                ],
+                id: 0,
+            }
+        ),
+        "MuxedContract(0000000000000000000000000000000000000000000000000000000000000000, 0)",
     );
 }
 

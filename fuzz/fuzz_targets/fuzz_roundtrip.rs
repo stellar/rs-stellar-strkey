@@ -45,6 +45,7 @@ fuzz_target!(|s: &str| -> Corpus {
             Strkey::HashX(_) => 'X',
             Strkey::SignedPayloadEd25519(_) => 'P',
             Strkey::Contract(_) => 'C',
+            Strkey::MuxedContract(_) => 'W',
             Strkey::LiquidityPool(_) => 'L',
             Strkey::ClaimableBalance(_) => 'B',
         }
@@ -58,6 +59,7 @@ fuzz_target!(|s: &str| -> Corpus {
         Strkey::HashX(_) => assert_eq!(len, 56),
         Strkey::MuxedAccountEd25519(_) => assert_eq!(len, 69),
         Strkey::Contract(_) => assert_eq!(len, 56),
+        Strkey::MuxedContract(_) => assert_eq!(len, 69),
         Strkey::LiquidityPool(_) => assert_eq!(len, 56),
         Strkey::ClaimableBalance(_) => assert_eq!(len, 58),
         Strkey::SignedPayloadEd25519(sp) => {

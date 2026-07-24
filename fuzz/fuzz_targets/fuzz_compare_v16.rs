@@ -43,6 +43,13 @@ fuzz_target!(|s: &str| -> Corpus {
             // Both failed - that's fine, they agree.
             Corpus::Keep
         }
+        (Ok(new), Err(_)) if matches!(new, StrkeyNew::MuxedContract(_)) => {
+            // Muxed contract (`W…`) was introduced after this old version, so
+            // the old library legitimately cannot parse it. Confirm the new
+            // side still round-trips.
+            assert_eq!(new.to_string().as_str(), s, "New version roundtrip failed");
+            Corpus::Keep
+        }
         (Ok(new), Err(old_err)) => {
             // New succeeded but old failed - this could be a new feature or a bug.
             panic!(

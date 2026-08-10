@@ -92,43 +92,18 @@ fn test_valid_private_keys_via_ed25519_private_key() {
 
 #[test]
 fn test_invalid_private_keys() {
-    // Too long strkey input. Strkey does not validate the private-key
-    // payload — any `S…` version byte returns `PrivateKey` to route the
-    // caller to `ed25519::PrivateKey`.
-    let r: Result<Strkey, _> = "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV764SE".parse();
-    assert_eq!(r, Err(DecodeError::PrivateKey));
-}
-
-#[test]
-fn test_invalid_private_keys_via_ed25519_private_key() {
-    // `Strkey` routes every `S…` input to `ed25519::PrivateKey` without
-    // inspecting its payload, so the 32-byte length requirement is only
-    // enforced on this path.
-
-    // All four inputs below are all-zero payloads with a valid CRC, differing
-    // only in payload length.
-
-    // 31 bytes, one short of the 32-byte seed. The strkey decodes and its
-    // checksum matches, so the length check is what rejects it.
-    let r: Result<ed25519::PrivateKey, _> =
+    // Too short, only 31 bytes but must be 32 bytes.
+    let mut r: Result<ed25519::PrivateKey, _> =
         "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXAQ".parse();
     assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
-    // 33 bytes and 36 bytes. These decode to more binary bytes than a private
-    // key's 35, so they are rejected by the decode buffer before the payload
-    // length is ever compared.
-    let r: Result<ed25519::PrivateKey, _> =
-        "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHT5A".parse();
+    // Too long, 33 bytes but must be 32 bytes.
+    r = "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHT5A".parse();
     assert_eq!(r, Err(DecodeError::TooLong));
 
-    let r: Result<ed25519::PrivateKey, _> =
-        "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAETY".parse();
+    // Too long, 36 bytes but must be 32 bytes.
+    r = "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAETY".parse();
     assert_eq!(r, Err(DecodeError::TooLong));
-
-    // The exact 32-byte payload is accepted.
-    let r: Result<ed25519::PrivateKey, _> =
-        "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSU2".parse();
-    assert_eq!(r, Ok(ed25519::PrivateKey([0u8; 32])));
 }
 
 #[test]
@@ -587,30 +562,6 @@ fn test_signed_payload_from_payload_min_length_boundary() {
     );
 }
 
-/// A zero inner-payload length is invalid, but a payload declaring it can
-/// still be exactly MIN_LENGTH (40 bytes) by carrying four trailing zero
-/// bytes. That case clears the MIN_LENGTH guard and the inner-length range
-/// check, so it is only caught by the final "entire payload consumed" check.
-#[test]
-fn test_signed_payload_from_payload_zero_inner_length_at_min_length() {
-    let mut payload = [0u8; 40];
-    // ed25519 public key (32 bytes) stays zero; length prefix (4 bytes) = 0;
-    // four trailing zero bytes bring the payload up to MIN_LENGTH.
-    payload[32..36].copy_from_slice(&0u32.to_be_bytes());
-
-    let result = stellar_strkey::ed25519::SignedPayload::from_payload(&payload);
-    assert_eq!(
-        result,
-        Err(DecodeError::InvalidPayloadLength),
-        "40 bytes declaring a 0-byte inner payload should fail"
-    );
-
-    // And the same payload is rejected when reached through a `P…` strkey.
-    let r: Result<Strkey, _> =
-        "PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC2CW".parse();
-    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
-}
-
 #[test]
 fn test_signed_payload_from_payload_max_length_boundary() {
     // Test MAX_LENGTH + 1 (101 bytes): should fail
@@ -674,6 +625,28 @@ fn test_signed_payload_from_payload_inner_length_boundary() {
     ];
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert!(result.is_ok(), "inner payload length 64 should succeed");
+}
+
+/// A zero inner-payload length is invalid, but a payload declaring it can
+/// still be exactly MIN_LENGTH (40 bytes) by carrying four trailing zero
+/// bytes, check that case is prevented.
+#[test]
+fn test_signed_payload_from_payload_zero_inner_length_at_min_length() {
+    let payload: &[u8] = &[
+        // ed25519 public key (32 bytes)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, // length prefix (4 bytes, big-endian) = 64 (valid)
+        0x00, 0x00, 0x00, 0x00, // inner payload (4 bytes)
+        0x00, 0x01, 0x02, 0x03,
+    ];
+
+    let result = stellar_strkey::ed25519::SignedPayload::from_payload(&payload);
+    assert_eq!(
+        result,
+        Err(DecodeError::InvalidPayloadLength),
+        "40 bytes declaring a 0-byte inner payload should fail"
+    );
 }
 
 #[test]

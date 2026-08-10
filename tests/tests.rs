@@ -91,7 +91,7 @@ fn test_valid_private_keys_via_ed25519_private_key() {
 }
 
 #[test]
-fn test_invalid_private_key() {
+fn test_invalid_private_keys() {
     // Too short, only 31 bytes but must be 32 bytes.
     let mut r: Result<ed25519::PrivateKey, _> =
         "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UALAI".parse();

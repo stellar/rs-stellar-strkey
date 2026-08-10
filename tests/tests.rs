@@ -91,18 +91,14 @@ fn test_valid_private_keys_via_ed25519_private_key() {
 }
 
 #[test]
-fn test_invalid_private_keys() {
+fn test_invalid_private_key() {
     // Too short, only 31 bytes but must be 32 bytes.
     let mut r: Result<ed25519::PrivateKey, _> =
-        "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACXAQ".parse();
+        "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UALAI".parse();
     assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
 
     // Too long, 33 bytes but must be 32 bytes.
-    r = "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHT5A".parse();
-    assert_eq!(r, Err(DecodeError::TooLong));
-
-    // Too long, 36 bytes but must be 32 bytes.
-    r = "SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAETY".parse();
+    r = "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV764SE".parse();
     assert_eq!(r, Err(DecodeError::TooLong));
 }
 

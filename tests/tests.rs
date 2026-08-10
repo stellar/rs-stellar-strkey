@@ -92,11 +92,14 @@ fn test_valid_private_keys_via_ed25519_private_key() {
 
 #[test]
 fn test_invalid_private_keys() {
-    // Too long strkey input. Strkey does not validate the private-key
-    // payload — any `S…` version byte returns `PrivateKey` to route the
-    // caller to `ed25519::PrivateKey`.
-    let r: Result<Strkey, _> = "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV764SE".parse();
-    assert_eq!(r, Err(DecodeError::PrivateKey));
+    // Too short, only 31 bytes but must be 32 bytes.
+    let mut r: Result<ed25519::PrivateKey, _> =
+        "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UALAI".parse();
+    assert_eq!(r, Err(DecodeError::InvalidPayloadLength));
+
+    // Too long, 33 bytes but must be 32 bytes.
+    r = "SA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJV764SE".parse();
+    assert_eq!(r, Err(DecodeError::TooLong));
 }
 
 #[test]
@@ -618,6 +621,28 @@ fn test_signed_payload_from_payload_inner_length_boundary() {
     ];
     let result = stellar_strkey::ed25519::SignedPayload::from_payload(payload);
     assert!(result.is_ok(), "inner payload length 64 should succeed");
+}
+
+/// A zero inner-payload length is invalid, but a payload declaring it can
+/// still be exactly MIN_LENGTH (40 bytes) by carrying four trailing zero
+/// bytes, check that case is prevented.
+#[test]
+fn test_signed_payload_from_payload_zero_inner_length_at_min_length() {
+    let payload: &[u8] = &[
+        // ed25519 public key (32 bytes)
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, // length prefix (4 bytes, big-endian) = 64 (valid)
+        0x00, 0x00, 0x00, 0x00, // inner payload (4 bytes)
+        0x00, 0x00, 0x00, 0x00,
+    ];
+
+    let result = stellar_strkey::ed25519::SignedPayload::from_payload(&payload);
+    assert_eq!(
+        result,
+        Err(DecodeError::InvalidPayloadLength),
+        "40 bytes declaring a 0-byte inner payload should fail"
+    );
 }
 
 #[test]

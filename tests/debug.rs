@@ -287,3 +287,31 @@ fn test_ed25519_private_key_debug_unredacted() {
         "PrivateKey(69a8c4cbb9f64e8a0798f6e1ac65d06c3162929056bcf4cdb7d3738d1855f363)",
     );
 }
+
+#[test]
+fn test_strkey_muxed_contract_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            Strkey::MuxedContract(MuxedContract {
+                contract_id: [0x00; 32],
+                id: 0,
+            })
+        ),
+        "MuxedContract(MuxedContract(0000000000000000000000000000000000000000000000000000000000000000, 0))",
+    );
+}
+
+#[test]
+fn test_muxed_contract_debug() {
+    assert_eq!(
+        format!(
+            "{:?}",
+            MuxedContract {
+                contract_id: [0x00; 32],
+                id: 0,
+            }
+        ),
+        "MuxedContract(0000000000000000000000000000000000000000000000000000000000000000, 0)",
+    );
+}

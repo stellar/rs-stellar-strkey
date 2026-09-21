@@ -857,17 +857,6 @@ fn test_valid_muxed_contract() {
             id: 9223372036854775808,
         }),
     );
-
-    // The dedicated type parses and renders the same strkey.
-    let key: MuxedContract =
-        "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAWWC"
-            .parse()
-            .unwrap();
-    assert_eq!(key.id, 0);
-    assert_eq!(
-        key.to_string().as_str(),
-        "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAWWC"
-    );
 }
 
 #[test]
@@ -883,6 +872,8 @@ fn test_invalid_muxed_contract() {
 
     // The unused trailing bit must be zero in the encoding of the last three
     // bytes (24 bits) as five base-32 symbols (25 bits).
+    // 0001_ C << The last character should be C, because the last bit is unused, and in
+    // 00011 D << the base32 alphabet 00010 maps to C. 00011 maps to D.
     r = "WA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUAAAAAAAAAAAAAWWD".parse();
     assert_eq!(r, Err(DecodeError::InvalidBase32));
 

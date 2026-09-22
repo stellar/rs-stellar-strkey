@@ -326,7 +326,7 @@ impl MuxedAccount {
     }
 
     pub fn from_payload(payload: &[u8]) -> Result<Self, DecodeError> {
-        if payload.len() != 40 {
+        if payload.len() != Self::PAYLOAD_LEN {
             return Err(DecodeError::InvalidPayloadLength);
         }
         let (ed25519, id) = payload.split_at(32);

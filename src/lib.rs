@@ -4,7 +4,7 @@
 //! across the Stellar network — account IDs, signing keys, contract IDs,
 //! liquidity pool IDs, and others. Each strkey begins with a single ASCII
 //! letter that identifies its kind (`G`, `S`, `M`, `T`, `X`, `P`, `C`, `L`,
-//! `B`) and is encoded as base32 without padding. The binary form is a
+//! `B`, `W`) and is encoded as base32 without padding. The binary form is a
 //! one-byte version, the type's payload, and a two-byte CRC16-XMODEM
 //! checksum, ensuring that mistyped strkeys are detected before they are
 //! used.
@@ -16,7 +16,7 @@
 //!   handled directly via [`ed25519::PrivateKey`], with rendering gated
 //!   behind [`Unredacted`].
 //! - Per-kind types in this module ([`PreAuthTx`], [`HashX`], [`Contract`],
-//!   [`LiquidityPool`], [`ClaimableBalance`]) and in [`ed25519`]
+//!   [`LiquidityPool`], [`ClaimableBalance`], [`MuxedContract`]) and in [`ed25519`]
 //!   ([`ed25519::PublicKey`], [`ed25519::PrivateKey`],
 //!   [`ed25519::MuxedAccount`], [`ed25519::SignedPayload`]) for callers that
 //!   know the kind in advance.
@@ -40,6 +40,7 @@
 //! | `C`    | [`Strkey::Contract`] / [`Contract`]                                    |            32 |
 //! | `L`    | [`Strkey::LiquidityPool`] / [`LiquidityPool`]                          |            32 |
 //! | `B`    | [`Strkey::ClaimableBalance`] / [`ClaimableBalance`]                    |            33 |
+//! | `W`    | [`Strkey::MuxedContract`] / [`MuxedContract`]                          |            40 |
 //!
 //! # Examples
 //!

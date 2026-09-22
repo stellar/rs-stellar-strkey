@@ -1,5 +1,6 @@
 use crate::{
-    ed25519, ClaimableBalance, Contract, Decoded, HashX, LiquidityPool, PreAuthTx, Strkey,
+    ed25519, ClaimableBalance, Contract, Decoded, HashX, LiquidityPool, MuxedContract, PreAuthTx,
+    Strkey,
 };
 use clap::{Args, ValueEnum};
 
@@ -27,6 +28,7 @@ pub enum StrkeyType {
     Contract,
     LiquidityPool,
     ClaimableBalanceV0,
+    MuxedContract,
 }
 
 #[derive(Clone, Debug, Default, ValueEnum)]
@@ -54,6 +56,10 @@ impl Cmd {
             StrkeyType::ClaimableBalanceV0 => {
                 Strkey::ClaimableBalance(ClaimableBalance::V0([0; 32]))
             }
+            StrkeyType::MuxedContract => Strkey::MuxedContract(MuxedContract {
+                contract_id: [0; 32],
+                id: 0,
+            }),
         };
         match self.output {
             Output::Strkey => println!("{strkey}"),

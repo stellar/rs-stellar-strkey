@@ -213,3 +213,31 @@ fn test_extra_variant_keys_rejected() {
         "unexpected error message: {err}",
     );
 }
+
+#[test]
+fn test_muxed_contract() {
+    assert_eq!(
+        serde_json::to_string_pretty(&Decoded(&Strkey::MuxedContract(MuxedContract {
+            contract_id: [0x00; 32],
+            id: 0,
+        })))
+        .unwrap(),
+        r#"{
+  "muxed_contract": {
+    "contract_id": "0000000000000000000000000000000000000000000000000000000000000000",
+    "id": 0
+  }
+}"#,
+    );
+}
+
+#[test]
+fn test_roundtrip_muxed_contract() {
+    let original = Strkey::MuxedContract(MuxedContract {
+        contract_id: [0x00; 32],
+        id: 42,
+    });
+    let json = serde_json::to_string(&Decoded(&original)).unwrap();
+    let Decoded(deserialized): Decoded<Strkey> = serde_json::from_str(&json).unwrap();
+    assert_eq!(original, deserialized);
+}

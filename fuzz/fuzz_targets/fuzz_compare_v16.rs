@@ -43,6 +43,11 @@ fuzz_target!(|s: &str| -> Corpus {
             // Both failed - that's fine, they agree.
             Corpus::Keep
         }
+        (Ok(StrkeyNew::MuxedContract(_)), Err(_)) => {
+            // Muxed contract (`W…`) strkeys are new in this version and are
+            // expected to be rejected by v0.0.16.
+            Corpus::Keep
+        }
         (Ok(new), Err(old_err)) => {
             // New succeeded but old failed - this could be a new feature or a bug.
             panic!(

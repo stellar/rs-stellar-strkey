@@ -15,9 +15,6 @@ pub enum Error {
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            // The input is deliberately not included: it may be a private-key
-            // strkey, and echoing it back would leak secret material into
-            // logs or terminal scrollback.
             Error::Decode(inner) => f.write_fmt(format_args!("decoding strkey: {inner}")),
             Error::InputTooLarge { len, max } => f.write_fmt(format_args!(
                 "strkey input too large: {len} bytes (max {max})"

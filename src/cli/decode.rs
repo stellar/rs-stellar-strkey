@@ -57,18 +57,22 @@ impl Cmd {
         let input = buf.trim();
         // `S…` strkeys are decoded via `ed25519::PrivateKey` directly; the
         // Strkey enum intentionally excludes that variant.
-        let json = if let Ok(k) = Strkey::from_str(input) {
-            serde_json::to_string_pretty(&Decoded(&k)).unwrap()
-        } else {
-            let pk = ed25519::PrivateKey::from_str(input)
-                .map_err(|e| Error::Decode(input.to_string(), e))?;
-            if !opts.quiet {
-                super::warn_private_key();
+        // Only fall back to the private-key decoder for `S…` inputs, so that
+        // errors for other kinds report the Strkey decoder's error.
+        let json = match Strkey::from_str(input) {
+            Ok(k) => serde_json::to_string_pretty(&Decoded(&k)).unwrap(),
+            Err(DecodeError::PrivateKey) => {
+                let pk = ed25519::PrivateKey::from_str(input)
+                    .map_err(|e| Error::Decode(input.to_string(), e))?;
+                if !opts.quiet {
+                    super::warn_private_key();
+                }
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "private_key_ed25519": Decoded(Unredacted(&pk)),
+                }))
+                .unwrap()
             }
-            serde_json::to_string_pretty(&serde_json::json!({
-                "private_key_ed25519": Decoded(Unredacted(&pk)),
-            }))
-            .unwrap()
+            Err(e) => return Err(Error::Decode(input.to_string(), e)),
         };
         println!("{json}");
         Ok(())

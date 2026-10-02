@@ -32,6 +32,7 @@ pub const fn encode_len(binary_len: usize) -> usize {
 // | LiquidityPool          |          32 |         35 |         56 |
 // | ClaimableBalance       |          33 |         36 |         58 |
 // | MuxedAccountEd25519    |          40 |         43 |         69 |
+// | MuxedContract          |          40 |         43 |         69 |
 // | SignedPayloadEd25519   |     40..100 |    43..103 |    69..165 |
 // +------------------------+-------------+------------+------------+
 

@@ -6,7 +6,7 @@ use clap::Args;
 
 #[derive(Debug)]
 pub enum Error {
-    Decode(String, DecodeError),
+    Decode(DecodeError),
     InputTooLarge { len: usize, max: usize },
     Io(std::io::Error),
     NoInput,
@@ -15,7 +15,7 @@ pub enum Error {
 impl core::fmt::Display for Error {
     fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         match self {
-            Error::Decode(s, inner) => f.write_fmt(format_args!("decoding {s:?}: {inner}")),
+            Error::Decode(inner) => f.write_fmt(format_args!("decoding strkey: {inner}")),
             Error::InputTooLarge { len, max } => f.write_fmt(format_args!(
                 "strkey input too large: {len} bytes (max {max})"
             )),
@@ -60,8 +60,7 @@ impl Cmd {
         let json = if let Ok(k) = Strkey::from_str(input) {
             serde_json::to_string_pretty(&Decoded(&k)).unwrap()
         } else {
-            let pk = ed25519::PrivateKey::from_str(input)
-                .map_err(|e| Error::Decode(input.to_string(), e))?;
+            let pk = ed25519::PrivateKey::from_str(input).map_err(Error::Decode)?;
             if !opts.quiet {
                 super::warn_private_key();
             }

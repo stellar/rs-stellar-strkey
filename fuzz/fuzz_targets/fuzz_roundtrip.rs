@@ -47,6 +47,7 @@ fuzz_target!(|s: &str| -> Corpus {
             Strkey::Contract(_) => 'C',
             Strkey::LiquidityPool(_) => 'L',
             Strkey::ClaimableBalance(_) => 'B',
+            Strkey::MuxedContract(_) => 'W',
         }
     );
 
@@ -60,6 +61,7 @@ fuzz_target!(|s: &str| -> Corpus {
         Strkey::Contract(_) => assert_eq!(len, 56),
         Strkey::LiquidityPool(_) => assert_eq!(len, 56),
         Strkey::ClaimableBalance(_) => assert_eq!(len, 58),
+        Strkey::MuxedContract(_) => assert_eq!(len, 69),
         Strkey::SignedPayloadEd25519(sp) => {
             let payload_len = sp.payload().len();
             let binary_len = 1              // version
